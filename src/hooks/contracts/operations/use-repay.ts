@@ -4,39 +4,38 @@ import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
 import { parseUnits } from 'ethers/lib/utils';
-// import { RAY } from '@/utils/wadraymath';
-// import { BigNumber } from 'ethers';
 
-interface SupplyParams {
-  assetId: string | Buffer;
+interface RepayParams {
+  assetId: Buffer<ArrayBufferLike>;
   amount: number | string;
   decimals: number;
+  useWalletBalance?: boolean; // Option to use wallet balance or supplied collateral
 }
 
-interface SupplyResult {
+interface RepayResult {
   success: boolean;
   error?: Error;
 }
 
 /**
- * Hook to supply assets to the protocol
+ * Hook to repay borrowed assets to the protocol
  * @param callbacks Optional callbacks for success and error scenarios
- * @returns A function to execute supply operations
+ * @returns A function to execute repay operations
  */
-export function useSupply({
+export function useRepay({
   onSuccess,
   onError,
 }: {
-  onSuccess?: (result: SupplyResult, params: SupplyParams) => void;
-  onError?: (error: Error, params: SupplyParams) => void;
+  onSuccess?: (result: RepayResult, params: RepayParams) => void;
+  onError?: (error: Error, params: RepayParams) => void;
 } = {}) {
   const { account } = useChromiaAccount();
   const { data: session } = useFtSession(
     account ? { clientConfig: publicClientConfig, account } : null
   );
 
-  const supply = useCallback(
-    async (params: SupplyParams): Promise<SupplyResult> => {
+  const repay = useCallback(
+    async (params: RepayParams): Promise<RepayResult> => {
       if (!session || !account) {
         const error = new Error('Session or account not available');
         onError?.(error, params);
@@ -44,40 +43,39 @@ export function useSupply({
       }
 
       try {
-        console.log('Starting supply operation:', params);
+        console.log('Starting repay operation:', params);
 
-        // Convert amount to BigInt format using toRay utility
+        // Convert amount to BigInt format using parseUnits
         const amountValue = parseUnits(params.amount.toString(), 27);
-        // const amountValue = BigNumber.from(RAY).mul(params.amount); //convert to RAY
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
-        // Execute supply operation
+
+        // Execute repay operation
         const result = await session
           .transactionBuilder()
           .add(
             op(
-              'supply',
-              account.id, // from account
-              params.assetId, // underlying asset ID
+              'repay',
+              params.assetId, // asset ID to repay
               BigInt(amountValue.toString()), // amount
-              account.id, // on behalf of account
-              BigInt(0), // referral code
+              account.id, // from account
+              params.useWalletBalance ? BigInt(1) : BigInt(0), // whether to use wallet balance (1) or collateral (0)
               BigInt(Date.now()) // timestamp
             )
           )
           .buildAndSend();
 
-        console.log('Supply operation result:', result);
+        console.log('Repay operation result:', result);
 
-        const supplyResult = {
+        const repayResult = {
           success: true,
         };
 
-        onSuccess?.(supplyResult, params);
-        return supplyResult;
+        onSuccess?.(repayResult, params);
+        return repayResult;
       } catch (error) {
-        console.error('Supply operation failed:', error);
+        console.error('Repay operation failed:', error);
         const errorObj = error instanceof Error ? error : new Error(String(error));
         onError?.(errorObj, params);
         return {
@@ -89,5 +87,5 @@ export function useSupply({
     [session, account, onSuccess, onError]
   );
 
-  return supply;
+  return repay;
 }

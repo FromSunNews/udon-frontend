@@ -37,10 +37,10 @@ async function initSupply() {
     // Create underlying asset
     console.log(chalk.blue('🔄 Creating underlying asset...'));
     const underlyingAsset = {
-      name: 'Test Underlying Token',
-      symbol: 'TUT',
+      name: 'MyNeighborAlice',
+      symbol: 'ALICEUSD',
       decimals: 8,
-      icon: 'http://example.com/icon.png',
+      icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
     };
 
     await adminSession.call(
@@ -91,8 +91,8 @@ async function initSupply() {
     // Configure reserve with a-asset
     console.log(chalk.blue('🔄 Configuring reserve with a-asset...'));
     const aAsset = {
-      name: 'Test A Token',
-      symbol: 'TAT',
+      name: 'AMyNeighborAlice',
+      symbol: 'AALICEUSD',
       decimals: 8,
     };
 
@@ -125,7 +125,9 @@ async function initSupply() {
         underlyingAssetId,
         BigInt(supplyAmount.toString()),
         userAccountId,
-        BigInt(0) // referral code
+        BigInt(0), // referral code
+        // get current block timestamp
+        BigInt(Date.now())
       )
     );
     const isSuccess = result.receipt.statusCode === 200;
@@ -133,6 +135,25 @@ async function initSupply() {
       isSuccess
         ? chalk.green('✅ Supply operation completed successfully')
         : chalk.red('❌ Supply operation failed')
+    );
+
+    const result2 = await userSession.call(
+      op(
+        'supply',
+        userAccountId,
+        underlyingAssetId,
+        BigInt(supplyAmount.toString()),
+        userAccountId,
+        BigInt(0), // referral code
+        // get current block timestamp
+        BigInt(Date.now())
+      )
+    );
+    const isSuccess2 = result2.receipt.statusCode === 200;
+    console.log(
+      isSuccess2
+        ? chalk.green('✅ Supply 2 operation completed successfully')
+        : chalk.red('❌ Supply 2 operation failed')
     );
 
     // Check final balances using getBalanceByAssetId

@@ -4,39 +4,37 @@ import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
 import { parseUnits } from 'ethers/lib/utils';
-// import { RAY } from '@/utils/wadraymath';
-// import { BigNumber } from 'ethers';
 
-interface SupplyParams {
-  assetId: string | Buffer;
+interface WithdrawParams {
+  assetId: Buffer<ArrayBufferLike>;
   amount: number | string;
   decimals: number;
 }
 
-interface SupplyResult {
+interface WithdrawResult {
   success: boolean;
   error?: Error;
 }
 
 /**
- * Hook to supply assets to the protocol
+ * Hook to withdraw assets from the protocol
  * @param callbacks Optional callbacks for success and error scenarios
- * @returns A function to execute supply operations
+ * @returns A function to execute withdraw operations
  */
-export function useSupply({
+export function useWithdraw({
   onSuccess,
   onError,
 }: {
-  onSuccess?: (result: SupplyResult, params: SupplyParams) => void;
-  onError?: (error: Error, params: SupplyParams) => void;
+  onSuccess?: (result: WithdrawResult, params: WithdrawParams) => void;
+  onError?: (error: Error, params: WithdrawParams) => void;
 } = {}) {
   const { account } = useChromiaAccount();
   const { data: session } = useFtSession(
     account ? { clientConfig: publicClientConfig, account } : null
   );
 
-  const supply = useCallback(
-    async (params: SupplyParams): Promise<SupplyResult> => {
+  const withdraw = useCallback(
+    async (params: WithdrawParams): Promise<WithdrawResult> => {
       if (!session || !account) {
         const error = new Error('Session or account not available');
         onError?.(error, params);
@@ -44,40 +42,37 @@ export function useSupply({
       }
 
       try {
-        console.log('Starting supply operation:', params);
+        console.log('Starting withdraw operation:', params);
 
-        // Convert amount to BigInt format using toRay utility
+        // Convert amount to BigInt format using parseUnits
         const amountValue = parseUnits(params.amount.toString(), 27);
-        // const amountValue = BigNumber.from(RAY).mul(params.amount); //convert to RAY
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
-        // Execute supply operation
+
+        // Execute withdraw operation
         const result = await session
           .transactionBuilder()
           .add(
             op(
-              'supply',
-              account.id, // from account
-              params.assetId, // underlying asset ID
+              'withdraw',
+              params.assetId, // asset ID to withdraw
               BigInt(amountValue.toString()), // amount
-              account.id, // on behalf of account
-              BigInt(0), // referral code
-              BigInt(Date.now()) // timestamp
+              account.id // from account (asset owner)
             )
           )
           .buildAndSend();
 
-        console.log('Supply operation result:', result);
+        console.log('Withdraw operation result:', result);
 
-        const supplyResult = {
+        const withdrawResult = {
           success: true,
         };
 
-        onSuccess?.(supplyResult, params);
-        return supplyResult;
+        onSuccess?.(withdrawResult, params);
+        return withdrawResult;
       } catch (error) {
-        console.error('Supply operation failed:', error);
+        console.error('Withdraw operation failed:', error);
         const errorObj = error instanceof Error ? error : new Error(String(error));
         onError?.(errorObj, params);
         return {
@@ -89,5 +84,5 @@ export function useSupply({
     [session, account, onSuccess, onError]
   );
 
-  return supply;
+  return withdraw;
 }

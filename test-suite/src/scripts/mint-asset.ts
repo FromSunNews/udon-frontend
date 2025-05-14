@@ -12,12 +12,12 @@ import { formatUnits } from 'ethers/lib/utils';
 // Users can modify these values before running the script
 const ASSET_CONFIG = {
   // Available options: BTC, ETH, ALICE, DUSD, UNDERLYING_TEST_TOKEN
-  ASSET_TYPE: 'UNDERLYING_TEST_TOKEN',
+  ASSET_TYPE: 'ALICE',
   // The amount to mint in whole tokens (will be converted to RAY)
-  MINT_AMOUNT: 100,
+  MINT_AMOUNT: 1000,
   // Target account keyPair: admin_kp or user_a_kp
   USE_ADMIN_ACCOUNT: false,
-  TARGET_USER_ID: ensureBuffer('E6BDEC98482AA1837D28E71DAE487905809BAE2B6F35B827016249C84566FCD3'),
+  TARGET_USER_ID: ensureBuffer('5D3D574FA59149FE64E7495907FA047A2AC80EA0524D66373D12770104A0B0FA'),
 };
 
 // Asset configurations
@@ -64,7 +64,7 @@ async function mintAsset() {
     const selectedAsset = ASSETS[ASSET_CONFIG.ASSET_TYPE];
 
     const underlyingAssetResult = await adminSession.getAssetsBySymbol(selectedAsset.symbol);
-    const underlyingAssetId = underlyingAssetResult.data[0].id;
+    const underlyingAssetId = underlyingAssetResult.data[0]?.id;
 
     // Convert mint amount to RAY
     const mintAmount = BigNumber.from(RAY).mul(ASSET_CONFIG.MINT_AMOUNT);

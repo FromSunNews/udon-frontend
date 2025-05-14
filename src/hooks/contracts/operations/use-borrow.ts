@@ -4,39 +4,38 @@ import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
 import { parseUnits } from 'ethers/lib/utils';
-// import { RAY } from '@/utils/wadraymath';
-// import { BigNumber } from 'ethers';
 
-interface SupplyParams {
-  assetId: string | Buffer;
+interface BorrowParams {
+  assetId: Buffer<ArrayBufferLike>;
   amount: number | string;
   decimals: number;
+  interestRateMode?: number; // 1 for stable, 2 for variable
 }
 
-interface SupplyResult {
+interface BorrowResult {
   success: boolean;
   error?: Error;
 }
 
 /**
- * Hook to supply assets to the protocol
+ * Hook to borrow assets from the protocol
  * @param callbacks Optional callbacks for success and error scenarios
- * @returns A function to execute supply operations
+ * @returns A function to execute borrow operations
  */
-export function useSupply({
+export function useBorrow({
   onSuccess,
   onError,
 }: {
-  onSuccess?: (result: SupplyResult, params: SupplyParams) => void;
-  onError?: (error: Error, params: SupplyParams) => void;
+  onSuccess?: (result: BorrowResult, params: BorrowParams) => void;
+  onError?: (error: Error, params: BorrowParams) => void;
 } = {}) {
   const { account } = useChromiaAccount();
   const { data: session } = useFtSession(
     account ? { clientConfig: publicClientConfig, account } : null
   );
 
-  const supply = useCallback(
-    async (params: SupplyParams): Promise<SupplyResult> => {
+  const borrow = useCallback(
+    async (params: BorrowParams): Promise<BorrowResult> => {
       if (!session || !account) {
         const error = new Error('Session or account not available');
         onError?.(error, params);
@@ -44,40 +43,40 @@ export function useSupply({
       }
 
       try {
-        console.log('Starting supply operation:', params);
+        console.log('Starting borrow operation:', params);
 
-        // Convert amount to BigInt format using toRay utility
+        // Convert amount to BigInt format using parseUnits
         const amountValue = parseUnits(params.amount.toString(), 27);
-        // const amountValue = BigNumber.from(RAY).mul(params.amount); //convert to RAY
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
-        // Execute supply operation
+
+        // Execute borrow operation
         const result = await session
           .transactionBuilder()
           .add(
             op(
-              'supply',
-              account.id, // from account
-              params.assetId, // underlying asset ID
+              'borrow',
+              params.assetId, // asset ID to borrow
               BigInt(amountValue.toString()), // amount
-              account.id, // on behalf of account
+              account.id, // to account
+              BigInt(params.interestRateMode || 2), // interest rate mode (default: variable)
               BigInt(0), // referral code
               BigInt(Date.now()) // timestamp
             )
           )
           .buildAndSend();
 
-        console.log('Supply operation result:', result);
+        console.log('Borrow operation result:', result);
 
-        const supplyResult = {
+        const borrowResult = {
           success: true,
         };
 
-        onSuccess?.(supplyResult, params);
-        return supplyResult;
+        onSuccess?.(borrowResult, params);
+        return borrowResult;
       } catch (error) {
-        console.error('Supply operation failed:', error);
+        console.error('Borrow operation failed:', error);
         const errorObj = error instanceof Error ? error : new Error(String(error));
         onError?.(errorObj, params);
         return {
@@ -89,5 +88,5 @@ export function useSupply({
     [session, account, onSuccess, onError]
   );
 
-  return supply;
+  return borrow;
 }

@@ -95,7 +95,6 @@ export const mockBalances = [
     },
     amount: 9876.54,
   },
-  // ...thêm nhiều asset nếu muốn
 ];
 
 export const BALANCE_QUERY_KEY = ['token-balance'] as const;

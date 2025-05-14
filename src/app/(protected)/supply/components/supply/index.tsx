@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { CheckIcon, Loader2, XIcon } from 'lucide-react';
 import { ColumnDef, SortableTable } from '@/components/common/sortable-table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import {
@@ -13,27 +13,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { SupplyDialog } from './dialog';
-
-// Define type for supply assets
-interface SupplyAsset {
-  id: Buffer<ArrayBufferLike>;
-  symbol: string;
-  name: string;
-  balance?: string;
-  apy?: string;
-  iconUrl: string;
-  collateral?: boolean; // For collateral functionality
-  maxAmount?: number;
-  price?: number;
-  decimals: number;
-}
+import { SupplyDialog } from './supply-dialog';
+import { CommonAsset } from '../../types';
 
 interface SupplyTableProps {
   title: string;
   showCollateral?: boolean;
-  assets: SupplyAsset[];
+  assets: CommonAsset[];
   isLoading: boolean;
+  mutateAssets: () => void;
 }
 
 export const SupplyTable: React.FC<SupplyTableProps> = ({
@@ -41,22 +29,24 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
   showCollateral = false,
   assets,
   isLoading,
+  mutateAssets,
 }) => {
-  const [selectedAsset, setSelectedAsset] = useState<SupplyAsset | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<CommonAsset | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
 
   // Prepare assets with supply-specific properties
   const supplyAssets = assets.map(asset => ({
     ...asset,
-    balance: asset.balance || '0', // Default balance
-    apy: asset.apy || '<0.001%', // Default APY
-    maxAmount: asset.maxAmount || 10, // Default max amount
-    collateral: asset.collateral || false, // Default collateral
+    balance: asset.balance || '0',
+    supplyAPY: 0.24, // TODO: calculate apy
+    maxAmount: asset.balance,
+    collateral: !!asset.canBeCollateral,
   }));
 
   // Handle supply button click
-  const handleSupplyClick = (asset: SupplyAsset) => {
+  const handleSupplyClick = (asset: CommonAsset) => {
+    console.log('asset', asset);
     setSelectedAsset(asset);
     setDialogOpen(true);
   };
@@ -67,7 +57,8 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
   };
 
   // Render asset icon and symbol
-  const renderAssetCell = (asset: SupplyAsset) => {
+  const renderAssetCell = (asset: CommonAsset) => {
+    console.log('asset', asset);
     return (
       <TooltipProvider>
         <Tooltip>
@@ -77,7 +68,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
               onClick={() => handleAssetClick(asset.symbol)}
             >
               <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+                <AvatarImage src={asset.icon_url} alt={asset.symbol} />
                 <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
               <Typography weight="medium">{asset.symbol}</Typography>
@@ -92,38 +83,59 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
   };
 
   // Define columns for the supply table
-  const supplyColumns: ColumnDef<SupplyAsset>[] = [
+  const supplyColumns: ColumnDef<CommonAsset>[] = [
     {
       header: 'Assets',
       accessorKey: 'symbol',
       enableSorting: true,
-      cell: ({ row }: { row: SupplyAsset }) => renderAssetCell(row),
+      cell: ({ row }: { row: CommonAsset }) => renderAssetCell(row),
     },
     {
-      header: 'Balance',
+      header: 'Wallet Balance',
       accessorKey: 'balance',
       enableSorting: true,
-      cell: ({ row }: { row: SupplyAsset }) => <Typography>{row.balance}</Typography>,
+      cell: ({ row }: { row: CommonAsset }) => <Typography>{row.balance}</Typography>,
     },
     {
       header: 'Price',
       accessorKey: 'price',
       enableSorting: true,
-      cell: ({ row }: { row: SupplyAsset }) => (
+      cell: ({ row }: { row: CommonAsset }) => (
         <Typography>${row.price != null ? row.price.toFixed(2) : '—'}</Typography>
       ),
     },
     {
       header: 'APY',
-      accessorKey: 'apy',
+      accessorKey: 'supplyAPY',
       enableSorting: true,
-      cell: ({ row }: { row: SupplyAsset }) => <Typography>{row.apy}</Typography>,
+      cell: ({ row }: { row: CommonAsset }) => <Typography>{row.supplyAPY}</Typography>,
+    },
+    {
+      header: 'Collateral',
+      accessorKey: 'canBeCollateral',
+      enableSorting: true,
+      cell: ({ row }: { row: CommonAsset }) => (
+        // <Typography
+        //   className={row.canBeCollateral ? 'text-green-500' : 'text-red-500'}
+        //   weight={row.canBeCollateral ? 'semibold' : 'normal'}
+        // >
+        //   {row.canBeCollateral ? 'Yes' : 'No'}
+        // </Typography>
+        //show check icon if true, otherwise show cross icon
+        <div className="flex items-center gap-2">
+          {row.canBeCollateral ? (
+            <CheckIcon className="w-6 h-6 text-green-500" />
+          ) : (
+            <XIcon className="w-6 h-6 text-red-500" />
+          )}
+        </div>
+      ),
     },
     ...(showCollateral
       ? [
           {
             header: 'Collateral',
-            accessorKey: 'collateral',
+            accessorKey: 'canBeCollateral',
             enableSorting: false,
             cell: () => (
               <div className="flex flex-col items-center">
@@ -136,35 +148,37 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
                 <Typography variant="small">+4</Typography>
               </div>
             ),
-          } as ColumnDef<SupplyAsset>,
+          } as ColumnDef<CommonAsset>,
         ]
       : []),
     {
       header: '',
       accessorKey: 'symbol',
       enableSorting: false,
-      cell: ({ row }: { row: SupplyAsset }) => (
-        <div className="flex flex-row items-center w-full justify-end gap-2">
-          <Button
-            variant="gradient"
-            onClick={e => {
-              e.stopPropagation();
-              handleSupplyClick(row);
-            }}
-            aria-label={`Supply ${row.symbol}`}
-            className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
-          >
-            Supply
-          </Button>
+      cell: ({ row }: { row: CommonAsset }) => (
+        <div className="flex justify-end">
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="gradient"
+              onClick={e => {
+                e.stopPropagation();
+                handleSupplyClick(row);
+              }}
+              aria-label={`Supply ${row.symbol}`}
+              className="w-[100px]"
+            >
+              Supply
+            </Button>
 
-          <Button
-            variant="outlineGradient"
-            onClick={() => handleAssetClick(row.symbol)}
-            aria-label={`Borrow ${row.symbol}`}
-            className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
-          >
-            Details
-          </Button>
+            <Button
+              variant="outlineGradient"
+              onClick={() => handleAssetClick(row.symbol)}
+              aria-label={`Borrow ${row.symbol}`}
+              className="w-[100px]"
+            >
+              Details
+            </Button>
+          </div>
         </div>
       ),
     },
@@ -182,7 +196,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
         {(!supplyAssets || supplyAssets.length === 0) && !isLoading && (
           <div className="rounded bg-accent/30 mt-2 sm:mt-2.5 p-2 sm:p-2.5">
             <Typography variant="small" color="submerged">
-              Your Ethereum wallet is empty. Purchase or transfer assets.
+              Assets are not available for supply at this time.
             </Typography>
           </div>
         )}
@@ -193,7 +207,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : supplyAssets.length > 0 ? (
-            <SortableTable<SupplyAsset>
+            <SortableTable<CommonAsset>
               data={supplyAssets}
               columns={supplyColumns}
               pageSize={5}
@@ -208,12 +222,8 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
         <SupplyDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          asset={{
-            ...selectedAsset,
-            balance: selectedAsset.balance || '0',
-            apy: selectedAsset.apy || '<0.001%',
-            maxAmount: selectedAsset.maxAmount || 10,
-          }}
+          asset={selectedAsset}
+          mutateAssets={mutateAssets}
         />
       )}
     </>

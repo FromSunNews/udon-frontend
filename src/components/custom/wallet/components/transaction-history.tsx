@@ -2,11 +2,10 @@
 
 import { ArrowUpRight, ArrowDownRight, HandCoins, Banknote, HelpCircle } from 'lucide-react';
 import { useTransferHistory } from '@/hooks/contracts/queries/use-tranfer-history';
-// import { convertToRawAmount } from '@chromia/ft4';
-// import Link from 'next/link';
 import { getTxLink } from '@/utils/get-tx-link';
 import React from 'react';
 import { cn } from '@/utils/tailwind';
+import { formatRay } from '@/utils/wadraymath';
 
 interface TransactionHistoryProps {
   compact?: boolean;
@@ -110,15 +109,15 @@ export function TransactionHistory({
           {displayTransfers && displayTransfers.length > 0 ? (
             <div className={cn('flex flex-col gap-4', fullList && 'pb-[120px]')}>
               {displayTransfers.map((transfer, index) => {
+                console.log(transfer);
                 const transactionHash = transfer?.transactionId?.toString('hex') || '';
                 const txType = getTxTypeInfo(transfer.operationName || '');
                 // Format amount using decimals
-                const decimals = transfer.asset?.decimals ?? 0;
                 const symbol = transfer.asset?.symbol ?? '';
-                const raw = transfer.delta.toString();
-                const value = Number(raw) / Math.pow(10, decimals);
+                const value = formatRay(transfer.delta.value);
                 // Show sign for positive/negative
-                const amountStr = value > 0 ? `+${value} ${symbol}` : `${value} ${symbol}`;
+                const amountStr =
+                  Number(value) > 0 ? `+${value} ${symbol}` : `- ${value} ${symbol}`;
                 return (
                   <div
                     key={index}

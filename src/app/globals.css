@@ -112,6 +112,16 @@
     right: 0;
   }
 
+  /* Horizontal scrollbar styles */
+  *::-webkit-scrollbar:horizontal,
+  *::-webkit-scrollbar-thumb:horizontal {
+    height: 6px;
+    border-radius: 3px;
+    background-clip: padding-box;
+    position: absolute;
+    bottom: 0;
+  }
+
   *::-webkit-scrollbar {
     background-color: transparent;
   }
@@ -122,6 +132,16 @@
   }
 
   *::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--primary));
+  }
+
+  /* Ensure horizontal scrollbar thumb has the same style */
+  *::-webkit-scrollbar-thumb:horizontal {
+    background-color: hsl(var(--muted));
+    transition: background-color 0.3s ease;
+  }
+
+  *::-webkit-scrollbar-thumb:horizontal:hover {
     background-color: hsl(var(--primary));
   }
 }

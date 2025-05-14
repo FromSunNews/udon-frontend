@@ -13,28 +13,25 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { BorrowDialog } from './dialog';
+import { BorrowDialog } from './borrow-dialog';
+import { CommonAsset } from '../../types';
 
 // Define type for borrow assets
-interface BorrowAsset {
-  id: Buffer<ArrayBufferLike>;
-  symbol: string;
-  name: string;
-  available?: string;
-  apy?: string;
-  iconUrl: string;
-  maxAmount?: number;
-  price?: number;
-}
 
 interface BorrowTableProps {
   title: string;
-  assets: BorrowAsset[];
+  assets: CommonAsset[];
   isLoading: boolean;
+  mutateAssets: () => void;
 }
 
-export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoading }) => {
-  const [selectedAsset, setSelectedAsset] = useState<BorrowAsset | null>(null);
+export const BorrowTable: React.FC<BorrowTableProps> = ({
+  title,
+  assets,
+  isLoading,
+  mutateAssets,
+}) => {
+  const [selectedAsset, setSelectedAsset] = useState<CommonAsset | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
 
@@ -42,12 +39,12 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
   const borrowAssets = assets.map(asset => ({
     ...asset,
     available: asset.available || '0.0045852', // Default available
-    apy: asset.apy || '<0.001%', // Default APY
-    maxAmount: asset.maxAmount || 0.0045852, // Default max amount
+    apy: asset.borrowAPY || '<0.001%', // Default APY
+    maxAmount: asset.balance || 0.0045852, // Default max amount
   }));
 
   // Handle borrow button click
-  const handleBorrowClick = (asset: BorrowAsset) => {
+  const handleBorrowClick = (asset: CommonAsset) => {
     setSelectedAsset(asset);
     setDialogOpen(true);
   };
@@ -58,7 +55,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
   };
 
   // Render asset icon and symbol
-  const renderAssetCell = (asset: BorrowAsset) => {
+  const renderAssetCell = (asset: CommonAsset) => {
     return (
       <TooltipProvider>
         <Tooltip>
@@ -68,7 +65,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
               onClick={() => handleAssetClick(asset.symbol)}
             >
               <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+                <AvatarImage src={asset.icon_url} alt={asset.symbol} />
                 <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
               <Typography weight="medium">{asset.symbol}</Typography>
@@ -83,59 +80,61 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
   };
 
   // Define columns for the borrow table
-  const borrowColumns: ColumnDef<BorrowAsset>[] = [
+  const borrowColumns: ColumnDef<CommonAsset>[] = [
     {
       header: 'Assets',
       accessorKey: 'symbol',
       enableSorting: true,
-      cell: ({ row }: { row: BorrowAsset }) => renderAssetCell(row),
+      cell: ({ row }: { row: CommonAsset }) => renderAssetCell(row),
     },
     {
       header: 'Available',
       accessorKey: 'available',
       enableSorting: true,
-      cell: ({ row }: { row: BorrowAsset }) => <Typography>{row.available}</Typography>,
+      cell: ({ row }: { row: CommonAsset }) => <Typography>{row.available}</Typography>,
     },
     {
       header: 'Price',
       accessorKey: 'price',
       enableSorting: true,
-      cell: ({ row }: { row: BorrowAsset }) => (
+      cell: ({ row }: { row: CommonAsset }) => (
         <Typography>${row.price != null ? row.price.toFixed(2) : '—'}</Typography>
       ),
     },
     {
       header: 'APY',
-      accessorKey: 'apy',
+      accessorKey: 'borrowAPY',
       enableSorting: true,
-      cell: ({ row }: { row: BorrowAsset }) => <Typography>{row.apy}</Typography>,
+      cell: ({ row }: { row: CommonAsset }) => <Typography>{row.borrowAPY}</Typography>,
     },
     {
       header: '',
       accessorKey: 'symbol',
       enableSorting: false,
-      cell: ({ row }: { row: BorrowAsset }) => (
-        <div className="flex flex-row items-center w-full justify-end gap-2">
-          <Button
-            variant="gradient"
-            onClick={e => {
-              e.stopPropagation();
-              handleBorrowClick(row);
-            }}
-            aria-label={`Borrow ${row.symbol}`}
-            className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
-          >
-            Borrow
-          </Button>
+      cell: ({ row }: { row: CommonAsset }) => (
+        <div className="flex justify-end">
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="gradient"
+              onClick={e => {
+                e.stopPropagation();
+                handleBorrowClick(row);
+              }}
+              aria-label={`Borrow ${row.symbol}`}
+              className="w-[100px]"
+            >
+              Borrow
+            </Button>
 
-          <Button
-            variant="outlineGradient"
-            onClick={() => handleAssetClick(row.symbol)}
-            aria-label={`Borrow ${row.symbol}`}
-            className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
-          >
-            Details
-          </Button>
+            <Button
+              variant="outlineGradient"
+              onClick={() => handleAssetClick(row.symbol)}
+              aria-label={`Borrow ${row.symbol}`}
+              className="w-[100px]"
+            >
+              Details
+            </Button>
+          </div>
         </div>
       ),
     },
@@ -164,7 +163,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : borrowAssets.length > 0 ? (
-            <SortableTable<BorrowAsset>
+            <SortableTable<CommonAsset>
               data={borrowAssets}
               columns={borrowColumns}
               pageSize={5}
@@ -178,12 +177,8 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
         <BorrowDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          asset={{
-            ...selectedAsset,
-            available: selectedAsset.available || '0.0045852',
-            apy: selectedAsset.apy || '<0.001%',
-            maxAmount: selectedAsset.maxAmount || 0.0045852,
-          }}
+          asset={selectedAsset}
+          mutateAssets={mutateAssets}
         />
       )}
     </>

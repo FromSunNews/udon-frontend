@@ -1,111 +1,253 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { SortableTable, ColumnDef } from '@/components/common/sortable-table';
 import { Button } from '@/components/common/button';
 import { Switch } from '@/components/common/switch';
-import Image from 'next/image';
 import { Typography } from '@/components/common/typography';
 import { Badge } from '@/components/common/badge';
+import { Skeleton } from '@/components/common/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/common/tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
+import { SupplyDialog } from './supply-dialog';
+import { WithdrawDialog } from './withdraw-dialog';
+import { CommonAsset } from '../../types';
 
-interface SupplyPosition {
-  iconUrl: string;
-  asset: string;
-  walletBalance: number;
-  walletBalanceUsd: number;
-  apy: number;
-  collateral: boolean;
+interface UserReserveData {
+  asset: CommonAsset;
+  current_a_token_balance: bigint;
+  current_variable_debt: bigint;
+  scaled_variable_debt: bigint;
+  liquidity_rate: bigint;
+  usage_as_collateral_enabled: boolean;
 }
 
-const columns: ColumnDef<SupplyPosition>[] = [
-  {
-    header: 'Assets',
-    accessorKey: 'asset',
-    cell: ({ row }) => (
-      <div className="flex items-center gap-3">
-        <Image src={row.iconUrl} alt={row.asset} width={32} height={32} className="rounded-full" />
-        <Typography weight="medium">{row.asset}</Typography>
-      </div>
-    ),
-  },
-  {
-    header: 'Balance',
-    accessorKey: 'walletBalance',
-    cell: ({ row }) => (
-      <div>
-        <Typography weight="medium">{row.walletBalance.toFixed(2)}</Typography>
-        <Typography variant="small" color="submerged">
-          ${row.walletBalanceUsd.toFixed(2)}
-        </Typography>
-      </div>
-    ),
-  },
-  {
-    header: 'APY',
-    accessorKey: 'apy',
-    cell: ({ row }) => <Typography weight="medium">{row.apy.toFixed(2)}%</Typography>,
-  },
-  {
-    header: 'Collateral',
-    accessorKey: 'collateral',
-    cell: ({ row }) => <Switch checked={row.collateral} />,
-  },
-  {
-    header: '',
-    accessorKey: 'asset',
-    cell: () => (
-      <div className="flex flex-col gap-2 w-[100px]">
-        <Button variant="outlineGradient" className="w-full py-2">
-          Switch
-        </Button>
-        <Button variant="gradient" className="w-full py-2">
-          Withdraw
-        </Button>
-      </div>
-    ),
-  },
-];
+interface SupplyPositionTableProps {
+  positions: UserReserveData[];
+  isLoading: boolean;
+  mutateAssets: () => void;
+}
 
-const mockData: SupplyPosition[] = [
-  {
-    iconUrl: '/images/wbtc.png',
-    asset: 'WBTC',
-    walletBalance: 10,
-    walletBalanceUsd: 10,
-    apy: 2.37,
-    collateral: true,
-  },
-  {
-    iconUrl: '/images/wbtc.png',
-    asset: 'WBTC',
-    walletBalance: 10,
-    walletBalanceUsd: 10,
-    apy: 2.37,
-    collateral: false,
-  },
-];
+export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
+  positions,
+  isLoading,
+  mutateAssets,
+}) => {
+  // Dialog state management
+  const [selectedPosition, setSelectedPosition] = useState<UserReserveData | null>(null);
+  const [supplyDialogOpen, setSupplyDialogOpen] = useState(false);
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
 
-export const SupplyPositionTable: React.FC = () => (
-  <div className="rounded-2xl border border-border bg-card p-6">
-    <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
-      Your Supply
-    </Typography>
-    <div className="flex gap-4 mb-4">
-      <Badge variant="outline" className="text-base px-3">
-        Balance: $10.00
-      </Badge>
-      <Badge variant="outline" className="text-base px-3">
-        APY: 2.71%
-      </Badge>
-      <Badge variant="outline" className="text-base px-3">
-        Collateral: $10.00
-      </Badge>
+  // Handle supply button click for a position
+  const handleSupplyClick = (position: UserReserveData) => {
+    setSelectedPosition(position);
+    setSupplyDialogOpen(true);
+  };
+
+  // Handle withdraw button click for a position
+  const handleWithdrawClick = (position: UserReserveData) => {
+    setSelectedPosition(position);
+    setWithdrawDialogOpen(true);
+  };
+
+  // Calculate total supply balance in USD
+  const totalBalanceUsd = positions.reduce((sum, position) => {
+    const balance =
+      Number(position.current_a_token_balance) / Math.pow(10, position.asset.decimals);
+    return sum + balance * (position.asset.price || 0);
+  }, 0);
+
+  // Calculate average APY
+  const averageApy =
+    positions.length > 0
+      ? positions.reduce((sum, position) => sum + Number(position.liquidity_rate) / 1e25, 0) /
+        positions.length
+      : 0;
+
+  // Calculate total collateral in USD
+  const totalCollateralUsd = positions
+    .filter(position => position.usage_as_collateral_enabled)
+    .reduce((sum, position) => {
+      const balance =
+        Number(position.current_a_token_balance) / Math.pow(10, position.asset.decimals);
+      return sum + balance * (position.asset.price || 0);
+    }, 0);
+
+  // Render asset icon and symbol
+  const renderAssetCell = (asset: CommonAsset) => {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-3 cursor-pointer">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={asset.icon_url} alt={asset.symbol} />
+                <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <Typography weight="medium">{asset.symbol}</Typography>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{asset.name}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  // Define columns for the positions table
+  const columns: ColumnDef<UserReserveData>[] = [
+    {
+      header: 'Assets',
+      accessorKey: 'asset',
+      cell: ({ row }) => renderAssetCell(row.asset),
+    },
+    {
+      header: 'Balance',
+      accessorKey: 'current_a_token_balance',
+      cell: ({ row }) => {
+        const asset = row.asset;
+        const balance = Number(row.current_a_token_balance) / Math.pow(10, asset.decimals);
+        const balanceUsd = balance * (asset.price || 0);
+        return (
+          <div>
+            <Typography weight="medium">{balance.toFixed(4)}</Typography>
+            <Typography variant="small" color="submerged">
+              ${balanceUsd.toFixed(2)}
+            </Typography>
+          </div>
+        );
+      },
+    },
+    {
+      header: 'APY',
+      accessorKey: 'liquidity_rate',
+      cell: ({ row }) => {
+        const apy = Number(row.liquidity_rate) / 1e25; // Adjust based on how apy is stored
+        return <Typography weight="medium">{apy.toFixed(2)}%</Typography>;
+      },
+    },
+    {
+      header: 'Collateral',
+      accessorKey: 'usage_as_collateral_enabled',
+      cell: ({ row }) => (
+        <Switch
+          checked={row.usage_as_collateral_enabled}
+          onCheckedChange={() => {
+            console.log('checked', row.usage_as_collateral_enabled);
+          }}
+        />
+      ),
+    },
+    {
+      header: '',
+      accessorKey: 'asset',
+      cell: ({ row }) => {
+        // Get the full position object from the row
+        const position = positions.find(
+          p => Buffer.compare(p.asset.id, (row.asset as CommonAsset).id) === 0
+        );
+
+        if (!position) return null;
+
+        return (
+          <div className="flex justify-end">
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="gradient"
+                className="w-[100px]"
+                onClick={() => handleSupplyClick(position)}
+              >
+                Supply
+              </Button>
+              <Button
+                variant="outlineGradient"
+                className="w-[100px]"
+                onClick={() => handleWithdrawClick(position)}
+              >
+                Withdraw
+              </Button>
+            </div>
+          </div>
+        );
+      },
+    },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6">
+      <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
+        Your Supply
+      </Typography>
+      {isLoading ? (
+        <div className="space-y-4">
+          <div className="flex gap-4 mb-4">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-8 w-32" />
+            ))}
+          </div>
+          <Skeleton className="h-40 w-full" />
+        </div>
+      ) : (
+        <>
+          {positions.length > 0 ? (
+            <>
+              <div className="flex gap-4 mb-4 flex-wrap">
+                <Badge variant="outline" className="text-base px-3">
+                  Balance: ${totalBalanceUsd.toFixed(2)}
+                </Badge>
+                <Badge variant="outline" className="text-base px-3">
+                  APY: {averageApy.toFixed(2)}%
+                </Badge>
+                <Badge variant="outline" className="text-base px-3">
+                  Collateral: ${totalCollateralUsd.toFixed(2)}
+                </Badge>
+              </div>
+              <SortableTable
+                data={positions}
+                columns={columns}
+                pageSize={4}
+                className="bg-transparent border-none"
+              />
+            </>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No supply positions found. <br />
+              Start supplying assets to earn interest.
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Supply Dialog */}
+      {selectedPosition && supplyDialogOpen && (
+        <SupplyDialog
+          open={supplyDialogOpen}
+          onOpenChange={setSupplyDialogOpen}
+          asset={selectedPosition.asset}
+          mutateAssets={mutateAssets}
+        />
+      )}
+
+      {/* Withdraw Dialog */}
+      {selectedPosition && withdrawDialogOpen && (
+        <WithdrawDialog
+          open={withdrawDialogOpen}
+          onOpenChange={setWithdrawDialogOpen}
+          asset={selectedPosition.asset}
+          supplyBalance={(
+            Number(selectedPosition.current_a_token_balance) /
+            Math.pow(10, selectedPosition.asset.decimals)
+          ).toFixed(2)}
+          healthFactor={1.23} // This would be calculated based on user's positions
+          mutateAssets={mutateAssets}
+        />
+      )}
     </div>
-    <SortableTable
-      data={mockData}
-      columns={columns}
-      pageSize={4}
-      className="bg-transparent border-none"
-    />
-  </div>
-);
+  );
+};

@@ -43,7 +43,7 @@ export function useAssetPrice(
 
       const price = (await client.query('get_latest_price_by_asset_id', {
         asset_id: formattedAssetId,
-      })) as unknown as AssetPrice;
+      })) as unknown as number;
 
       console.log('Received price data:', price);
       return price;

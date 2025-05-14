@@ -1,10 +1,12 @@
 'use client';
 
-import { Balance, convertToRawAmount } from '@chromia/ft4';
+import { Balance } from '@chromia/ft4';
 import { useTokenBalance } from '@/hooks/contracts/queries/use-token-balance';
+import { useTokenPrices } from '@/hooks/contracts/queries/use-token-prices';
 import Image from 'next/image';
 import React from 'react';
 import { cn } from '@/utils/tailwind';
+import { formatRay } from '@/utils/wadraymath';
 
 // Extend the Balance type with additional properties
 
@@ -22,9 +24,19 @@ export function TokenList({
   className,
 }: TokenListProps) {
   const { balances, isLoading: isLoadingBalances } = useTokenBalance();
+  // Use the new hook to get token prices
+  const { prices, isLoading: isLoadingPrices } = useTokenPrices(balances);
+
   const showCompact = compact && !fullList;
   const displayBalances = showCompact ? balances.slice(0, 3) : balances;
   const hasMore = showCompact && balances.length > 1;
+
+  // Helper function to calculate USD value
+  const calculateUsdValue = (balance: Balance) => {
+    const tokenBalance = Number(formatRay(balance.amount.value));
+    const price = prices[balance.asset.symbol] || 0;
+    return tokenBalance * price;
+  };
 
   return (
     <div className={cn('w-full flex flex-col h-full', className)}>
@@ -44,7 +56,7 @@ export function TokenList({
         )}
       </div>
       <div className="relative flex-1 flex flex-col">
-        {isLoadingBalances && (
+        {(isLoadingBalances || isLoadingPrices) && (
           <div className="absolute right-0 top-0">
             <div className="h-3 w-3 rounded-full border-2 border-primary/60 border-t-transparent animate-spin"></div>
           </div>
@@ -54,6 +66,8 @@ export function TokenList({
             <div className={cn('flex flex-col gap-4', fullList && 'pb-[120px]')}>
               {displayBalances.map((balance, index) => {
                 const tokenBalance = balance as unknown as Balance;
+                const usdValue = calculateUsdValue(tokenBalance);
+
                 return (
                   <div
                     key={index}
@@ -74,10 +88,7 @@ export function TokenList({
                           {tokenBalance.asset.symbol}
                         </span>
                         <span className="text-sm text-submerged font-medium">
-                          {convertToRawAmount(
-                            tokenBalance.amount.toString(),
-                            tokenBalance.asset.decimals
-                          ).value.toString()}{' '}
+                          {formatRay(tokenBalance.amount.value)}{' '}
                         </span>
                         <span className="text-sm text-submerged font-medium">
                           {tokenBalance.asset.symbol}
@@ -85,8 +96,11 @@ export function TokenList({
                       </div>
                     </div>
                     <span className="text-lg font-bold text-white">
-                      {/* You can format the value as currency if needed */}
-                      $3,127.12
+                      {isLoadingPrices ? (
+                        <span className="inline-block w-16 h-6 bg-secondary/30 rounded-md animate-pulse"></span>
+                      ) : (
+                        `$${usdValue.toFixed(2)}`
+                      )}
                     </span>
                   </div>
                 );

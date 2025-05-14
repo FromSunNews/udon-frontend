@@ -17,19 +17,19 @@ const TOKENS = [
   {
     name: 'Ethereum USD',
     symbol: 'ETHUSD',
-    decimals: 18,
+    decimals: 8,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
   },
   {
     name: 'MyNeighborAlice',
     symbol: 'ALICEUSD',
-    decimals: 18,
+    decimals: 8,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
   },
   {
     name: 'DAR Open Network',
     symbol: 'DUSD',
-    decimals: 18,
+    decimals: 8,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
   },
 ];
@@ -91,6 +91,12 @@ async function initSupply() {
         chalk.yellow(`(${underlyingAssetId})`)
       );
 
+      // Create price asset
+      await adminSession.call(
+        op('create_price_asset', admin_kp.pubKey, token.symbol, underlyingAssetId)
+      );
+      console.log(chalk.green('✅ Price asset oracle created:'));
+
       // Set interest rate strategy
       await adminSession.call(
         op(
@@ -110,6 +116,8 @@ async function initSupply() {
         symbol: `A${token.symbol}`,
         decimals: token.decimals,
       };
+
+      console.log('aAsset', aAsset);
 
       await adminSession.call(
         op('init_reserve_op', underlyingAssetId, adminAccountId, aAsset.name, aAsset.symbol, '', '')

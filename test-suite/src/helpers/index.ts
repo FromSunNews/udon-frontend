@@ -35,6 +35,6 @@ export async function getSessionOrRegister(client: IClient, kp: KeyPair) {
     const store = createInMemoryFtKeyStore(kp);
     const { getSession } = createKeyStoreInteractor(client, store);
     console.log('getting session');
-    return await getSession(resultGetAccountBySigner?.data[0].id);
+    return await getSession(resultGetAccountBySigner?.data[0]?.id);
   }
 }

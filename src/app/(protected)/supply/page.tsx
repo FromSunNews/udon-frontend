@@ -1,123 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StatCard } from './components/stat-card';
 import { Typography } from '@/components/common/typography';
+import { StatCard } from './components/stat-card';
 import { SupplyTable } from './components/supply';
 import { BorrowTable } from './components/borrow';
-import { Asset, PaginatedEntity } from '@chromia/ft4';
-import { useChromiaAccount, useChromiaQuery } from '@/hooks/configs/chromia-hooks';
-import { toast } from 'sonner';
 import { SupplyPositionTable } from './components/supply/position';
 import { BorrowPositionTable } from './components/borrow/position';
-
-// Define asset price interface
-interface AssetPrice {
-  stork_asset_id: string;
-  price: number;
-  timestamp: string;
-}
-
-// Define the common asset structure both components will use
-interface CommonAsset {
-  id: Buffer<ArrayBufferLike>;
-  symbol: string;
-  name: string;
-  iconUrl: string;
-  price?: number;
-  decimals: number;
-}
+import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
 
 export default function SupplyPage() {
-  const { client } = useChromiaAccount();
-  const [isLoadingPrices, setIsLoadingPrices] = useState(false);
-
-  // Query for assets
+  // Use the enhanced custom hook to get all data
   const {
-    data: assetsData,
-    isLoading: isLoadingAssets,
-    error: assetsError,
-  } = useChromiaQuery<string, Record<string, unknown>, PaginatedEntity<Asset>>({
-    queryName: 'ft4.get_assets_by_type',
-    queryParams: {
-      type: 'ft4',
-      page_size: null,
-      page_cursor: null,
-    },
-    swrConfiguration: {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300000,
-    },
-  });
-
-  // Extract asset IDs for price query
-  const assetIds = useMemo(() => {
-    if (assetsData?.data) {
-      return assetsData.data.map(asset => asset.id);
-    }
-    return [];
-  }, [assetsData]);
-
-  // Store processed assets with prices
-  const [processedAssets, setProcessedAssets] = useState<CommonAsset[]>([]);
-
-  // Fetch prices using client directly
-  const fetchPrices = useCallback(async () => {
-    if (!client || !assetIds.length) return;
-
-    try {
-      setIsLoadingPrices(true);
-
-      const prices = (await client.query('get_latest_price_by_asset_ids', {
-        asset_ids: assetIds,
-      })) as unknown as AssetPrice[];
-
-      console.log('prices', prices);
-
-      if (assetsData?.data) {
-        const assetsWithPriceData = assetsData.data.map(asset => {
-          const assetPrice = prices.find(p => p.stork_asset_id === asset.symbol);
-          console.log('assetPrice', assetPrice);
-          console.log('assetPrice', assetPrice?.price);
-
-          return {
-            id: asset.id,
-            symbol: asset.symbol,
-            name: asset.name,
-            iconUrl: asset.iconUrl,
-            price: Number(assetPrice?.price) || 0,
-            decimals: 8,
-          };
-        });
-        setProcessedAssets(assetsWithPriceData);
-      }
-    } catch (error) {
-      console.error('Failed to fetch prices:', error);
-      toast.error('Failed to load asset prices. Please try again.');
-    } finally {
-      setIsLoadingPrices(false);
-    }
-  }, [client, assetIds, assetsData?.data]);
-
-  // Fetch prices when assets data changes
-  useEffect(() => {
-    if (assetsData?.data && assetIds.length > 0) {
-      fetchPrices();
-    }
-  }, [assetsData, assetIds, fetchPrices]);
-
-  // Show error toast if API calls fail
-  useEffect(() => {
-    if (assetsError) {
-      toast.error('Failed to load assets. Please try again.');
-    }
-  }, [assetsError]);
-
-  const isLoading = isLoadingAssets || isLoadingPrices;
+    assets: processedAssets,
+    supplyPositions,
+    borrowPositions,
+    isLoading,
+    refresh: refetchAssets,
+  } = useCompletedAssets();
 
   return (
-    <main className="container mx-auto px-4 sm:px-5 py-[180px]">
+    <main className="px-8 py-[180px]">
       <section className="flex flex-col items-center gap-2 sm:gap-2.5">
         <div
           dangerouslySetInnerHTML={{
@@ -157,15 +59,29 @@ export default function SupplyPage() {
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
-        <SupplyPositionTable />
-        <BorrowPositionTable />
+        <SupplyPositionTable
+          positions={supplyPositions}
+          isLoading={isLoading}
+          mutateAssets={refetchAssets}
+        />
+        <BorrowPositionTable
+          positions={borrowPositions}
+          isLoading={isLoading}
+          mutateAssets={refetchAssets}
+        />
         <SupplyTable
           title="Assets to supply"
           showCollateral={false}
           assets={processedAssets}
           isLoading={isLoading}
+          mutateAssets={refetchAssets}
         />
-        <BorrowTable title="Assets to borrow" assets={processedAssets} isLoading={isLoading} />
+        <BorrowTable
+          title="Assets to borrow"
+          assets={processedAssets}
+          isLoading={isLoading}
+          mutateAssets={refetchAssets}
+        />
       </section>
     </main>
   );
