@@ -93,7 +93,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   // Update price when data is fetched
   useEffect(() => {
     if (priceData !== null && priceData !== undefined) {
-      setCurrentPrice(priceData.price);
+      setCurrentPrice(priceData);
       // Disable refetching to prevent unnecessary calls
       setIsRefetchEnabled(false);
     }
