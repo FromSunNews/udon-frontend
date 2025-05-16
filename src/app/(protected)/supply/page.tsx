@@ -48,12 +48,12 @@ export default function SupplyPage() {
       <section className="flex flex-col sm:flex-row gap-4 sm:gap-5 mt-6 sm:mt-10">
         <StatCard
           value="$4,232,090,563"
-          label="Your Deposit"
+          label="Total Deposit"
           iconUrl="/images/supply/coin-stack.gif"
         />
         <StatCard
           value="$4,232,090,563"
-          label="Your Borrows"
+          label="Total Borrows"
           iconUrl="/images/supply/saving-piggy.gif"
         />
       </section>
