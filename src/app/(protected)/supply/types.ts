@@ -24,9 +24,9 @@ export interface AssetPrice {
 
 export interface UserReserveData {
   asset: CommonAsset;
-  current_a_token_balance: bigint;
-  current_variable_debt: bigint;
-  scaled_variable_debt: bigint;
-  liquidity_rate: bigint;
+  current_a_token_balance: number;
+  current_variable_debt: number;
+  scaled_variable_debt: number;
+  liquidity_rate: number;
   usage_as_collateral_enabled: boolean;
 }

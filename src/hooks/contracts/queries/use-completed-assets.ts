@@ -169,41 +169,81 @@ export function useCompletedAssets() {
           reserves: { isLoading: true, error: null },
         }));
 
-        // In a real implementation, you would fetch this data from the blockchain
-        // Here we're using mock data with a delay to simulate network request
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // // In a real implementation, you would fetch this data from the blockchain
+        // // Here we're using mock data with a delay to simulate network request
+        // await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Create mock data for supply positions
-        const mockSupplyPositions = assets.map(asset => ({
-          asset,
-          current_a_token_balance: BigInt(Math.floor(Math.random() * 20000000000)),
-          current_variable_debt: BigInt(0),
-          scaled_variable_debt: BigInt(0),
-          liquidity_rate: BigInt(Math.floor(Math.random() * 1000000)),
-          usage_as_collateral_enabled: true,
-        }));
+        // // Create mock data for supply positions
+        // const mockSupplyPositions = assets.map(asset => ({
+        //   asset,
+        //   current_a_token_balance: BigInt(Math.floor(Math.random() * 20000000000)),
+        //   current_variable_debt: BigInt(0),
+        //   scaled_variable_debt: BigInt(0),
+        //   liquidity_rate: BigInt(Math.floor(Math.random() * 1000000)),
+        //   usage_as_collateral_enabled: true,
+        // }));
 
-        // Create mock data for borrow positions - only use first two assets for demo
-        const mockBorrowPositions = assets.slice(0, 2).map(asset => ({
-          asset,
-          current_a_token_balance: BigInt(0),
-          current_variable_debt: BigInt(Math.floor(Math.random() * 10000000000)),
-          scaled_variable_debt: BigInt(Math.floor(Math.random() * 9000000000)),
-          liquidity_rate: BigInt(0),
-          usage_as_collateral_enabled: true,
-        }));
+        // // Create mock data for borrow positions - only use first two assets for demo
+        // const mockBorrowPositions = assets.slice(0, 2).map(asset => ({
+        //   asset,
+        //   current_a_token_balance: BigInt(0),
+        //   current_variable_debt: BigInt(Math.floor(Math.random() * 10000000000)),
+        //   scaled_variable_debt: BigInt(Math.floor(Math.random() * 9000000000)),
+        //   liquidity_rate: BigInt(0),
+        //   usage_as_collateral_enabled: true,
+        // }));
 
-        // Update state with mock data
-        setSupplyPositions(mockSupplyPositions);
-        setBorrowPositions(mockBorrowPositions);
+        // // Update state with mock data
+        // setSupplyPositions(mockSupplyPositions);
+        // setBorrowPositions(mockBorrowPositions);
+
+        // Create an array of promises for all asset queries
+        const reservePromises = assets.map(asset =>
+          client
+            .query('get_user_reserve_data', {
+              asset_id: asset.id,
+              user_id: account.id,
+            })
+            .then(response => {
+              // Cast response to correct tuple type
+              const reserveData = response as unknown as [bigint, bigint, bigint, bigint, boolean];
+              console.log('reserveData[0]', reserveData[0]);
+              console.log('formatRay(reserveData[0])', formatRay(reserveData[0]));
+              return {
+                asset,
+                current_a_token_balance: Number(formatRay(reserveData[0])),
+                current_variable_debt: Number(formatRay(reserveData[1])),
+                scaled_variable_debt: Number(formatRay(reserveData[2])),
+                liquidity_rate: Number(formatRay(reserveData[3])),
+                usage_as_collateral_enabled: !!reserveData[4],
+              };
+            })
+        );
+
+        // Wait for all queries to complete
+        const userReserves = await Promise.all(reservePromises);
+
+        console.log('userReserves', userReserves);
+        // Filter positions
+        const supplyData = userReserves.filter(
+          reserve => reserve.current_a_token_balance > BigInt(0)
+        );
+
+        const borrowData = userReserves.filter(
+          reserve => reserve.current_variable_debt > BigInt(0)
+        );
+
+        console.log('supplyData', supplyData);
+        console.log('borrowData', borrowData);
+        setSupplyPositions(supplyData);
+        setBorrowPositions(borrowData);
 
         // update canBeCollateral - use the assets parameter instead of processedAssets state
         setProcessedAssets(prevAssets =>
           prevAssets.map(asset => ({
             ...asset,
-            canBeCollateral: mockSupplyPositions.find(
-              position => position.asset.id.toString() === asset.id.toString()
-            )?.usage_as_collateral_enabled,
+            canBeCollateral: supplyData.find(s => s.asset.id.toString() === asset.id.toString())
+              ?.usage_as_collateral_enabled,
           }))
         );
       } catch (error) {
@@ -233,14 +273,21 @@ export function useCompletedAssets() {
       const assetsWithPrices = await fetchPrices(assetsData.data);
       if (!assetsWithPrices.length) return;
 
+      console.log('assetsWithPrices', assetsWithPrices);
+
       // Step 2: Get assets with prices and balances
       const completedAssets = await fetchBalances(assetsWithPrices);
 
+      console.log('completedAssets', completedAssets);
+
       // Update state
       setProcessedAssets(completedAssets);
+      console.log('processedAssets', processedAssets);
 
       // Step 3: Fetch user positions after assets are loaded
+      console.log('fetching user reserves');
       await fetchUserReserves(completedAssets);
+      console.log('user reserves fetched');
     } catch (error) {
       console.error('Error loading complete asset data:', error);
       toast.error('Failed to load complete asset data');

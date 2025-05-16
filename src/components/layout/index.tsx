@@ -19,9 +19,9 @@ export function MainLayout({ children }: PropsWithChildren) {
       <Header />
       {/* Glowing effect at the top */}
       <div className="absolute w-full h-full -mt-[135px] z-0">
-        <div className="absolute w-[1097px] h-[246px] top-0 left-1/2 -translate-x-1/2 bg-[#1fc3e8] rounded-[548.5px/123.1px] blur-[48.75px]">
-          <div className="relative w-[1016px] h-52 left-[50px] bg-[#1f6ce8] rounded-[508.19px/103.8px]">
-            <div className="relative w-[862px] h-[134px] top-6 left-[88px] bg-white rounded-[430.85px/67px]" />
+        <div className="absolute w-full h-[250px] top-0 left-1/2 -translate-x-1/2 bg-[#1fc3e8] rounded-[548.5px/123.1px] blur-[48.75px]">
+          <div className="relative w-full h-52 bg-[#1f6ce8] rounded-[508.19px/103.8px]">
+            <div className="relative w-full h-[150px] top-6 bg-white rounded-[430.85px/67px]" />
           </div>
         </div>
 
@@ -37,15 +37,14 @@ export function MainLayout({ children }: PropsWithChildren) {
         </div>
 
         {/* Vector image overlay */}
-        <div className="absolute w-[1119px] h-[1001px] top-[321px] left-1/2 -translate-x-1/2">
-          {/* This would be the vector.svg */}
-          <Image
-            className="w-full h-full"
-            alt="Vector graphic"
-            src="/images/supply/vector-overlay.png"
-            fill
-          />
-        </div>
+        {/* <div className=" z-10"> */}
+        {/* This would be the vector.svg */}
+        <img
+          className="absolute w-full h-auto top-[321px] left-1/2 -translate-x-1/2"
+          alt="Vector graphic"
+          src="/images/supply/vector-overlay.png"
+        />
+        {/* </div> */}
       </div>
       <main className="h-min-screen z-10">{children}</main>
       <Footer />

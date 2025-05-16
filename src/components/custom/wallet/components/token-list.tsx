@@ -84,18 +84,18 @@ export function TokenList({
                         />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-base font-semibold text-white">
-                          {tokenBalance.asset.symbol}
+                        <span className="text-base font-semibold text-embossed">
+                          {tokenBalance.asset.name}
                         </span>
-                        <span className="text-sm text-submerged font-medium">
+                        <span className="text-base text-embossed font-bold">
                           {formatRay(tokenBalance.amount.value)}{' '}
                         </span>
-                        <span className="text-sm text-submerged font-medium">
+                        <span className="text-sm text-embossed font-medium">
                           {tokenBalance.asset.symbol}
                         </span>
                       </div>
                     </div>
-                    <span className="text-lg font-bold text-white">
+                    <span className="text-lg font-bold text-green-500">
                       {isLoadingPrices ? (
                         <span className="inline-block w-16 h-6 bg-secondary/30 rounded-md animate-pulse"></span>
                       ) : (

@@ -56,9 +56,11 @@ export function useWithdraw({
           .add(
             op(
               'withdraw',
+              account.id, // from account (asset owner)
               params.assetId, // asset ID to withdraw
               BigInt(amountValue.toString()), // amount
-              account.id // from account (asset owner)
+              account.id, // to_id
+              Date.now() // timestamp
             )
           )
           .buildAndSend();

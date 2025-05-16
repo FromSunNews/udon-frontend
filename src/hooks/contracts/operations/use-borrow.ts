@@ -59,10 +59,10 @@ export function useBorrow({
               'borrow',
               params.assetId, // asset ID to borrow
               BigInt(amountValue.toString()), // amount
-              account.id, // to account
-              BigInt(params.interestRateMode || 2), // interest rate mode (default: variable)
-              BigInt(0), // referral code
-              BigInt(Date.now()) // timestamp
+              2, // interest rate mode (default: variable)
+              0, // referral code,
+              account.id // from on_behalf_of_id
+              // BigInt(Date.now()) // Todo: implement this
             )
           )
           .buildAndSend();

@@ -30,14 +30,16 @@ export function useTokenPrices(tokens?: (Asset | Balance)[]) {
       setIsLoading(true);
       setError(null);
 
+      console.log('tokens', tokens);
+
       // Extract asset info from tokens (handle both Asset and Balance types)
       const assetIds = tokens.map(token => {
         // Check if it's a Balance type (which contains asset property)
         if ('asset' in token) {
-          return (token as Balance).asset.symbol;
+          return (token as Balance).asset.id;
         }
         // It's an Asset type
-        return (token as Asset).symbol;
+        return (token as Asset).id;
       });
 
       // Query the blockchain for latest prices
@@ -45,11 +47,15 @@ export function useTokenPrices(tokens?: (Asset | Balance)[]) {
         asset_ids: assetIds,
       })) as unknown as AssetPrice[];
 
+      console.log('pricesData', pricesData);
+
       // Create a map of symbol -> price
       const priceMap: TokenPriceMap = {};
       pricesData.forEach(priceData => {
         priceMap[priceData.stork_asset_id] = Number(priceData.price) || 0;
       });
+
+      console.log('priceMap', priceMap);
 
       setPrices(priceMap);
     } catch (error) {

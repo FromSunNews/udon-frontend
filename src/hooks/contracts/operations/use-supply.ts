@@ -63,7 +63,7 @@ export function useSupply({
               BigInt(amountValue.toString()), // amount
               account.id, // on behalf of account
               BigInt(0), // referral code
-              BigInt(Date.now()) // timestamp
+              Date.now() // timestamp
             )
           )
           .buildAndSend();

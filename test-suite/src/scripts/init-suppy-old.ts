@@ -127,7 +127,7 @@ async function initSupply() {
         userAccountId,
         BigInt(0), // referral code
         // get current block timestamp
-        BigInt(Date.now())
+        Date.now()
       )
     );
     const isSuccess = result.receipt.statusCode === 200;
@@ -146,7 +146,7 @@ async function initSupply() {
         userAccountId,
         BigInt(0), // referral code
         // get current block timestamp
-        BigInt(Date.now())
+        Date.now()
       )
     );
     const isSuccess2 = result2.receipt.statusCode === 200;
@@ -170,6 +170,40 @@ async function initSupply() {
       chalk.yellow(`   Underlying balance: ${formatRay(userUnderlyingBalance.amount.value)}`)
     );
     console.log(chalk.yellow(`   A-asset balance: ${formatRay(userAAssetBalance.amount.value)}`));
+
+    console.log(chalk.bold.green('✅✅✅ Supply initialization completed successfully ✅✅✅'));
+
+    // init emode
+    console.log(chalk.blue('🔄 Initializing emode...'));
+    await adminSession.call(op('initialize_emode_logic'));
+    await adminSession.call(op('set_reserve_borrowing', underlyingAssetId, true));
+    console.log(chalk.green('✅ Emode initialized'));
+
+    // init borrow mode
+    const borrowAmount = BigNumber.from(RAY).mul(30);
+    console.log(chalk.blue('🔄 Initializing borrow mode...'));
+    await userSession.call(
+      op(
+        'borrow',
+        underlyingAssetId,
+        BigInt(borrowAmount.toString()),
+        2,
+        0,
+        userAccountId,
+        Date.now()
+      )
+    );
+    console.log(chalk.green('✅ Borrow mode initialized'));
+
+    // check balances
+    console.log(chalk.blue('🔄 Checking final balances...'));
+    const userUnderlyingBalance2 = await userSession.account.getBalanceByAssetId(underlyingAssetId);
+    const userAAssetBalance2 = await userSession.account.getBalanceByAssetId(aAssetId);
+    console.log(chalk.green('✅ Final balances:'));
+    console.log(
+      chalk.yellow(`   Underlying balance: ${formatRay(userUnderlyingBalance2.amount.value)}`)
+    );
+    console.log(chalk.yellow(`   A-asset balance: ${formatRay(userAAssetBalance2.amount.value)}`));
 
     console.log(chalk.bold.green('✅✅✅ Supply initialization completed successfully ✅✅✅'));
   } catch (error) {

@@ -127,22 +127,26 @@
   }
 
   *::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted));
+    background-color: #ffffff33;
     transition: background-color 0.3s ease;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--primary));
+    cursor: pointer;
+    background-color: transparent;
+    background-image: linear-gradient(to bottom, #52e5ff, #36b1ff, #e4f5ff);
   }
 
   /* Ensure horizontal scrollbar thumb has the same style */
   *::-webkit-scrollbar-thumb:horizontal {
-    background-color: hsl(var(--muted));
+    background-color: #ffffff33;
     transition: background-color 0.3s ease;
   }
 
   *::-webkit-scrollbar-thumb:horizontal:hover {
-    background-color: hsl(var(--primary));
+    cursor: pointer;
+    background-color: transparent;
+    background-image: linear-gradient(to right, #52e5ff, #36b1ff, #e4f5ff);
   }
 }
 
