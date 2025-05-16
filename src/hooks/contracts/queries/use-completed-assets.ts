@@ -207,7 +207,7 @@ export function useCompletedAssets() {
             .then(response => {
               // Cast response to correct tuple type
               const reserveData = response as unknown as [bigint, bigint, bigint, bigint, boolean];
-              console.log('reserveData[0]', reserveData[0]);
+              console.log('reserveData[0]', reserveData);
               console.log('formatRay(reserveData[0])', formatRay(reserveData[0]));
               return {
                 asset,

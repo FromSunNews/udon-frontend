@@ -8,6 +8,9 @@ import { getSessionOrRegister } from '../helpers';
 import { ensureBuffer } from '../helpers/buffer';
 import { formatUnits } from 'ethers/lib/utils';
 
+// hippo: A8A05014A795D77C4FA12FDF08776FD70799549530F27ABB3B3331FB4D0A2AC8
+// nathan: 5D3D574FA59149FE64E7495907FA047A2AC80EA0524D66373D12770104A0B0FA
+
 // Define constants for minting
 // Users can modify these values before running the script
 const ASSET_CONFIG = {
@@ -17,7 +20,7 @@ const ASSET_CONFIG = {
   MINT_AMOUNT: 1000,
   // Target account keyPair: admin_kp or user_a_kp
   USE_ADMIN_ACCOUNT: false,
-  TARGET_USER_ID: ensureBuffer('A8A05014A795D77C4FA12FDF08776FD70799549530F27ABB3B3331FB4D0A2AC8'),
+  TARGET_USER_ID: ensureBuffer('5D3D574FA59149FE64E7495907FA047A2AC80EA0524D66373D12770104A0B0FA'),
 };
 
 // Asset configurations
@@ -75,19 +78,32 @@ async function mintAsset() {
     );
 
     // Perform the mint operation
-    await adminSession.call(
-      op(
-        'mint_underlying_asset',
-        ASSET_CONFIG.TARGET_USER_ID,
-        BigInt(mintAmount.toString()),
-        underlyingAssetId
-      )
-    );
+    // await adminSession.call(
+    //   op(
+    //     'mint_underlying_asset',
+    //     ASSET_CONFIG.TARGET_USER_ID,
+    //     BigInt(mintAmount.toString()),
+    //     underlyingAssetId
+    //   )
+    // );
     console.log(
       chalk.green(
         `✅ Minted ${chalk.yellow(formatRay(mintAmount))} ${selectedAsset.symbol} tokens to ${ASSET_CONFIG.TARGET_USER_ID.toString('hex')}`
       )
     );
+
+    console.log(chalk.blue('🔄 init enable collateral...'));
+
+    await adminSession.call(
+      op(
+        'init_set_using_as_collateral_op',
+        ASSET_CONFIG.TARGET_USER_ID,
+        underlyingAssetId,
+        true // enable colateral
+      )
+    );
+
+    console.log(chalk.green(`✅ Init enable collateral successfully!`));
 
     // Check the final balance
     console.log(chalk.blue('🔄 Checking final balance...'));

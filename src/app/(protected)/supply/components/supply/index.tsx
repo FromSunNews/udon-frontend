@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { CheckIcon, Loader2, XIcon } from 'lucide-react';
 import { ColumnDef, SortableTable } from '@/components/common/sortable-table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import {
@@ -41,7 +41,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
     balance: asset.balance || '0',
     supplyAPY: 0.24, // TODO: calculate apy
     maxAmount: asset.balance,
-    collateral: !!asset.canBeCollateral,
+    collateral: asset.canBeCollateral,
   }));
 
   // Handle supply button click
@@ -115,20 +115,20 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
       accessorKey: 'canBeCollateral',
       enableSorting: true,
       cell: ({ row }: { row: CommonAsset }) => (
-        <Typography
-          className={row.canBeCollateral ? 'text-green-500' : 'text-red-500'}
-          weight={row.canBeCollateral ? 'semibold' : 'normal'}
-        >
-          {row.canBeCollateral ? 'Yes' : 'No'}
-        </Typography>
+        // <Typography
+        //   className={row.canBeCollateral ? 'text-green-500' : 'text-red-500'}
+        //   weight={row.canBeCollateral ? 'semibold' : 'normal'}
+        // >
+        //   {row.canBeCollateral ? 'Yes' : 'No'}
+        // </Typography>
         //show check icon if true, otherwise show cross icon
-        // <div className="flex items-center gap-2">
-        //   {row.canBeCollateral ? (
-        //     <CheckIcon className="w-6 h-6 text-green-500" />
-        //   ) : (
-        //     <XIcon className="w-6 h-6 text-red-500" />
-        //   )}
-        // </div>
+        <div className="flex items-center gap-2">
+          {row.canBeCollateral ? (
+            <CheckIcon className="w-6 h-6 text-green-500" />
+          ) : (
+            <XIcon className="w-6 h-6 text-red-500" />
+          )}
+        </div>
       ),
     },
     ...(showCollateral
