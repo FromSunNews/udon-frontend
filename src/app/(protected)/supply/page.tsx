@@ -14,8 +14,13 @@ export default function SupplyPage() {
     assets: processedAssets,
     supplyPositions,
     borrowPositions,
+    totalDeposit,
+    totalBorrow,
     isLoading,
     refresh: refetchAssets,
+    yourBalancePosition,
+    yourCollateralPosition,
+    yourAPYPosition,
   } = useCompletedAssets();
 
   return (
@@ -47,12 +52,12 @@ export default function SupplyPage() {
 
       <section className="flex flex-col sm:flex-row gap-4 sm:gap-5 mt-6 sm:mt-10">
         <StatCard
-          value="$4,232,090,563"
+          value={`$${totalDeposit}`}
           label="Total Deposit"
           iconUrl="/images/supply/coin-stack.gif"
         />
         <StatCard
-          value="$4,232,090,563"
+          value={`$${totalBorrow}`}
           label="Total Borrows"
           iconUrl="/images/supply/saving-piggy.gif"
         />
@@ -60,6 +65,9 @@ export default function SupplyPage() {
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
         <SupplyPositionTable
+          yourBalancePosition={yourBalancePosition}
+          yourCollateralPosition={yourCollateralPosition}
+          yourAPYPosition={yourAPYPosition}
           positions={supplyPositions}
           isLoading={isLoading}
           mutateAssets={refetchAssets}
@@ -71,14 +79,13 @@ export default function SupplyPage() {
         />
         <SupplyTable
           title="Assets to supply"
-          showCollateral={false}
-          assets={processedAssets}
+          reserves={processedAssets}
           isLoading={isLoading}
           mutateAssets={refetchAssets}
         />
         <BorrowTable
           title="Assets to borrow"
-          assets={processedAssets}
+          reserves={processedAssets}
           isLoading={isLoading}
           mutateAssets={refetchAssets}
         />

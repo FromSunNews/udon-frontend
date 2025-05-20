@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { CommonAsset } from '../../types';
+import { UserReserveData } from '../../types';
 
 const borrowFormSchema = z.object({
   amount: z.string().min(1, 'Amount is required!'),
@@ -33,7 +33,7 @@ type BorrowFormValues = z.infer<typeof borrowFormSchema>;
 export interface BorrowDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  asset: CommonAsset;
+  reserve: UserReserveData;
   availableToBorrow?: string;
   healthFactor?: number;
   mutateAssets: () => void;
@@ -47,15 +47,14 @@ const debouncedFn = debounce((callback: () => void) => {
 export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   open,
   onOpenChange,
-  asset,
-  availableToBorrow = '1.0',
-  healthFactor = 4.91,
+  reserve,
   mutateAssets,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentPrice, setCurrentPrice] = useState<number | undefined>(asset.price);
+  const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
+  const hf = 0;
 
   const form = useForm<BorrowFormValues>({
     resolver: zodResolver(borrowFormSchema),
@@ -69,7 +68,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     data: priceData,
     isLoading: isPriceFetching,
     refetch: fetchPrice,
-  } = useAssetPrice(asset.id, isRefetchEnabled);
+  } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
   // Use the borrow hook
   const borrow = useBorrow({
@@ -101,8 +100,8 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
 
   // Initialize with asset price
   useEffect(() => {
-    setCurrentPrice(asset.price);
-  }, [asset.price]);
+    setCurrentPrice(reserve.price);
+  }, [reserve.price]);
 
   // Watch for input changes and fetch price
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,8 +115,8 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   };
 
   const handleMaxAmount = () => {
-    form.setValue('amount', availableToBorrow);
-    setInputAmount(availableToBorrow);
+    form.setValue('amount', reserve.availableBorrow.toString());
+    setInputAmount(reserve.availableBorrow.toString());
     handleFetchPrice();
   };
 
@@ -127,9 +126,9 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     try {
       // Use the borrow hook
       const borrowResult = await borrow({
-        assetId: asset.id,
+        assetId: reserve.assetId,
         amount: data.amount,
-        decimals: asset.decimals,
+        decimals: reserve.decimals,
         interestRateMode: 2, // Variable rate
       });
 
@@ -139,7 +138,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
       });
 
       if (borrowResult.success) {
-        toast.success(`Successfully borrowed ${data.amount} ${asset.symbol}`);
+        toast.success(`Successfully borrowed ${data.amount} ${reserve.symbol}`);
         // Close dialog after successful operation
         onOpenChange(false);
       } else {
@@ -159,9 +158,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     : '$0';
 
   // Calculate new health factor after borrowing (simplified estimation)
-  const newHealthFactor = Math.max(0, healthFactor - parseFloat(inputAmount || '0') * 0.2).toFixed(
-    2
-  );
+  const newHealthFactor = Math.max(0, hf - parseFloat(inputAmount || '0') * 0.2).toFixed(2);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -169,7 +166,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
         <TooltipProvider delayDuration={300}>
           <DialogHeader>
             <div className="flex justify-between items-center">
-              <DialogTitle className="text-2xl font-semibold">Borrow {asset.symbol}</DialogTitle>
+              <DialogTitle className="text-2xl font-semibold">Borrow {reserve.symbol}</DialogTitle>
             </div>
           </DialogHeader>
 
@@ -192,11 +189,11 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                     />
                     <div className="flex items-center gap-2 absolute right-3 top-1/2 -translate-y-1/2">
                       <Avatar className="h-7 w-7">
-                        <AvatarImage src={asset.icon_url} alt={asset.symbol} />
-                        <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
+                        <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-row items-center gap-1">
-                        <span className="font-medium text-lg">{asset.symbol}</span>
+                        <span className="font-medium text-lg">{reserve.symbol}</span>
                       </div>
                     </div>
                   </div>
@@ -211,7 +208,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                       className="flex flex-row items-center gap-1 text-primary cursor-pointer"
                       onClick={handleMaxAmount}
                     >
-                      <Typography>Available: {availableToBorrow}</Typography>
+                      <Typography>Available: {reserve.availableBorrow}</Typography>
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>
@@ -251,7 +248,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                           : 'text-red-500'
                     }
                   >
-                    {healthFactor.toFixed(2)} → {newHealthFactor}
+                    {hf.toFixed(2)} → {newHealthFactor}
                   </Typography>
                 </div>
 
@@ -263,7 +260,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                   <Typography className="flex items-center gap-1">
                     Interest Rate (variable)
                   </Typography>
-                  <Typography weight="medium">5.3%</Typography>
+                  <Typography weight="medium">{reserve.borrowAPY.toFixed(4)}%</Typography>
                 </div>
               </div>
             </div>
@@ -284,7 +281,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                   className="w-full text-lg py-6"
                   disabled={!form.watch('amount')}
                 >
-                  Borrow {asset.symbol}
+                  Borrow {reserve.symbol}
                 </Button>
               )}
             </div>

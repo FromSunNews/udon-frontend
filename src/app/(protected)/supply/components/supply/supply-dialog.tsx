@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { CommonAsset } from '../../types';
+import { UserReserveData } from '../../types';
 // import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 
 const supplyFormSchema = z.object({
@@ -37,7 +37,7 @@ type SupplyFormValues = z.infer<typeof supplyFormSchema>;
 export interface SupplyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  asset: CommonAsset;
+  reserve: UserReserveData;
   mutateAssets: () => void;
 }
 
@@ -50,12 +50,12 @@ const debouncedFn = debounce((callback: () => void) => {
 export const SupplyDialog: React.FC<SupplyDialogProps> = ({
   open,
   onOpenChange,
-  asset,
+  reserve,
   mutateAssets,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   // const [useAsCollateral, setUseAsCollateral] = useState(true);
-  const [currentPrice, setCurrentPrice] = useState<number | undefined>(asset.price);
+  const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
 
@@ -71,7 +71,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
     data: priceData,
     isLoading: isPriceFetching,
     refetch: fetchPrice,
-  } = useAssetPrice(asset.id, isRefetchEnabled);
+  } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
   // Use the supply hook
   const supply = useSupply({
@@ -106,8 +106,8 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
 
   // Initialize with asset price
   useEffect(() => {
-    setCurrentPrice(asset.price);
-  }, [asset.price]);
+    setCurrentPrice(reserve.price);
+  }, [reserve.price]);
 
   // Watch for input changes and fetch price
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,8 +121,8 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
   };
 
   const handleMaxAmount = () => {
-    form.setValue('amount', asset.balance || '0');
-    setInputAmount(asset.balance || '0');
+    form.setValue('amount', reserve.balance.toString() || '0');
+    setInputAmount(reserve.balance.toString() || '0');
     handleFetchPrice();
   };
 
@@ -132,9 +132,9 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
     try {
       // Use the supply hook
       const supplyResult = await supply({
-        assetId: asset.id,
+        assetId: reserve.assetId,
         amount: data.amount,
-        decimals: asset.decimals,
+        decimals: reserve.decimals,
       });
 
       console.log('Supply submitted:', {
@@ -143,7 +143,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
       });
 
       if (supplyResult.success) {
-        toast.success(`Successfully supplied ${data.amount} ${asset.symbol}`);
+        toast.success(`Successfully supplied ${data.amount} ${reserve.symbol}`);
         // Close dialog after successful operation
         onOpenChange(false);
       } else {
@@ -168,7 +168,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
         <TooltipProvider delayDuration={300}>
           <DialogHeader>
             <div className="flex justify-between items-center">
-              <DialogTitle className="text-2xl font-semibold">Supply {asset.symbol}</DialogTitle>
+              <DialogTitle className="text-2xl font-semibold">Supply {reserve.symbol}</DialogTitle>
             </div>
           </DialogHeader>
 
@@ -189,12 +189,14 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
                       inputMode="decimal"
                       onChange={handleAmountChange}
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <div className="flex items-center gap-2 absolute right-3 top-1/2 -translate-y-1/2">
                       <Avatar className="h-7 w-7">
-                        <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
-                        <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
+                        <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-lg">{asset.symbol}</span>
+                      <div className="flex flex-row items-center gap-1">
+                        <span className="font-medium text-lg">{reserve.symbol}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -208,7 +210,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
                       className="flex flex-row items-center gap-1 text-primary cursor-pointer"
                       onClick={handleMaxAmount}
                     >
-                      <Typography>Balance {asset.balance}</Typography>
+                      <Typography>Balance {reserve.balance}</Typography>
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>
@@ -238,7 +240,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   </Typography>
-                  <Typography weight="medium">5.68%</Typography>
+                  <Typography weight="medium">{reserve.supplyAPY.toFixed(2)}%</Typography>
                 </div>
 
                 <div className="flex justify-between items-center">
@@ -256,16 +258,16 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
                   <Typography
                     weight="medium"
                     size="base"
-                    className={asset.canBeCollateral ? 'text-green-500' : 'text-red-500'}
+                    className={reserve.usageAsCollateralEnabled ? 'text-green-500' : 'text-red-500'}
                   >
-                    {asset.canBeCollateral ? 'Yes' : 'No'}
+                    {reserve.usageAsCollateralEnabled ? 'Yes' : 'No'}
                   </Typography>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">Supply amount</Typography>
                   <div className="font-medium text-base">
-                    {inputAmount || 0} {asset.symbol} ~{' '}
+                    {inputAmount || 0} {reserve.symbol} ~{' '}
                     {isPriceFetching ? <Skeleton className="inline-block h-5 w-20" /> : usdAmount}
                   </div>
                 </div>
@@ -296,7 +298,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
             <div className="mt-4">
               {isSubmitting ? (
                 <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
-                  Approving {asset.symbol}...
+                  Approving {reserve.symbol}...
                 </Button>
               ) : (
                 <Button
@@ -305,7 +307,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
                   className="w-full text-lg py-6"
                   disabled={!form.watch('amount')}
                 >
-                  Supply {asset.symbol}
+                  Supply {reserve.symbol}
                 </Button>
               )}
             </div>

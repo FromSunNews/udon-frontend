@@ -16,35 +16,37 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { SupplyDialog } from './supply-dialog';
 import { WithdrawDialog } from './withdraw-dialog';
-import { CommonAsset } from '../../types';
-
-interface UserReserveData {
-  asset: CommonAsset;
-  current_a_token_balance: number;
-  current_variable_debt: number;
-  scaled_variable_debt: number;
-  liquidity_rate: number;
-  usage_as_collateral_enabled: boolean;
-}
+import { CollateralDialog } from './collateral-dialog';
+import { UserReserveData } from '../../types';
 
 interface SupplyPositionTableProps {
   positions: UserReserveData[];
   isLoading: boolean;
   mutateAssets: () => void;
+  yourBalancePosition: number;
+  yourCollateralPosition: number;
+  yourAPYPosition: number;
 }
 
 export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   positions,
   isLoading,
   mutateAssets,
+  yourBalancePosition,
+  yourCollateralPosition,
+  yourAPYPosition,
 }) => {
   // Dialog state management
   const [selectedPosition, setSelectedPosition] = useState<UserReserveData | null>(null);
   const [supplyDialogOpen, setSupplyDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  // Collateral dialog state
+  const [collateralDialogOpen, setCollateralDialogOpen] = useState(false);
+  const [selectedCollateral, setSelectedCollateral] = useState<UserReserveData | null>(null);
 
   // Handle supply button click for a position
   const handleSupplyClick = (position: UserReserveData) => {
+    console.log('position', position);
     setSelectedPosition(position);
     setSupplyDialogOpen(true);
   };
@@ -55,45 +57,28 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     setWithdrawDialogOpen(true);
   };
 
-  // Calculate total supply balance in USD
-  const totalBalanceUsd = positions.reduce((sum, position) => {
-    const balance =
-      Number(position.current_a_token_balance) / Math.pow(10, position.asset.decimals);
-    return sum + balance * (position.asset.price || 0);
-  }, 0);
-
-  // Calculate average APY
-  const averageApy =
-    positions.length > 0
-      ? positions.reduce((sum, position) => sum + Number(position.liquidity_rate) / 1e25, 0) /
-        positions.length
-      : 0;
-
-  // Calculate total collateral in USD
-  const totalCollateralUsd = positions
-    .filter(position => position.usage_as_collateral_enabled)
-    .reduce((sum, position) => {
-      const balance =
-        Number(position.current_a_token_balance) / Math.pow(10, position.asset.decimals);
-      return sum + balance * (position.asset.price || 0);
-    }, 0);
+  // Handle collateral switch click
+  const handleCollateralSwitch = (position: UserReserveData) => {
+    setSelectedCollateral(position);
+    setCollateralDialogOpen(true);
+  };
 
   // Render asset icon and symbol
-  const renderAssetCell = (asset: CommonAsset) => {
+  const renderAssetCell = (row: UserReserveData) => {
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center gap-3 cursor-pointer">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.icon_url} alt={asset.symbol} />
-                <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+                <AvatarImage src={row.iconUrl} alt={row.symbol} />
+                <AvatarFallback>{row.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
-              <Typography weight="medium">{asset.symbol}</Typography>
+              <Typography weight="medium">{row.symbol}</Typography>
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{asset.name}</p>
+            <p>{row.name}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -104,16 +89,15 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   const columns: ColumnDef<UserReserveData>[] = [
     {
       header: 'Assets',
-      accessorKey: 'asset',
-      cell: ({ row }) => renderAssetCell(row.asset),
+      accessorKey: 'symbol',
+      cell: ({ row }) => renderAssetCell(row),
     },
     {
       header: 'Amount',
-      accessorKey: 'current_a_token_balance',
+      accessorKey: 'currentATokenBalance',
       cell: ({ row }) => {
-        const asset = row.asset;
-        const balance = row.current_a_token_balance;
-        const balanceUsd = Number(balance) * (asset.price || 0);
+        const balance = row.currentATokenBalance;
+        const balanceUsd = Number(balance) * (row.price || 0);
         return (
           <div>
             <Typography weight="medium">{balance.toString()}</Typography>
@@ -126,49 +110,39 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     },
     {
       header: 'APY',
-      accessorKey: 'liquidity_rate',
+      accessorKey: 'reserveCurrentLiquidityRate',
       cell: ({ row }) => {
-        const apy = Number(row.liquidity_rate) / 1e25; // Adjust based on how apy is stored
-        return <Typography weight="medium">{apy.toFixed(2)}%</Typography>;
+        return <Typography weight="medium">{row.supplyAPY.toFixed(4)}%</Typography>;
       },
     },
     {
       header: 'Collateral',
-      accessorKey: 'usage_as_collateral_enabled',
-      cell: ({ row }) => (
+      accessorKey: 'usageAsCollateralEnabled',
+      cell: ({ row }: { row: UserReserveData }) => (
         <Switch
-          checked={row.usage_as_collateral_enabled}
-          onCheckedChange={() => {
-            console.log('checked', row.usage_as_collateral_enabled);
-          }}
+          checked={row.usageAsCollateralEnabled}
+          onCheckedChange={() => handleCollateralSwitch(row)}
         />
       ),
     },
     {
       header: '',
-      accessorKey: 'asset',
+      accessorKey: 'symbol',
       cell: ({ row }) => {
-        // Get the full position object from the row
-        const position = positions.find(
-          p => Buffer.compare(p.asset.id, (row.asset as CommonAsset).id) === 0
-        );
-
-        if (!position) return null;
-
         return (
           <div className="flex justify-end">
             <div className="flex flex-col gap-2">
               <Button
                 variant="gradient"
                 className="w-[100px]"
-                onClick={() => handleSupplyClick(position)}
+                onClick={() => handleSupplyClick(row)}
               >
                 Supply
               </Button>
               <Button
                 variant="outlineGradient"
                 className="w-[100px]"
-                onClick={() => handleWithdrawClick(position)}
+                onClick={() => handleWithdrawClick(row)}
               >
                 Withdraw
               </Button>
@@ -199,13 +173,13 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
             <>
               <div className="flex gap-4 mb-4 flex-wrap">
                 <Badge variant="outline" className="text-base px-3">
-                  Balance: ${totalBalanceUsd.toFixed(2)}
+                  Balance: ${yourBalancePosition?.toFixed(2)}
                 </Badge>
                 <Badge variant="outline" className="text-base px-3">
-                  APY: {averageApy.toFixed(2)}%
+                  APY: {yourAPYPosition?.toFixed(2)}%
                 </Badge>
                 <Badge variant="outline" className="text-base px-3">
-                  Collateral: ${totalCollateralUsd.toFixed(2)}
+                  Collateral: ${yourCollateralPosition?.toFixed(2)}
                 </Badge>
               </div>
               <SortableTable
@@ -229,7 +203,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
         <SupplyDialog
           open={supplyDialogOpen}
           onOpenChange={setSupplyDialogOpen}
-          asset={selectedPosition.asset}
+          reserve={selectedPosition}
           mutateAssets={mutateAssets}
         />
       )}
@@ -239,12 +213,20 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
         <WithdrawDialog
           open={withdrawDialogOpen}
           onOpenChange={setWithdrawDialogOpen}
-          asset={selectedPosition.asset}
-          supplyBalance={(
-            Number(selectedPosition.current_a_token_balance) /
-            Math.pow(10, selectedPosition.asset.decimals)
-          ).toFixed(2)}
+          reserve={selectedPosition}
           healthFactor={1.23} // This would be calculated based on user's positions
+          mutateAssets={mutateAssets}
+        />
+      )}
+
+      {/* Collateral Dialog */}
+      {selectedCollateral && (
+        <CollateralDialog
+          open={collateralDialogOpen}
+          onOpenChange={setCollateralDialogOpen}
+          reserve={selectedCollateral}
+          healthFactor={1.26} // TODO: calulate HF
+          newHealthFactor={selectedCollateral.usageAsCollateralEnabled ? 1.1 : 2.4} // TODO: calculate
           mutateAssets={mutateAssets}
         />
       )}

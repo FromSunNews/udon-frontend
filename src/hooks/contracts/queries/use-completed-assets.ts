@@ -1,350 +1,173 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Asset, PaginatedEntity } from '@chromia/ft4';
-import { useChromiaAccount, useChromiaQuery } from '@/hooks/configs/chromia-hooks';
+import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { toast } from 'sonner';
 import { formatRay } from '@/utils/wadraymath';
-import { CommonAsset, UserReserveData } from '@/app/(protected)/supply/types';
-
-interface AssetPrice {
-  stork_asset_id: string;
-  price: number;
-  timestamp: string;
-}
-
-interface FetchState {
-  isLoading: boolean;
-  error: Error | null;
-}
+import { keysToCamelCase } from '@/utils/object';
+import { AssetPrice, UserReserveData } from '@/app/(protected)/supply/types';
+import { calculateCompoundedRate } from '@/utils/math/compounded-interest';
+import { SECONDS_PER_YEAR } from '@/utils/constants';
+import { normalize } from '@/utils/bignumber';
 
 /**
- * Custom hook to fetch complete asset data including:
- * - Basic asset information (from ft4.get_assets_by_type)
- * - Asset prices (from get_latest_price_by_asset_ids)
- * - User balances (from ft4.get_asset_balances)
- * - User supply and borrow positions
+ * Custom hook to fetch complete asset data for a user using get_all_fields_user_reserve_data
  */
 export function useCompletedAssets() {
   const { client, account } = useChromiaAccount();
-  const [fetchState, setFetchState] = useState<{
-    prices: FetchState;
-    balances: FetchState;
-    reserves: FetchState;
-  }>({
-    prices: { isLoading: false, error: null },
-    balances: { isLoading: false, error: null },
-    reserves: { isLoading: false, error: null },
-  });
+  const [userReserves, setUserReserves] = useState<UserReserveData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  const [processedAssets, setProcessedAssets] = useState<CommonAsset[]>([]);
-  const [supplyPositions, setSupplyPositions] = useState<UserReserveData[]>([]);
-  const [borrowPositions, setBorrowPositions] = useState<UserReserveData[]>([]);
-
-  // Step 1: Fetch assets list
-  const {
-    data: assetsData,
-    isLoading: isLoadingAssets,
-    error: assetsError,
-    mutate: refetchAssets,
-  } = useChromiaQuery<string, Record<string, unknown>, PaginatedEntity<Asset>>({
-    queryName: 'ft4.get_assets_by_type',
-    queryParams: {
-      type: 'ft4',
-      page_size: null,
-      page_cursor: null,
-    },
-    swrConfiguration: {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300000,
-    },
-  });
-
-  // Step 2: Fetch asset prices
-  const fetchPrices = useCallback(
-    async (assets: Asset[]): Promise<CommonAsset[]> => {
-      if (!client || !assets?.length) return [];
-
-      try {
-        setFetchState(prev => ({
-          ...prev,
-          prices: { isLoading: true, error: null },
-        }));
-
-        const assetIds = assets.map(asset => asset.id);
-        const prices = (await client.query('get_latest_price_by_asset_ids', {
-          asset_ids: assetIds,
-        })) as unknown as AssetPrice[];
-
-        // Create assets with price data - avoid excessive logging in production
-        const assetsWithPriceData = assets.map(asset => {
-          const assetPrice = prices.find(p => p.stork_asset_id === asset.symbol);
-          return {
-            ...asset,
-            price: Number(assetPrice?.price) || 0,
-            balance: '0', // Initialize with zero string for compatibility
-          } as CommonAsset;
-        });
-
-        return assetsWithPriceData;
-      } catch (error) {
-        const typedError = error instanceof Error ? error : new Error('Unknown error');
-        console.error('Failed to fetch prices:', typedError);
-        toast.error('Failed to load asset prices. Please try again.');
-        setFetchState(prev => ({
-          ...prev,
-          prices: { isLoading: false, error: typedError },
-        }));
-        return [];
-      } finally {
-        setFetchState(prev => ({
-          ...prev,
-          prices: { ...prev.prices, isLoading: false },
-        }));
-      }
-    },
-    [client]
-  );
-
-  // Step 3: Fetch user balances
-  const fetchBalances = useCallback(
-    async (assetsWithPrices: CommonAsset[]): Promise<CommonAsset[]> => {
-      if (!client || !account || !assetsWithPrices.length) return assetsWithPrices;
-
-      try {
-        setFetchState(prev => ({
-          ...prev,
-          balances: { isLoading: true, error: null },
-        }));
-
-        // Query balances from the blockchain
-        const result = await client.query('ft4.get_asset_balances', {
-          account_id: account.id,
-          page_size: null,
-          page_cursor: null,
-        });
-        const balancesRaw = result as unknown as PaginatedEntity<{ amount: bigint; asset: Asset }>;
-
-        // Process assets with balance information
-        return assetsWithPrices.map(asset => {
-          // Find the corresponding balance for this asset
-          const balance = balancesRaw.data.find(b => Buffer.compare(b.asset.id, asset.id) === 0);
-
-          // Convert Amount to string
-          const balanceString = balance ? formatRay(balance.amount) : '0';
-
-          return {
-            ...asset,
-            balance: balanceString,
-            balanceAmount: balance?.amount,
-            rawBalance: balance,
-          };
-        });
-      } catch (error) {
-        const typedError = error instanceof Error ? error : new Error('Unknown error');
-        console.error('Failed to fetch balances:', typedError);
-        toast.error('Failed to load your asset balances. Please try again.');
-        setFetchState(prev => ({
-          ...prev,
-          balances: { isLoading: false, error: typedError },
-        }));
-        return assetsWithPrices; // Return assets with prices but without balances
-      } finally {
-        setFetchState(prev => ({
-          ...prev,
-          balances: { ...prev.balances, isLoading: false },
-        }));
-      }
-    },
-    [client, account]
-  );
-
-  // Step 4: Fetch user reserves data for supply and borrow positions
-  const fetchUserReserves = useCallback(
-    async (assets: CommonAsset[]): Promise<void> => {
-      if (!client || !account || !assets.length) return;
-
-      try {
-        setFetchState(prev => ({
-          ...prev,
-          reserves: { isLoading: true, error: null },
-        }));
-
-        // // In a real implementation, you would fetch this data from the blockchain
-        // // Here we're using mock data with a delay to simulate network request
-        // await new Promise(resolve => setTimeout(resolve, 800));
-
-        // // Create mock data for supply positions
-        // const mockSupplyPositions = assets.map(asset => ({
-        //   asset,
-        //   current_a_token_balance: BigInt(Math.floor(Math.random() * 20000000000)),
-        //   current_variable_debt: BigInt(0),
-        //   scaled_variable_debt: BigInt(0),
-        //   liquidity_rate: BigInt(Math.floor(Math.random() * 1000000)),
-        //   usage_as_collateral_enabled: true,
-        // }));
-
-        // // Create mock data for borrow positions - only use first two assets for demo
-        // const mockBorrowPositions = assets.slice(0, 2).map(asset => ({
-        //   asset,
-        //   current_a_token_balance: BigInt(0),
-        //   current_variable_debt: BigInt(Math.floor(Math.random() * 10000000000)),
-        //   scaled_variable_debt: BigInt(Math.floor(Math.random() * 9000000000)),
-        //   liquidity_rate: BigInt(0),
-        //   usage_as_collateral_enabled: true,
-        // }));
-
-        // // Update state with mock data
-        // setSupplyPositions(mockSupplyPositions);
-        // setBorrowPositions(mockBorrowPositions);
-
-        // Create an array of promises for all asset queries
-        const reservePromises = assets.map(asset =>
-          client
-            .query('get_user_reserve_data', {
-              asset_id: asset.id,
-              user_id: account.id,
-            })
-            .then(response => {
-              // Cast response to correct tuple type
-              const reserveData = response as unknown as [bigint, bigint, bigint, bigint, boolean];
-              console.log('reserveData[0]', reserveData);
-              console.log('formatRay(reserveData[0])', formatRay(reserveData[0]));
-              return {
-                asset,
-                current_a_token_balance: Number(formatRay(reserveData[0])),
-                current_variable_debt: Number(formatRay(reserveData[1])),
-                scaled_variable_debt: Number(formatRay(reserveData[2])),
-                liquidity_rate: Number(formatRay(reserveData[3])),
-                usage_as_collateral_enabled: !!reserveData[4],
-              };
-            })
-        );
-
-        // Wait for all queries to complete
-        const userReserves = await Promise.all(reservePromises);
-
-        console.log('userReserves', userReserves);
-        // Filter positions
-        const supplyData = userReserves.filter(
-          reserve => reserve.current_a_token_balance > BigInt(0)
-        );
-
-        const borrowData = userReserves.filter(
-          reserve => reserve.current_variable_debt > BigInt(0)
-        );
-
-        console.log('supplyData', supplyData);
-        console.log('borrowData', borrowData);
-        setSupplyPositions(supplyData);
-        setBorrowPositions(borrowData);
-
-        // update canBeCollateral - use the assets parameter instead of processedAssets state
-        setProcessedAssets(prevAssets =>
-          prevAssets.map(asset => ({
-            ...asset,
-            canBeCollateral: supplyData.find(s => s.asset.id.toString() === asset.id.toString())
-              ?.usage_as_collateral_enabled,
-          }))
-        );
-      } catch (error) {
-        const typedError = error instanceof Error ? error : new Error('Unknown error');
-        console.error('Failed to fetch user reserves:', typedError);
-        toast.error('Failed to load your positions. Please try again.');
-        setFetchState(prev => ({
-          ...prev,
-          reserves: { isLoading: false, error: typedError },
-        }));
-      } finally {
-        setFetchState(prev => ({
-          ...prev,
-          reserves: { ...prev.reserves, isLoading: false },
-        }));
-      }
-    },
-    [client, account]
-  );
-
-  // Main function to load all data
-  const loadAllData = useCallback(async () => {
-    if (!assetsData?.data) return;
-
+  const fetchUserReserves = useCallback(async () => {
+    if (!client || !account) return;
+    setIsLoading(true);
+    setError(null);
     try {
-      // Step 1: Get assets with prices
-      const assetsWithPrices = await fetchPrices(assetsData.data);
-      if (!assetsWithPrices.length) return;
+      // 1. Fetch all user reserve data
+      const result = await client.query('get_all_fields_user_reserve_data', {
+        user_id: account.id,
+      });
+      // convert key in object to camelCase
+      let reserves = (Array.isArray(result) ? result : []).map(r => keysToCamelCase(r));
+      console.log('reserves', reserves);
 
-      console.log('assetsWithPrices', assetsWithPrices);
+      // 2. Fetch prices
 
-      // Step 2: Get assets with prices and balances
-      const completedAssets = await fetchBalances(assetsWithPrices);
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      const assetIds: any = [];
+      reserves.map(r => assetIds.push(r.assetId));
 
-      console.log('completedAssets', completedAssets);
+      console.log('assetIds', Buffer.from(assetIds[0], 'hex'));
+      // const pricesResult = await client.query('get_latest_price_by_asset_ids', {
+      //   asset_ids: assetIds,
+      // });
+      const pricesResult = (await client.query('get_latest_price_by_asset_ids', {
+        asset_ids: assetIds,
+      })) as unknown as AssetPrice[];
+      console.log('pricesResult', pricesResult);
 
-      // Update state
-      setProcessedAssets(completedAssets);
-      console.log('processedAssets', processedAssets);
+      // 3. Map price to each reserve
+      const prices: AssetPrice[] = Array.isArray(pricesResult) ? pricesResult : [];
+      console.log('prices', prices);
 
-      // Step 3: Fetch user positions after assets are loaded
-      console.log('fetching user reserves');
-      await fetchUserReserves(completedAssets);
-      console.log('user reserves fetched');
-    } catch (error) {
-      console.error('Error loading complete asset data:', error);
-      toast.error('Failed to load complete asset data');
+      // 2. Format Ray for all big number fields and convert to number
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      reserves = reserves.map((r: any) => {
+        const priceObj = prices.find(p => p.stork_asset_id === r.symbol);
+
+        return {
+          // asset
+
+          ...r,
+          assetId: Buffer.from(r.assetId, 'hex'),
+          // reserve
+          totalSupply: Number(formatRay(r.totalSupply)),
+          balance: Number(formatRay(r.balance)),
+          reserveUnbacked: Number(formatRay(r.reserveUnbacked)),
+          reserveAccruedToTreasury: Number(formatRay(r.reserveAccruedToTreasury)),
+          currentATokenBalance: Number(formatRay(r.currentATokenBalance)),
+          currentATokenTotalSupply: Number(formatRay(r.currentATokenTotalSupply)),
+          currentVariableDebt: Number(formatRay(r.currentVariableDebt)),
+          currentVariableDebtTokenTotalSupply: Number(
+            formatRay(r.currentVariableDebtTokenTotalSupply)
+          ),
+          reserveCurrentLiquidityRate: Number(formatRay(r.reserveCurrentLiquidityRate)),
+          reserveCurrentVariableBorrowRate: Number(formatRay(r.reserveCurrentVariableBorrowRate)),
+          reserveLiquidityIndex: Number(formatRay(r.reserveLiquidityIndex)),
+          reserveVariableBorrowIndex: Number(formatRay(r.reserveVariableBorrowIndex)),
+          reserveLastUpdateTimestamp: Number(r.reserveLastUpdateTimestamp),
+          usageAsCollateralEnabled: !!r.usageAsCollateralEnabled,
+          price: Number(priceObj?.price) || 10,
+          supplyCap: Number(formatRay(r.supplyCap)),
+          borrowCap: Number(formatRay(r.borrowCap)),
+
+          // calculate field
+          availableBorrow: Number(formatRay(r.borrowCap - r.currentVariableDebtTokenTotalSupply)),
+          supplyAPY: Number(
+            normalize(
+              calculateCompoundedRate({
+                rate: r.reserveCurrentLiquidityRate,
+                duration: SECONDS_PER_YEAR,
+              }),
+              27
+            )
+          ),
+          borrowAPY: Number(
+            normalize(
+              calculateCompoundedRate({
+                rate: r.reserveCurrentVariableBorrowRate,
+                duration: SECONDS_PER_YEAR,
+              }),
+              27
+            )
+          ),
+        } as UserReserveData;
+      });
+
+      console.log('process fields:', reserves);
+
+      setUserReserves(reserves);
+    } catch (err) {
+      const typedError = err instanceof Error ? err : new Error('Unknown error');
+      setError(typedError);
+      toast.error('Failed to load your positions. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-  }, [assetsData, fetchPrices, fetchBalances, fetchUserReserves]);
+  }, [client, account]);
 
-  // Load data when asset data changes - using a stable loadAllData reference
   useEffect(() => {
-    if (assetsData?.data) {
-      loadAllData();
-    }
-  }, [assetsData, loadAllData]);
+    fetchUserReserves();
+  }, [fetchUserReserves]);
 
-  // Derive loading state from all sources
-  const isLoading = useMemo(
-    () =>
-      isLoadingAssets ||
-      fetchState.prices.isLoading ||
-      fetchState.balances.isLoading ||
-      fetchState.reserves.isLoading,
-    [
-      isLoadingAssets,
-      fetchState.prices.isLoading,
-      fetchState.balances.isLoading,
-      fetchState.reserves.isLoading,
-    ]
+  // For compatibility with old API, split supply/borrow positions
+  const supplyPositions = useMemo(
+    () => userReserves.filter(r => r.currentATokenBalance > 0n),
+    [userReserves]
+  );
+  const borrowPositions = useMemo(
+    () => userReserves.filter(r => r.currentVariableDebt > 0n),
+    [userReserves]
   );
 
-  // Aggregate errors
-  const error = useMemo(
-    () =>
-      assetsError ||
-      fetchState.prices.error ||
-      fetchState.balances.error ||
-      fetchState.reserves.error,
-    [assetsError, fetchState.prices.error, fetchState.balances.error, fetchState.reserves.error]
-  );
+  const totalDeposit = useMemo(() => {
+    return userReserves.reduce((sum, r) => sum + Number(r.currentATokenTotalSupply) * r.price, 0);
+  }, [userReserves]);
 
-  // Show error toast if API calls fail
-  useEffect(() => {
-    if (error) {
-      toast.error('Failed to load assets. Please try again.');
-    }
-  }, [error]);
+  const totalBorrow = useMemo(() => {
+    return userReserves.reduce(
+      (sum, r) => sum + Number(r.currentVariableDebtTokenTotalSupply) * r.price,
+      0
+    );
+  }, [userReserves]);
 
-  // Function to refresh all data
-  const refreshAllData = useCallback(async () => {
-    await refetchAssets();
-    // loadAllData will be triggered by the assetsData change
-  }, [refetchAssets]);
+  const yourBalancePosition = useMemo(() => {
+    return userReserves.reduce((sum, r) => sum + Number(r.currentATokenBalance) * r.price, 0);
+  }, [userReserves]);
+
+  const yourCollateralPosition = useMemo(() => {
+    return userReserves.reduce(
+      (sum, r) => sum + (r.usageAsCollateralEnabled ? Number(r.currentATokenBalance) * r.price : 0),
+      0
+    );
+  }, [userReserves]);
+
+  const yourAPYPosition = useMemo(() => {
+    if (!userReserves.length) return 0;
+    const total = userReserves.reduce((sum, r) => sum + (r.supplyAPY || 0), 0);
+    return total / userReserves.length;
+  }, [userReserves]);
 
   return {
-    assets: processedAssets,
+    assets: userReserves, // all user reserves (with asset info)
     supplyPositions,
     borrowPositions,
+    totalDeposit,
+    totalBorrow,
+    yourBalancePosition,
+    yourCollateralPosition,
+    yourAPYPosition,
     isLoading,
     error,
-    refresh: refreshAllData,
+    refresh: fetchUserReserves,
   };
 }

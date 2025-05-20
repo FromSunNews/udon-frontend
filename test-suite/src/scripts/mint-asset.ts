@@ -20,7 +20,7 @@ const ASSET_CONFIG = {
   MINT_AMOUNT: 1000,
   // Target account keyPair: admin_kp or user_a_kp
   USE_ADMIN_ACCOUNT: false,
-  TARGET_USER_ID: ensureBuffer('5D3D574FA59149FE64E7495907FA047A2AC80EA0524D66373D12770104A0B0FA'),
+  TARGET_USER_ID: ensureBuffer('70F9701B2D147FACD8A0C8E1A2622A805309FB696D4DAE261368D019AC55B1D6'),
 };
 
 // Asset configurations
@@ -78,14 +78,14 @@ async function mintAsset() {
     );
 
     // Perform the mint operation
-    // await adminSession.call(
-    //   op(
-    //     'mint_underlying_asset',
-    //     ASSET_CONFIG.TARGET_USER_ID,
-    //     BigInt(mintAmount.toString()),
-    //     underlyingAssetId
-    //   )
-    // );
+    await adminSession.call(
+      op(
+        'mint_underlying_asset',
+        ASSET_CONFIG.TARGET_USER_ID,
+        BigInt(mintAmount.toString()),
+        underlyingAssetId
+      )
+    );
     console.log(
       chalk.green(
         `✅ Minted ${chalk.yellow(formatRay(mintAmount))} ${selectedAsset.symbol} tokens to ${ASSET_CONFIG.TARGET_USER_ID.toString('hex')}`
@@ -96,7 +96,7 @@ async function mintAsset() {
 
     await adminSession.call(
       op(
-        'init_set_using_as_collateral_op',
+        'set_using_as_collateral_op',
         ASSET_CONFIG.TARGET_USER_ID,
         underlyingAssetId,
         true // enable colateral

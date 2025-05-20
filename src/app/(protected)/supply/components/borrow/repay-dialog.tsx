@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { CommonAsset } from '../../types';
+import { UserReserveData } from '../../types';
 
 const repayFormSchema = z.object({
   amount: z.string().min(1, 'Amount is required!'),
@@ -33,7 +33,7 @@ type RepayFormValues = z.infer<typeof repayFormSchema>;
 export interface RepayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  asset: CommonAsset;
+  reserve: UserReserveData;
   debtBalance?: string;
   walletBalance?: string;
   healthFactor?: number;
@@ -48,14 +48,14 @@ const debouncedFn = debounce((callback: () => void) => {
 export const RepayDialog: React.FC<RepayDialogProps> = ({
   open,
   onOpenChange,
-  asset,
+  reserve,
   debtBalance = '0.001',
   walletBalance = '0.0021429',
   healthFactor = 4.91,
   mutateAssets,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentPrice, setCurrentPrice] = useState<number | undefined>(asset.price);
+  const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
   const [repaySource, setRepaySource] = useState<'wallet' | 'collateral'>('wallet');
@@ -72,7 +72,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
     data: priceData,
     isLoading: isPriceFetching,
     refetch: fetchPrice,
-  } = useAssetPrice(asset.id, isRefetchEnabled);
+  } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
   // Use the repay hook
   const repay = useRepay({
@@ -104,8 +104,8 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
 
   // Initialize with asset price
   useEffect(() => {
-    setCurrentPrice(asset.price);
-  }, [asset.price]);
+    setCurrentPrice(reserve.price);
+  }, [reserve.price]);
 
   // Watch for input changes and fetch price
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,9 +132,9 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
     try {
       // Use the repay hook
       const repayResult = await repay({
-        assetId: asset.id,
+        assetId: reserve.assetId,
         amount: data.amount,
-        decimals: asset.decimals,
+        decimals: reserve.decimals,
         useWalletBalance: repaySource === 'wallet',
       });
 
@@ -145,7 +145,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
       });
 
       if (repayResult.success) {
-        toast.success(`Successfully repaid ${data.amount} ${asset.symbol}`);
+        toast.success(`Successfully repaid ${data.amount} ${reserve.symbol}`);
         // Close dialog after successful operation
         onOpenChange(false);
       } else {
@@ -176,7 +176,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
         <TooltipProvider delayDuration={300}>
           <DialogHeader>
             <div className="flex justify-between items-center">
-              <DialogTitle className="text-2xl font-semibold">Repay {asset.symbol}</DialogTitle>
+              <DialogTitle className="text-2xl font-semibold">Repay {reserve.symbol}</DialogTitle>
             </div>
           </DialogHeader>
 
@@ -221,11 +221,11 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                     />
                     <div className="flex items-center gap-2 absolute right-3 top-1/2 -translate-y-1/2">
                       <Avatar className="h-7 w-7">
-                        <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
-                        <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
+                        <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-row items-center gap-1">
-                        <span className="font-medium text-lg">{asset.symbol}</span>
+                        <span className="font-medium text-lg">{reserve.symbol}</span>
                       </div>
                     </div>
                   </div>
@@ -262,7 +262,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                   <Typography className="flex items-center gap-1">Remaining debt</Typography>
                   <div className="flex items-center">
                     <Typography weight="medium">
-                      {remainingDebt} {asset.symbol} → {remainingDebt} {asset.symbol}
+                      {remainingDebt} {reserve.symbol} → {remainingDebt} {reserve.symbol}
                     </Typography>
                   </div>
                 </div>
@@ -313,7 +313,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                   className="w-full text-lg py-6"
                   disabled={!form.watch('amount')}
                 >
-                  Repay {asset.symbol}
+                  Repay {reserve.symbol}
                 </Button>
               )}
             </div>

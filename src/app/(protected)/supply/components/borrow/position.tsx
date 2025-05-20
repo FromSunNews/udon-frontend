@@ -15,16 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { RepayDialog } from './repay-dialog';
 import { BorrowDialog } from './borrow-dialog';
-import { CommonAsset } from '../../types';
-
-interface UserReserveData {
-  asset: CommonAsset;
-  current_a_token_balance: number;
-  current_variable_debt: number;
-  scaled_variable_debt: number;
-  liquidity_rate: number;
-  usage_as_collateral_enabled: boolean;
-}
+import { UserReserveData } from '../../types';
 
 interface BorrowPositionTableProps {
   positions: UserReserveData[];
@@ -56,33 +47,35 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
 
   // Calculate total debt balance in USD
   const totalBalanceUsd = positions.reduce((sum, position) => {
-    const balance = Number(position.current_variable_debt) / Math.pow(10, position.asset.decimals);
-    return sum + balance * (position.asset.price || 0);
+    const balance = Number(position.currentVariableDebt) / Math.pow(10, position.decimals);
+    return sum + balance * (position.price || 0);
   }, 0);
 
   // Calculate average APY
   const averageApy =
     positions.length > 0
-      ? positions.reduce((sum, position) => sum + Number(position.liquidity_rate) / 1e25, 0) /
-        positions.length
+      ? positions.reduce(
+          (sum, position) => sum + Number(position.reserveCurrentLiquidityRate) / 1e25,
+          0
+        ) / positions.length
       : 0;
 
-  // Render asset icon and symbol
-  const renderAssetCell = (asset: CommonAsset) => {
+  // Render reserve. icon and symbol
+  const renderAssetCell = (reserve: UserReserveData) => {
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center gap-3 cursor-pointer">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.icon_url} alt={asset.symbol} />
-                <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+                <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
+                <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
-              <Typography weight="medium">{asset.symbol}</Typography>
+              <Typography weight="medium">{reserve.symbol}</Typography>
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{asset.name}</p>
+            <p>{reserve.name}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -92,15 +85,15 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
   const columns: ColumnDef<UserReserveData>[] = [
     {
       header: 'Assets',
-      accessorKey: 'asset',
-      cell: ({ row }) => renderAssetCell(row.asset),
+      accessorKey: 'symbol',
+      cell: ({ row }) => renderAssetCell(row),
     },
     {
       header: 'Debt',
-      accessorKey: 'current_variable_debt',
+      accessorKey: 'currentVariableDebt',
       cell: ({ row }) => {
-        const balance = Number(row.current_variable_debt) / Math.pow(10, row.asset.decimals);
-        const balanceUsd = balance * (row.asset.price || 0);
+        const balance = Number(row.currentVariableDebt) / Math.pow(10, row.decimals);
+        const balanceUsd = balance * (row.price || 0);
         return (
           <div>
             <Typography weight="medium">{balance.toFixed(4)}</Typography>
@@ -113,22 +106,22 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
     },
     {
       header: 'APY',
-      accessorKey: 'liquidity_rate',
+      accessorKey: 'reserveCurrentLiquidityRate',
       cell: ({ row }) => {
         // For borrow APY, we might use a different rate (variable borrow rate)
         // This is a placeholder - adjust based on actual data structure
-        const apy = Number(row.liquidity_rate) / 1e25;
+        const apy = Number(row.reserveCurrentLiquidityRate) / 1e25;
         return <Typography weight="medium">{apy.toFixed(2)}%</Typography>;
       },
     },
     {
       header: 'Type',
-      accessorKey: 'asset',
+      accessorKey: 'symbol',
       cell: () => <Badge variant="secondary">VARIABLE</Badge>,
     },
     {
       header: '',
-      accessorKey: 'asset',
+      accessorKey: 'symbol',
       cell: ({ row }) => (
         <div className="flex justify-end">
           <div className="flex flex-col gap-2">
@@ -197,10 +190,10 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
         <RepayDialog
           open={repayDialogOpen}
           onOpenChange={setRepayDialogOpen}
-          asset={selectedPosition.asset}
+          reserve={selectedPosition}
           debtBalance={(
-            Number(selectedPosition.current_variable_debt) /
-            Math.pow(10, selectedPosition.asset.decimals)
+            Number(selectedPosition.reserveCurrentLiquidityRate) /
+            Math.pow(10, selectedPosition.decimals)
           ).toFixed(7)}
           walletBalance="0.0021429" // This would come from wallet balance query
           healthFactor={4.91} // This would be calculated based on user's positions
@@ -213,7 +206,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
         <BorrowDialog
           open={borrowDialogOpen}
           onOpenChange={setBorrowDialogOpen}
-          asset={selectedPosition.asset}
+          reserve={selectedPosition}
           availableToBorrow="0.05" // This would come from available liquidity calculation
           healthFactor={4.91} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}

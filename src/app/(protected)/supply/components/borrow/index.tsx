@@ -14,37 +14,28 @@ import {
   TooltipTrigger,
 } from '@/components/common/tooltip';
 import { BorrowDialog } from './borrow-dialog';
-import { CommonAsset } from '../../types';
+import { UserReserveData } from '../../types';
 
-// Define type for borrow assets
+// Define type for borrow reserves
 
 interface BorrowTableProps {
   title: string;
-  assets: CommonAsset[];
+  reserves: UserReserveData[];
   isLoading: boolean;
   mutateAssets: () => void;
 }
 
 export const BorrowTable: React.FC<BorrowTableProps> = ({
   title,
-  assets,
+  reserves,
   isLoading,
   mutateAssets,
 }) => {
-  const [selectedAsset, setSelectedAsset] = useState<CommonAsset | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<UserReserveData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
-
-  // Prepare assets with borrow-specific properties
-  const borrowAssets = assets.map(asset => ({
-    ...asset,
-    available: asset.available || '0.0045852', // Default available
-    apy: asset.borrowAPY || '<0.001%', // Default APY
-    maxAmount: asset.balance || 0.0045852, // Default max amount
-  }));
-
   // Handle borrow button click
-  const handleBorrowClick = (asset: CommonAsset) => {
+  const handleBorrowClick = (asset: UserReserveData) => {
     setSelectedAsset(asset);
     setDialogOpen(true);
   };
@@ -55,7 +46,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   };
 
   // Render asset icon and symbol
-  const renderAssetCell = (asset: CommonAsset) => {
+  const renderAssetCell = (asset: UserReserveData) => {
     return (
       <TooltipProvider>
         <Tooltip>
@@ -65,7 +56,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
               onClick={() => handleAssetClick(asset.symbol)}
             >
               <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.icon_url} alt={asset.symbol} />
+                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
                 <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
               <Typography weight="medium">{asset.symbol}</Typography>
@@ -80,24 +71,24 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   };
 
   // Define columns for the borrow table
-  const borrowColumns: ColumnDef<CommonAsset>[] = [
+  const borrowColumns: ColumnDef<UserReserveData>[] = [
     {
       header: 'Assets',
       accessorKey: 'symbol',
       enableSorting: true,
-      cell: ({ row }: { row: CommonAsset }) => renderAssetCell(row),
+      cell: ({ row }: { row: UserReserveData }) => renderAssetCell(row),
     },
     {
       header: 'Available',
-      accessorKey: 'available',
+      accessorKey: 'availableBorrow',
       enableSorting: true,
-      cell: ({ row }: { row: CommonAsset }) => <Typography>{row.available}</Typography>,
+      cell: ({ row }: { row: UserReserveData }) => <Typography>{row.availableBorrow}</Typography>,
     },
     {
       header: 'Price',
       accessorKey: 'price',
       enableSorting: true,
-      cell: ({ row }: { row: CommonAsset }) => (
+      cell: ({ row }: { row: UserReserveData }) => (
         <Typography>${row.price != null ? row.price.toFixed(2) : '—'}</Typography>
       ),
     },
@@ -105,13 +96,15 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
       header: 'APY',
       accessorKey: 'borrowAPY',
       enableSorting: true,
-      cell: ({ row }: { row: CommonAsset }) => <Typography>{row.borrowAPY}</Typography>,
+      cell: ({ row }: { row: UserReserveData }) => (
+        <Typography>{row.borrowAPY.toFixed(4)}%</Typography>
+      ),
     },
     {
       header: '',
       accessorKey: 'symbol',
       enableSorting: false,
-      cell: ({ row }: { row: CommonAsset }) => (
+      cell: ({ row }: { row: UserReserveData }) => (
         <div className="flex justify-end">
           <div className="flex flex-col gap-2">
             <Button
@@ -149,10 +142,10 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
           </Typography>
         </div>
 
-        {(!borrowAssets || borrowAssets.length === 0) && !isLoading && (
+        {(!reserves || reserves.length === 0) && !isLoading && (
           <div className="rounded bg-accent/30 mt-2 sm:mt-2.5 p-2 sm:p-2.5">
             <Typography variant="small" color="submerged">
-              No assets available for borrowing at this time.
+              No reserves available for borrowing at this time.
             </Typography>
           </div>
         )}
@@ -162,9 +155,9 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : borrowAssets.length > 0 ? (
-            <SortableTable<CommonAsset>
-              data={borrowAssets}
+          ) : reserves.length > 0 ? (
+            <SortableTable<UserReserveData>
+              data={reserves}
               columns={borrowColumns}
               pageSize={5}
               className="p-0 border-none"
@@ -177,7 +170,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
         <BorrowDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          asset={selectedAsset}
+          reserve={selectedAsset}
           mutateAssets={mutateAssets}
         />
       )}
