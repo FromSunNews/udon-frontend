@@ -117,10 +117,24 @@ async function initSupply() {
         decimals: token.decimals,
       };
 
-      console.log('aAsset', aAsset);
+      const vAsset = {
+        name: `V ${token.name}`,
+        symbol: `V${token.symbol}`,
+        decimals: token.decimals,
+      };
 
+      console.log('aAsset', aAsset);
+      console.log('vAsset', vAsset);
       await adminSession.call(
-        op('init_reserve_op', underlyingAssetId, adminAccountId, aAsset.name, aAsset.symbol, '', '')
+        op(
+          'init_reserve_op',
+          underlyingAssetId,
+          adminAccountId,
+          aAsset.name,
+          aAsset.symbol,
+          vAsset.name,
+          vAsset.symbol
+        )
       );
 
       const aAssetResult = await adminSession.getAssetsBySymbol(aAsset.symbol);
@@ -166,7 +180,8 @@ async function initSupply() {
         supplyToken.underlying.id,
         BigInt(supplyAmount.toString()),
         userAccountId,
-        BigInt(0) // referral code
+        BigInt(0), // referral code
+        BigInt(Date.now()) // referral code timestamp
       )
     );
     const isSuccess = result.receipt.statusCode === 200;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Info } from 'lucide-react';
+import { CircleX, Info } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,9 +23,21 @@ import {
   TooltipTrigger,
 } from '@/components/common/tooltip';
 import { UserReserveData } from '../../types';
+import { cn } from '@/utils/tailwind';
 
 const borrowFormSchema = z.object({
-  amount: z.string().min(1, 'Amount is required!'),
+  amount: z
+    .string()
+    .min(1, 'Amount is required!')
+    .refine(
+      val => {
+        const num = Number(val);
+        return !isNaN(num) && num > 0;
+      },
+      {
+        message: 'Please enter a valid positive number',
+      }
+    ),
 });
 
 type BorrowFormValues = z.infer<typeof borrowFormSchema>;
@@ -34,7 +46,6 @@ export interface BorrowDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   reserve: UserReserveData;
-  availableToBorrow?: string;
   healthFactor?: number;
   mutateAssets: () => void;
 }
@@ -84,10 +95,22 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   // Handle price fetch with lodash debounce
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
+      // Don't allow value > available borrow
+      const availableBorrowActual =
+        Number(reserve.availableBorrow) === 0 ? Number.MAX_VALUE : Number(reserve.availableBorrow);
+      const valueWithBalance =
+        Number(form.watch('amount')) > availableBorrowActual
+          ? availableBorrowActual
+          : form.watch('amount');
+      const needToChangeValue = valueWithBalance !== form.watch('amount');
+      if (needToChangeValue) {
+        form.setValue('amount', valueWithBalance.toString());
+        setInputAmount(valueWithBalance.toString());
+      }
       setIsRefetchEnabled(true);
       fetchPrice();
     });
-  }, [fetchPrice]);
+  }, [fetchPrice, form, reserve.availableBorrow]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -106,6 +129,16 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   // Watch for input changes and fetch price
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
+    // Only allow numbers and a single decimal point
+    const regex = /^$|^[0-9]+\.?[0-9]*$/;
+    if (!regex.test(value)) {
+      // if don't pass set input with 0
+      form.setValue('amount', '0');
+      setInputAmount('0');
+      return;
+    }
+
     form.setValue('amount', value);
     setInputAmount(value);
 
@@ -121,9 +154,26 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   };
 
   const onSubmit = async (data: BorrowFormValues) => {
-    setIsSubmitting(true);
-
     try {
+      const amount = Number(data.amount);
+
+      // Final validation checks before submission
+      if (isNaN(amount) || amount <= 0) {
+        toast.error('Please enter a valid positive number');
+        return;
+      }
+
+      const availableBorrow =
+        Number(reserve.availableBorrow) === 0 ? Number.MAX_VALUE : Number(reserve.availableBorrow);
+      if (amount > availableBorrow) {
+        toast.error(
+          `Amount exceeds your available borrow of ${reserve.availableBorrow} ${reserve.symbol}`
+        );
+        return;
+      }
+
+      setIsSubmitting(true);
+
       // Use the borrow hook
       const borrowResult = await borrow({
         assetId: reserve.assetId,
@@ -183,11 +233,29 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                       {...form.register('amount')}
                       autoComplete="off"
                       placeholder="0.00"
-                      className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0"
+                      className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]"
                       inputMode="decimal"
+                      pattern="[0-9]*[.]?[0-9]*"
+                      min={0.0}
+                      max={reserve.availableBorrow}
+                      step="any"
                       onChange={handleAmountChange}
                     />
-                    <div className="flex items-center gap-2 absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
+                      {/* clear icon */}
+                      {form.watch('amount') && (
+                        <Button
+                          variant="none"
+                          size="icon"
+                          onClick={() => {
+                            form.setValue('amount', '');
+                            setInputAmount('');
+                          }}
+                          className="hover:opacity-70"
+                        >
+                          <CircleX className="h-6 w-6 text-embossed" />
+                        </Button>
+                      )}
                       <Avatar className="h-7 w-7">
                         <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
                         <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
@@ -205,10 +273,13 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                       <Typography>{usdAmount}</Typography>
                     )}
                     <div
-                      className="flex flex-row items-center gap-1 text-primary cursor-pointer"
+                      className={cn(
+                        'flex flex-row items-center gap-1 text-primary cursor-pointer',
+                        !reserve.availableBorrow && 'opacity-50 cursor-not-allowed'
+                      )}
                       onClick={handleMaxAmount}
                     >
-                      <Typography>Available: {reserve.availableBorrow}</Typography>
+                      <Typography>Available: {reserve.availableBorrow || '_'}</Typography>
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>

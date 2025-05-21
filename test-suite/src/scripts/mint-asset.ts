@@ -6,7 +6,6 @@ import { formatRay, RAY } from '../helpers/wadraymath';
 import { BigNumber } from 'ethers';
 import { getSessionOrRegister } from '../helpers';
 import { ensureBuffer } from '../helpers/buffer';
-import { formatUnits } from 'ethers/lib/utils';
 
 // hippo: A8A05014A795D77C4FA12FDF08776FD70799549530F27ABB3B3331FB4D0A2AC8
 // nathan: 5D3D574FA59149FE64E7495907FA047A2AC80EA0524D66373D12770104A0B0FA
@@ -14,107 +13,105 @@ import { formatUnits } from 'ethers/lib/utils';
 // Define constants for minting
 // Users can modify these values before running the script
 const ASSET_CONFIG = {
-  // Available options: BTC, ETH, ALICE, DUSD, UNDERLYING_TEST_TOKEN
-  ASSET_TYPE: 'ALICE',
   // The amount to mint in whole tokens (will be converted to RAY)
   MINT_AMOUNT: 1000,
-  // Target account keyPair: admin_kp or user_a_kp
-  USE_ADMIN_ACCOUNT: false,
-  TARGET_USER_ID: ensureBuffer('70F9701B2D147FACD8A0C8E1A2622A805309FB696D4DAE261368D019AC55B1D6'),
+  // Target user ID
+  TARGET_USER_ID: ensureBuffer('90737200602B0D981FC35751BAAC4402DBD4E7E1D0934F096553A29D02455FE5'),
 };
 
 // Asset configurations
-const ASSETS = {
-  BTC: {
-    name: 'Bitcoin Token',
+const TOKENS = [
+  {
+    name: 'Bitcoin USD',
     symbol: 'BTCUSD',
     decimals: 8,
-    icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
   },
-  ETH: {
-    name: 'Ethereum Token',
+  {
+    name: 'Ethereum USD',
     symbol: 'ETHUSD',
     decimals: 8,
-    icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
   },
-  ALICE: {
-    name: 'Alice Token',
+  {
+    name: 'MyNeighborAlice',
     symbol: 'ALICEUSD',
     decimals: 8,
-    icon: 'https://cryptologos.cc/logos/alice-alice-logo.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
   },
-  DUSD: {
-    name: 'Dummy USD',
+  {
+    name: 'DAR Open Network',
     symbol: 'DUSD',
     decimals: 8,
-    icon: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
   },
-  UNDERLYING_TEST_TOKEN: {
-    name: 'Test Underlying Token',
-    symbol: 'TUT',
-    decimals: 8,
-    icon: 'http://example.com/icon.png',
-  },
-};
+];
 
 async function mintAsset() {
   try {
-    console.log(
-      chalk.bold.cyan(`=== Starting Asset Minting Process for ${ASSET_CONFIG.ASSET_TYPE} ===`)
-    );
+    console.log(chalk.bold.cyan(`=== Starting Asset Minting Process for All Tokens ===`));
     const client = await getClient();
     const adminSession = await getSessionOrRegister(client, admin_kp);
-    const selectedAsset = ASSETS[ASSET_CONFIG.ASSET_TYPE];
-
-    const underlyingAssetResult = await adminSession.getAssetsBySymbol(selectedAsset.symbol);
-    const underlyingAssetId = underlyingAssetResult.data[0]?.id;
 
     // Convert mint amount to RAY
     const mintAmount = BigNumber.from(RAY).mul(ASSET_CONFIG.MINT_AMOUNT);
+
+    // Loop through all tokens and perform mint operations
+    for (const token of TOKENS) {
+      console.log(chalk.bold.yellow(`\nProcessing ${token.symbol}...`));
+
+      // Get asset ID
+      console.log(chalk.blue(`🔍 Getting asset ID for ${token.symbol}...`));
+      const underlyingAssetResult = await adminSession.getAssetsBySymbol(token.symbol);
+      const underlyingAssetId = underlyingAssetResult.data[0]?.id;
+
+      if (!underlyingAssetId) {
+        console.log(chalk.red(`❌ Asset ${token.symbol} not found. Skipping...`));
+        continue;
+      }
+
+      console.log(chalk.green(`✅ Found asset ID for ${token.symbol}: ${underlyingAssetId}`));
+
+      // Mint tokens
+      console.log(
+        chalk.blue(
+          `🔄 Minting ${ASSET_CONFIG.MINT_AMOUNT} ${token.symbol} to ${ASSET_CONFIG.TARGET_USER_ID.toString('hex')}...`
+        )
+      );
+
+      await adminSession.call(
+        op(
+          'mint_underlying_asset',
+          ASSET_CONFIG.TARGET_USER_ID,
+          BigInt(mintAmount.toString()),
+          underlyingAssetId
+        )
+      );
+
+      console.log(
+        chalk.green(
+          `✅ Minted ${chalk.yellow(formatRay(mintAmount))} ${token.symbol} tokens to ${ASSET_CONFIG.TARGET_USER_ID.toString('hex')}`
+        )
+      );
+
+      // Enable collateral
+      console.log(chalk.blue('🔄 Enabling collateral...'));
+
+      await adminSession.call(
+        op(
+          'set_using_as_collateral_op',
+          ASSET_CONFIG.TARGET_USER_ID,
+          underlyingAssetId,
+          true // enable collateral
+        )
+      );
+
+      console.log(chalk.green(`✅ Collateral enabled for ${token.symbol}`));
+    }
+
     console.log(
-      chalk.blue(
-        `🔄 Minting ${ASSET_CONFIG.MINT_AMOUNT} ${selectedAsset.symbol} to ${ASSET_CONFIG.TARGET_USER_ID.toString('hex')}...`
-      )
+      chalk.bold.green('\n✅✅✅ Asset minting completed successfully for all tokens ✅✅✅')
     );
-
-    // Perform the mint operation
-    await adminSession.call(
-      op(
-        'mint_underlying_asset',
-        ASSET_CONFIG.TARGET_USER_ID,
-        BigInt(mintAmount.toString()),
-        underlyingAssetId
-      )
-    );
-    console.log(
-      chalk.green(
-        `✅ Minted ${chalk.yellow(formatRay(mintAmount))} ${selectedAsset.symbol} tokens to ${ASSET_CONFIG.TARGET_USER_ID.toString('hex')}`
-      )
-    );
-
-    console.log(chalk.blue('🔄 init enable collateral...'));
-
-    await adminSession.call(
-      op(
-        'set_using_as_collateral_op',
-        ASSET_CONFIG.TARGET_USER_ID,
-        underlyingAssetId,
-        true // enable colateral
-      )
-    );
-
-    console.log(chalk.green(`✅ Init enable collateral successfully!`));
-
-    // Check the final balance
-    console.log(chalk.blue('🔄 Checking final balance...'));
-    const finalBalance = await adminSession.account.getBalanceByAssetId(underlyingAssetId);
-    console.log(
-      chalk.green(
-        `✅ Final ${selectedAsset.symbol} balance: ${chalk.yellow(formatUnits(finalBalance.amount.value, finalBalance.asset.decimals))}`
-      )
-    );
-
-    console.log(chalk.bold.green('✅✅✅ Asset minting completed successfully ✅✅✅'));
   } catch (error) {
     console.error(chalk.bold.red('❌❌❌ ERROR IN MINT ASSET ❌❌❌'));
     console.error(chalk.red(error));

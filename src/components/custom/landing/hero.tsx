@@ -54,7 +54,7 @@ export default function Hero() {
                 <Button
                   className="flex flex-row !w-[120px] md:w-auto"
                   onClick={() => {
-                    router.push('/supply');
+                    router.push('/dashboard');
                   }}
                 >
                   <Typography size="base" weight="normal">
@@ -68,7 +68,7 @@ export default function Hero() {
                   variant="outline"
                   className="w-full md:w-auto"
                   onClick={() => {
-                    router.push('/borrow');
+                    router.push('/dashboard');
                   }}
                 >
                   <Typography size="base" weight="normal">

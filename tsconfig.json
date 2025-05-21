@@ -28,7 +28,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/app/(protected)/supply/components/borrow/position"
+    "src/app/(protected)/dashboard/components/borrow/position"
   ],
   "exclude": ["node_modules", "test-suite"]
 }

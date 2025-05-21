@@ -1,5 +1,5 @@
 import React from 'react';
-import { StatCard } from '@/app/(protected)/vault/components/stat-card';
+import { StatCard } from '@/app/(protected)/reserve/components/stat-card';
 import { AllocationHistory } from './allocation-history';
 
 export const VaultAllocation: React.FC = () => {

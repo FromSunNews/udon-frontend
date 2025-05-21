@@ -7,14 +7,14 @@ import {
   apyData,
   apyBreakdown,
   marketData,
-} from '@/app/(protected)/vault/data/mock-data';
+} from '@/app/(protected)/reserve/data/mock-data';
 import {
   SimpleAreaChart,
   ChartFilters,
   ChartCard,
   APYBreakdownList,
   AllocationChart,
-} from '@/app/(protected)/vault/charts';
+} from '@/app/(protected)/reserve/charts';
 import { SortableTable, type ColumnDef } from '@/components/common/sortable-table';
 import { ArrowUpRight } from 'lucide-react';
 import { cn } from '@/utils/tailwind';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography } from '@/components/common/typography';
-import { StatCard } from '@/app/(protected)/vault/components/stat-card';
+import { StatCard } from '@/app/(protected)/reserve/components/stat-card';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/common/button';
 

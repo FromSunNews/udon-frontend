@@ -39,22 +39,30 @@ export function TokenList({
   };
 
   return (
-    <div className={cn('w-full flex flex-col h-full', className)}>
+    <div
+      className={cn(
+        'w-full flex flex-col rounded-2xl',
+        !fullList && 'bg-card',
+        !fullList && 'p-4',
+        className
+      )}
+    >
       <div className="flex items-center justify-between mb-2">
         {!fullList && (
-          <h3 className="text-md font-semibold">
+          <h3 className="text-md text-submerged font-semibold">
             Your Assets{balances.length ? ` (${balances.length})` : ''}
           </h3>
         )}
         {showCompact && hasMore && (
           <button
-            className="text-sm text-primary font-medium hover:underline focus:outline-none"
+            className="text-base text-embossed font-medium hover:underline focus:outline-none hover:text-primary cursor-pointer"
             onClick={onViewAll}
           >
             View all
           </button>
         )}
       </div>
+
       <div className="relative flex-1 flex flex-col">
         {(isLoadingBalances || isLoadingPrices) && (
           <div className="absolute right-0 top-0">
@@ -69,40 +77,45 @@ export function TokenList({
                 const usdValue = calculateUsdValue(tokenBalance);
 
                 return (
-                  <div
-                    key={index}
-                    className="relative rounded-xl bg-[#232323] p-4 flex items-center justify-between shadow-md transition hover:shadow-lg hover:bg-[#282828]"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
-                        <Image
-                          src={tokenBalance.asset.iconUrl}
-                          alt={tokenBalance.asset.symbol}
-                          width={40}
-                          height={40}
-                          className="object-contain"
-                        />
+                  <>
+                    {(index > 0 || !fullList) && (
+                      <div className="flex items-center gap-2 h-[1px] w-full bg-border/50 rounded-full" />
+                    )}
+                    <div
+                      key={index}
+                      className="relative py-1 flex items-center justify-between shadow-md "
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                          <Image
+                            src={tokenBalance.asset.iconUrl}
+                            alt={tokenBalance.asset.symbol}
+                            width={40}
+                            height={40}
+                            className="object-contain"
+                          />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-base font-semibold text-embossed">
+                            {tokenBalance.asset.name}
+                          </span>
+                          <span className="text-base text-embossed font-bold">
+                            {formatRay(tokenBalance.amount.value)}{' '}
+                          </span>
+                          <span className="text-sm text-embossed font-medium">
+                            {tokenBalance.asset.symbol}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-base font-semibold text-embossed">
-                          {tokenBalance.asset.name}
-                        </span>
-                        <span className="text-base text-embossed font-bold">
-                          {formatRay(tokenBalance.amount.value)}{' '}
-                        </span>
-                        <span className="text-sm text-embossed font-medium">
-                          {tokenBalance.asset.symbol}
-                        </span>
-                      </div>
+                      <span className="text-lg font-bold text-green-500">
+                        {isLoadingPrices ? (
+                          <span className="inline-block w-16 h-6 bg-secondary/30 rounded-md animate-pulse"></span>
+                        ) : (
+                          `$${usdValue.toFixed(2)}`
+                        )}
+                      </span>
                     </div>
-                    <span className="text-lg font-bold text-green-500">
-                      {isLoadingPrices ? (
-                        <span className="inline-block w-16 h-6 bg-secondary/30 rounded-md animate-pulse"></span>
-                      ) : (
-                        `$${usdValue.toFixed(2)}`
-                      )}
-                    </span>
-                  </div>
+                  </>
                 );
               })}
             </div>

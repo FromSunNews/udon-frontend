@@ -18,6 +18,7 @@ import { SupplyDialog } from './supply-dialog';
 import { WithdrawDialog } from './withdraw-dialog';
 import { CollateralDialog } from './collateral-dialog';
 import { UserReserveData } from '../../types';
+import { useRouter } from 'next/navigation';
 
 interface SupplyPositionTableProps {
   positions: UserReserveData[];
@@ -36,6 +37,8 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   yourCollateralPosition,
   yourAPYPosition,
 }) => {
+  const router = useRouter();
+
   // Dialog state management
   const [selectedPosition, setSelectedPosition] = useState<UserReserveData | null>(null);
   const [supplyDialogOpen, setSupplyDialogOpen] = useState(false);
@@ -63,13 +66,21 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     setCollateralDialogOpen(true);
   };
 
+  // Handle asset click
+  const handleAssetClick = (asset: string) => {
+    router.push(`/reserve/${asset}`);
+  };
+
   // Render asset icon and symbol
   const renderAssetCell = (row: UserReserveData) => {
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-3 cursor-pointer">
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => handleAssetClick(row.symbol)}
+            >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={row.iconUrl} alt={row.symbol} />
                 <AvatarFallback>{row.symbol.charAt(0)}</AvatarFallback>
@@ -91,10 +102,20 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
       header: 'Assets',
       accessorKey: 'symbol',
       cell: ({ row }) => renderAssetCell(row),
+      enableSorting: true,
+      meta: {
+        skeleton: (
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-8 h-8 rounded-full" />
+            <Skeleton className="w-24 h-5" />
+          </div>
+        ),
+      },
     },
     {
       header: 'Amount',
       accessorKey: 'currentATokenBalance',
+      enableSorting: true,
       cell: ({ row }) => {
         const balance = row.currentATokenBalance;
         const balanceUsd = Number(balance) * (row.price || 0);
@@ -107,23 +128,38 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           </div>
         );
       },
+      meta: {
+        skeleton: (
+          <div>
+            <Skeleton className="w-24 h-5 mb-1" />
+            <Skeleton className="w-16 h-4" />
+          </div>
+        ),
+      },
     },
     {
       header: 'APY',
       accessorKey: 'reserveCurrentLiquidityRate',
+      enableSorting: true,
       cell: ({ row }) => {
         return <Typography weight="medium">{row.supplyAPY.toFixed(4)}%</Typography>;
+      },
+      meta: {
+        skeleton: <Skeleton className="w-16 h-5" />,
       },
     },
     {
       header: 'Collateral',
       accessorKey: 'usageAsCollateralEnabled',
-      cell: ({ row }: { row: UserReserveData }) => (
+      cell: ({ row }) => (
         <Switch
           checked={row.usageAsCollateralEnabled}
           onCheckedChange={() => handleCollateralSwitch(row)}
         />
       ),
+      meta: {
+        skeleton: <Skeleton className="w-10 h-5 rounded-full" />,
+      },
     },
     {
       header: '',
@@ -150,22 +186,43 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           </div>
         );
       },
+      meta: {
+        skeleton: (
+          <div className="flex justify-end">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="w-[100px] h-9" />
+              <Skeleton className="w-[100px] h-9" />
+            </div>
+          </div>
+        ),
+      },
     },
   ];
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6">
-      <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
-        Your Supply
-      </Typography>
+    <div className="flex flex-col rounded-2xl border border-border bg-card p-6">
+      {isLoading ? (
+        <Skeleton className="h-8 w-48 mb-4" />
+      ) : (
+        <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
+          Your Supply
+        </Typography>
+      )}
       {isLoading ? (
         <div className="space-y-4">
-          <div className="flex gap-4 mb-4">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-8 w-32" />
-            ))}
+          <div className="flex gap-4 mb-4 flex-wrap">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-32" />
           </div>
-          <Skeleton className="h-40 w-full" />
+          <SortableTable<UserReserveData>
+            data={[]}
+            columns={columns}
+            pageSize={4}
+            className="bg-transparent border-none"
+            isLoading={true}
+            skeletonRows={3}
+          />
         </div>
       ) : (
         <>
@@ -190,9 +247,11 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
               />
             </>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No supply positions found. <br />
-              Start supplying assets to earn interest.
+            <div className="flex flex-grow items-center justify-center">
+              <Typography className="text-submerged text-center text-lg">
+                No supply positions found. <br />
+                Start supplying assets to earn interest.
+              </Typography>
             </div>
           )}
         </>
@@ -225,8 +284,8 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           open={collateralDialogOpen}
           onOpenChange={setCollateralDialogOpen}
           reserve={selectedCollateral}
-          healthFactor={1.26} // TODO: calulate HF
-          newHealthFactor={selectedCollateral.usageAsCollateralEnabled ? 1.1 : 2.4} // TODO: calculate
+          healthFactor={1.26} // Using a placeholder value, would be calculated based on actual data
+          newHealthFactor={selectedCollateral.usageAsCollateralEnabled ? 1.1 : 2.4} // Would be dynamically calculated
           mutateAssets={mutateAssets}
         />
       )}

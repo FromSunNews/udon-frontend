@@ -19,7 +19,7 @@ export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl }) => 
             <Typography variant="h3" weight="semibold" className="text-[32px]">
               {value}
             </Typography>
-            <Typography variant="p" color="submerged">
+            <Typography variant="h5" color="submerged">
               {label}
             </Typography>
           </div>

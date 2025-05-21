@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar'
 import { RepayDialog } from './repay-dialog';
 import { BorrowDialog } from './borrow-dialog';
 import { UserReserveData } from '../../types';
+import { useRouter } from 'next/navigation';
 
 interface BorrowPositionTableProps {
   positions: UserReserveData[];
@@ -28,6 +29,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
   isLoading,
   mutateAssets,
 }) => {
+  const router = useRouter();
   // Dialog state management
   const [selectedPosition, setSelectedPosition] = useState<UserReserveData | null>(null);
   const [repayDialogOpen, setRepayDialogOpen] = useState(false);
@@ -60,13 +62,21 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
         ) / positions.length
       : 0;
 
+  // Handle asset click
+  const handleAssetClick = (asset: string) => {
+    router.push(`/reserve/${asset}`);
+  };
+
   // Render reserve. icon and symbol
   const renderAssetCell = (reserve: UserReserveData) => {
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-3 cursor-pointer">
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => handleAssetClick(reserve.symbol)}
+            >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
                 <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
@@ -86,11 +96,21 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
     {
       header: 'Assets',
       accessorKey: 'symbol',
+      enableSorting: true,
       cell: ({ row }) => renderAssetCell(row),
+      meta: {
+        skeleton: (
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-8 h-8 rounded-full" />
+            <Skeleton className="w-24 h-5" />
+          </div>
+        ),
+      },
     },
     {
       header: 'Debt',
       accessorKey: 'currentVariableDebt',
+      enableSorting: true,
       cell: ({ row }) => {
         const balance = Number(row.currentVariableDebt) / Math.pow(10, row.decimals);
         const balanceUsd = balance * (row.price || 0);
@@ -103,21 +123,28 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           </div>
         );
       },
+      meta: {
+        skeleton: (
+          <div>
+            <Skeleton className="w-24 h-5 mb-1" />
+            <Skeleton className="w-16 h-4" />
+          </div>
+        ),
+      },
     },
     {
       header: 'APY',
       accessorKey: 'reserveCurrentLiquidityRate',
+      enableSorting: true,
       cell: ({ row }) => {
         // For borrow APY, we might use a different rate (variable borrow rate)
         // This is a placeholder - adjust based on actual data structure
         const apy = Number(row.reserveCurrentLiquidityRate) / 1e25;
         return <Typography weight="medium">{apy.toFixed(2)}%</Typography>;
       },
-    },
-    {
-      header: 'Type',
-      accessorKey: 'symbol',
-      cell: () => <Badge variant="secondary">VARIABLE</Badge>,
+      meta: {
+        skeleton: <Skeleton className="w-16 h-5" />,
+      },
     },
     {
       header: '',
@@ -138,22 +165,43 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           </div>
         </div>
       ),
+      meta: {
+        skeleton: (
+          <div className="flex justify-end">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="w-[100px] h-9" />
+              <Skeleton className="w-[100px] h-9" />
+            </div>
+          </div>
+        ),
+      },
     },
   ];
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6">
-      <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
-        Your Borrow
-      </Typography>
+    <div className="flex flex-col rounded-2xl border border-border bg-card p-6">
+      {isLoading ? (
+        <Skeleton className="h-8 w-48 mb-4" />
+      ) : (
+        <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
+          Your Borrow
+        </Typography>
+      )}
       {isLoading ? (
         <div className="space-y-4">
-          <div className="flex gap-4 mb-4">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-8 w-32" />
-            ))}
+          <div className="flex gap-4 mb-4 flex-wrap">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-32" />
           </div>
-          <Skeleton className="h-40 w-full" />
+          <SortableTable<UserReserveData>
+            data={[]}
+            columns={columns}
+            pageSize={4}
+            className="bg-transparent border-none"
+            isLoading={true}
+            skeletonRows={3}
+          />
         </div>
       ) : (
         <>
@@ -170,16 +218,19 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
                   Health Factor: {positions.length > 0 ? '1.75' : 'N/A'}
                 </Badge>
               </div>
-              <SortableTable
+              <SortableTable<UserReserveData>
                 data={positions}
                 columns={columns}
                 pageSize={4}
                 className="bg-transparent border-none"
+                skeletonRows={5}
               />
             </>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No borrow positions found. <br /> Start borrowing assets to leverage your portfolio.
+            <div className="flex flex-grow items-center justify-center">
+              <Typography className="text-submerged text-center text-lg">
+                No borrow positions found. <br /> Start borrowing assets to leverage your portfolio.
+              </Typography>
             </div>
           )}
         </>
@@ -207,7 +258,6 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           open={borrowDialogOpen}
           onOpenChange={setBorrowDialogOpen}
           reserve={selectedPosition}
-          availableToBorrow="0.05" // This would come from available liquidity calculation
           healthFactor={4.91} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}
         />

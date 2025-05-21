@@ -21,6 +21,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/utils/tailwind';
 import { Typography } from '../typography';
 import { Button } from '../button';
+import { Skeleton } from '../skeleton';
 
 export type SortDirection = 'asc' | 'desc' | null;
 
@@ -29,6 +30,9 @@ export interface ColumnDef<T> {
   accessorKey: keyof T;
   cell?: (info: { row: T }) => React.ReactNode;
   enableSorting?: boolean;
+  meta?: {
+    skeleton?: React.ReactNode | (() => React.ReactNode);
+  };
 }
 
 interface SortableTableProps<T> {
@@ -36,6 +40,8 @@ interface SortableTableProps<T> {
   columns: ColumnDef<T>[];
   pageSize?: number;
   className?: string;
+  isLoading?: boolean;
+  skeletonRows?: number;
 }
 
 export function SortableTable<T>({
@@ -43,6 +49,8 @@ export function SortableTable<T>({
   columns,
   pageSize = 8,
   className,
+  isLoading = false,
+  skeletonRows = 5,
 }: SortableTableProps<T>) {
   const [sortColumn, setSortColumn] = useState<keyof T | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -84,7 +92,51 @@ export function SortableTable<T>({
 
   const totalPages = Math.ceil(sortedData.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = sortedData.slice(startIndex, startIndex + pageSize);
+  const paginatedData = isLoading
+    ? Array(skeletonRows).fill({})
+    : sortedData.slice(startIndex, startIndex + pageSize);
+
+  const renderSkeletonOrCell = (column: ColumnDef<T>) => {
+    if (isLoading) {
+      // Render skeleton if provided, otherwise default skeleton
+      if (column.meta?.skeleton) {
+        return typeof column.meta.skeleton === 'function'
+          ? column.meta.skeleton()
+          : column.meta.skeleton;
+      }
+      // Default skeleton based on position
+      if (column.accessorKey === 'symbol' || column.header === 'Assets') {
+        return (
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-5 w-24" />
+          </div>
+        );
+      }
+      return <Skeleton className="h-5 w-20" />;
+    }
+    return null;
+  };
+
+  const renderHeaderSkeleton = (column: ColumnDef<T>, index: number) => {
+    // Vary width based on column position or header text length
+    let skeletonWidth = 'w-16';
+
+    // First column (assets column) is usually wider
+    if (index === 0 || column.header === 'Assets') {
+      skeletonWidth = 'w-24';
+    }
+    // Last column (actions) is usually smaller
+    else if (index === columns.length - 1) {
+      skeletonWidth = 'w-12';
+    }
+    // Columns with longer headers
+    else if (column.header.length > 8) {
+      skeletonWidth = 'w-20';
+    }
+
+    return <Skeleton className={`h-5 ${skeletonWidth}`} />;
+  };
 
   //   const renderPageNumbers = () => {
   //     const pages = [];
@@ -144,34 +196,43 @@ export function SortableTable<T>({
                 <TableHead
                   key={i}
                   className={cn(
-                    'text-embossed font-medium py-3 bg-background',
-                    column.enableSorting && 'cursor-pointer select-none',
+                    'text-embossed font-medium py-3',
+                    !isLoading ? 'bg-background' : 'bg-primary/5',
+                    column.enableSorting && !isLoading && 'cursor-pointer select-none',
                     i === 0 && 'rounded-l-full pl-8',
                     i === columns.length - 1 && 'rounded-r-full pr-8'
                   )}
-                  onClick={() => column.enableSorting && toggleSort(column.accessorKey)}
+                  onClick={() =>
+                    !isLoading && column.enableSorting && toggleSort(column.accessorKey)
+                  }
                 >
                   <div className="flex items-center gap-1">
-                    <Typography>{column.header}</Typography>
-                    {column.enableSorting && (
-                      <div className="flex flex-col">
-                        <ChevronUp
-                          className={cn(
-                            'h-3 w-3 -mb-0.5',
-                            sortColumn === column.accessorKey && sortDirection === 'asc'
-                              ? 'text-primary'
-                              : 'text-gray-500'
-                          )}
-                        />
-                        <ChevronDown
-                          className={cn(
-                            'h-3 w-3 -mt-0.5',
-                            sortColumn === column.accessorKey && sortDirection === 'desc'
-                              ? 'text-primary'
-                              : 'text-gray-500'
-                          )}
-                        />
-                      </div>
+                    {isLoading ? (
+                      renderHeaderSkeleton(column, i)
+                    ) : (
+                      <>
+                        <Typography>{column.header}</Typography>
+                        {column.enableSorting && (
+                          <div className="flex flex-col">
+                            <ChevronUp
+                              className={cn(
+                                'h-4 w-4 -mb-[3px]',
+                                sortColumn === column.accessorKey && sortDirection === 'asc'
+                                  ? 'text-primary'
+                                  : 'text-gray-500'
+                              )}
+                            />
+                            <ChevronDown
+                              className={cn(
+                                'h-4 w-4 -mt-[3px] text-bold',
+                                sortColumn === column.accessorKey && sortDirection === 'desc'
+                                  ? 'text-primary'
+                                  : 'text-gray-500'
+                              )}
+                            />
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </TableHead>
@@ -193,7 +254,11 @@ export function SortableTable<T>({
                       colIndex === columns.length - 1 && 'rounded-r-lg pr-8'
                     )}
                   >
-                    {column.cell ? column.cell({ row }) : String(row[column.accessorKey])}
+                    {isLoading
+                      ? renderSkeletonOrCell(column)
+                      : column.cell
+                        ? column.cell({ row })
+                        : String(row[column.accessorKey])}
                   </TableCell>
                 ))}
               </TableRow>
@@ -202,7 +267,7 @@ export function SortableTable<T>({
         </Table>
       </div>
 
-      {totalPages > 1 && (
+      {!isLoading && totalPages > 1 && (
         <div className="flex justify-center items-center pt-4 px-5 pb-2 text-sm gap-4">
           <Button
             onClick={() => {

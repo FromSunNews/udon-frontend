@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Info } from 'lucide-react';
+import { CircleX, Info } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +25,18 @@ import {
 import { UserReserveData } from '../../types';
 
 const withdrawFormSchema = z.object({
-  amount: z.string().min(1, 'Amount is required!'),
+  amount: z
+    .string()
+    .min(1, 'Amount is required!')
+    .refine(
+      val => {
+        const num = Number(val);
+        return !isNaN(num) && num > 0;
+      },
+      {
+        message: 'Please enter a valid positive number',
+      }
+    ),
 });
 
 type WithdrawFormValues = z.infer<typeof withdrawFormSchema>;
@@ -83,10 +94,20 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   // Handle price fetch with lodash debounce
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
+      // Don't allow value > supply balance
+      const valueWithBalance =
+        Number(form.watch('amount')) > Number(reserve.currentATokenBalance)
+          ? reserve.currentATokenBalance
+          : form.watch('amount');
+      const needToChangeValue = valueWithBalance !== form.watch('amount');
+      if (needToChangeValue) {
+        form.setValue('amount', valueWithBalance.toString());
+        setInputAmount(valueWithBalance.toString());
+      }
       setIsRefetchEnabled(true);
       fetchPrice();
     });
-  }, [fetchPrice]);
+  }, [fetchPrice, form, reserve.currentATokenBalance]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -105,6 +126,16 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   // Watch for input changes and fetch price
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
+    // Only allow numbers and a single decimal point
+    const regex = /^$|^[0-9]+\.?[0-9]*$/;
+    if (!regex.test(value)) {
+      // if don't pass set input with 0
+      form.setValue('amount', '0');
+      setInputAmount('0');
+      return;
+    }
+
     form.setValue('amount', value);
     setInputAmount(value);
 
@@ -121,9 +152,25 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   };
 
   const onSubmit = async (data: WithdrawFormValues) => {
-    setIsSubmitting(true);
-
     try {
+      const amount = Number(data.amount);
+
+      // Final validation checks before submission
+      if (isNaN(amount) || amount <= 0) {
+        toast.error('Please enter a valid positive number');
+        return;
+      }
+
+      const balance = Number(reserve.currentATokenBalance);
+      if (amount > balance) {
+        toast.error(
+          `Amount exceeds your supply balance of ${reserve.currentATokenBalance} ${reserve.symbol}`
+        );
+        return;
+      }
+
+      setIsSubmitting(true);
+
       // Use the withdraw hook
       const withdrawResult = await withdraw({
         assetId: reserve.assetId,
@@ -187,11 +234,29 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                       {...form.register('amount')}
                       autoComplete="off"
                       placeholder="0.00"
-                      className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0"
+                      className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]"
                       inputMode="decimal"
+                      pattern="[0-9]*[.]?[0-9]*"
+                      min={0.0}
+                      max={reserve.currentATokenBalance}
+                      step="any"
                       onChange={handleAmountChange}
                     />
-                    <div className="flex items-center gap-2 absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
+                      {/* clear icon */}
+                      {form.watch('amount') && (
+                        <Button
+                          variant="none"
+                          size="icon"
+                          onClick={() => {
+                            form.setValue('amount', '');
+                            setInputAmount('');
+                          }}
+                          className="hover:opacity-70"
+                        >
+                          <CircleX className="h-6 w-6 text-embossed" />
+                        </Button>
+                      )}
                       <Avatar className="h-7 w-7">
                         <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
                         <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>

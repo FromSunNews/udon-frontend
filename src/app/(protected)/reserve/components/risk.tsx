@@ -1,5 +1,5 @@
 import React from 'react';
-import { StatCard } from '@/app/(protected)/vault/components/stat-card';
+import { StatCard } from '@/app/(protected)/reserve/components/stat-card';
 
 export const VaultRisk: React.FC = () => {
   return (

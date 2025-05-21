@@ -9,7 +9,7 @@ export const AccountCreatedModal: React.FC<{ open: boolean; onClose: () => void 
   return (
     <Popup
       variant="success"
-      title="Thanks for creating an account"
+      title="Created account"
       description="Your Chromia account has been created successfully."
       buttonText="Continue"
       onButtonClick={onClose}

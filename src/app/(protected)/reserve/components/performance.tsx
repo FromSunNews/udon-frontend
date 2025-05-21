@@ -1,6 +1,6 @@
 import React from 'react';
-import { StatCard } from '@/app/(protected)/vault/components/stat-card';
-import { StatCardGrid } from '@/app/(protected)/vault/components/stat-card-grid';
+import { StatCard } from '@/app/(protected)/reserve/components/stat-card';
+import { StatCardGrid } from '@/app/(protected)/reserve/components/stat-card-grid';
 
 export const VaultPerformance: React.FC = () => {
   return (

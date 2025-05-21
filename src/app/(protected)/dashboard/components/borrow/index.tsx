@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import { SortableTable, type ColumnDef } from '@/components/common/sortable-table';
+import { ColumnDef, SortableTable } from '@/components/common/sortable-table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import {
   Tooltip,
@@ -15,6 +14,7 @@ import {
 } from '@/components/common/tooltip';
 import { BorrowDialog } from './borrow-dialog';
 import { UserReserveData } from '../../types';
+import { Skeleton } from '@/components/common/skeleton';
 
 // Define type for borrow reserves
 
@@ -42,7 +42,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
 
   // Handle asset click
   const handleAssetClick = (asset: string) => {
-    router.push(`/vault/${asset}`);
+    router.push(`/reserve/${asset}`);
   };
 
   // Render asset icon and symbol
@@ -76,35 +76,48 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
       header: 'Assets',
       accessorKey: 'symbol',
       enableSorting: true,
-      cell: ({ row }: { row: UserReserveData }) => renderAssetCell(row),
+      cell: ({ row }) => renderAssetCell(row),
+      meta: {
+        skeleton: (
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-8 h-8 rounded-full" />
+            <Skeleton className="w-24 h-5" />
+          </div>
+        ),
+      },
     },
     {
       header: 'Available',
       accessorKey: 'availableBorrow',
       enableSorting: true,
-      cell: ({ row }: { row: UserReserveData }) => <Typography>{row.availableBorrow}</Typography>,
+      cell: ({ row }) => <Typography>{row.availableBorrow ? row.availableBorrow : '_'}</Typography>,
+      meta: {
+        skeleton: <Skeleton className="w-20 h-5" />,
+      },
     },
     {
       header: 'Price',
       accessorKey: 'price',
       enableSorting: true,
-      cell: ({ row }: { row: UserReserveData }) => (
-        <Typography>${row.price != null ? row.price.toFixed(2) : '—'}</Typography>
-      ),
+      cell: ({ row }) => <Typography>${row.price != null ? row.price.toFixed(2) : '—'}</Typography>,
+      meta: {
+        skeleton: <Skeleton className="w-16 h-5" />,
+      },
     },
     {
       header: 'APY',
       accessorKey: 'borrowAPY',
       enableSorting: true,
-      cell: ({ row }: { row: UserReserveData }) => (
-        <Typography>{row.borrowAPY.toFixed(4)}%</Typography>
-      ),
+      cell: ({ row }) => <Typography>{row.borrowAPY.toFixed(4)}%</Typography>,
+      meta: {
+        skeleton: <Skeleton className="w-16 h-5" />,
+      },
     },
     {
       header: '',
       accessorKey: 'symbol',
       enableSorting: false,
-      cell: ({ row }: { row: UserReserveData }) => (
+      cell: ({ row }) => (
         <div className="flex justify-end">
           <div className="flex flex-col gap-2">
             <Button
@@ -130,6 +143,16 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
           </div>
         </div>
       ),
+      meta: {
+        skeleton: (
+          <div className="flex justify-end">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="w-[100px] h-9" />
+              <Skeleton className="w-[100px] h-9" />
+            </div>
+          </div>
+        ),
+      },
     },
   ];
 
@@ -137,33 +160,35 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
     <>
       <div className="flex-1 border bg-card p-3 sm:p-5 rounded-[18px] border-solid border-border min-w-[320px] max-w-full">
         <div className="flex justify-between items-center">
-          <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
-            {title}
-          </Typography>
+          {isLoading ? (
+            <Skeleton className="h-8 w-48" />
+          ) : (
+            <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
+              {title}
+            </Typography>
+          )}
         </div>
 
         {(!reserves || reserves.length === 0) && !isLoading && (
-          <div className="rounded bg-accent/30 mt-2 sm:mt-2.5 p-2 sm:p-2.5">
-            <Typography variant="small" color="submerged">
+          <div className="flex flex-grow items-center justify-center">
+            <Typography className="text-submerged text-center text-lg">
               No reserves available for borrowing at this time.
             </Typography>
           </div>
         )}
 
-        <div className="mt-3 sm:mt-5">
-          {isLoading ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : reserves.length > 0 ? (
+        {reserves.length > 0 && (
+          <div className="mt-3 sm:mt-5">
             <SortableTable<UserReserveData>
               data={reserves}
               columns={borrowColumns}
               pageSize={5}
               className="p-0 border-none"
+              isLoading={isLoading}
+              skeletonRows={5}
             />
-          ) : null}
-        </div>
+          </div>
+        )}
       </div>
 
       {selectedAsset && dialogOpen && (

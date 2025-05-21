@@ -52,12 +52,12 @@ export default function SupplyPage() {
 
       <section className="flex flex-col sm:flex-row gap-4 sm:gap-5 mt-6 sm:mt-10">
         <StatCard
-          value={`$${totalDeposit}`}
+          value={`$${totalDeposit.toFixed(2)}`}
           label="Total Deposit"
           iconUrl="/images/supply/coin-stack.gif"
         />
         <StatCard
-          value={`$${totalBorrow}`}
+          value={`$${totalBorrow.toFixed(2)}`}
           label="Total Borrows"
           iconUrl="/images/supply/saving-piggy.gif"
         />

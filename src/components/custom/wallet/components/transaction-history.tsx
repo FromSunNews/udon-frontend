@@ -83,16 +83,23 @@ export function TransactionHistory({
   };
 
   return (
-    <div className={cn('w-full flex flex-col h-full', className)}>
+    <div
+      className={cn(
+        'w-full flex flex-col h-auto rounded-2xl',
+        !fullList && 'bg-card',
+        !fullList && 'p-4',
+        className
+      )}
+    >
       <div className="flex items-center justify-between mb-2">
         {!fullList && (
-          <h3 className="text-md font-semibold">
+          <h3 className="text-md text-submerged font-semibold">
             Your Activity{transfers?.length ? ` (${transfers.length})` : ''}
           </h3>
         )}
         {showCompact && hasMore && (
           <button
-            className="text-sm text-primary font-medium hover:underline focus:outline-none"
+            className="text-base text-embossed font-medium hover:underline focus:outline-none hover:text-primary cursor-pointer"
             onClick={onViewAll}
           >
             View all
@@ -119,56 +126,61 @@ export function TransactionHistory({
                 const amountStr =
                   Number(value) > 0 ? `+${value} ${symbol}` : `- ${value} ${symbol}`;
                 return (
-                  <div
-                    key={index}
-                    className="flex items-center gap-4 rounded-xl bg-[#232323] p-4 shadow-md hover:shadow-lg hover:bg-[#282828] transition"
-                  >
-                    {/* Icon */}
+                  <>
+                    {(index > 0 || !fullList) && (
+                      <div className="flex items-center gap-2 h-[1px] w-full bg-border/50 rounded-full" />
+                    )}
                     <div
-                      className={`flex items-center justify-center rounded-full ${txType.color} min-w-[44px] min-h-[44px]`}
+                      key={index}
+                      className="relative py-1 flex items-center justify-between shadow-md "
                     >
-                      {txType.icon}
-                    </div>
-                    {/* Info */}
-                    <div className="flex-1 flex flex-col justify-center">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-semibold ${txType.color}`}>
-                          {txType.label}
-                        </span>
+                      {/* Icon */}
+                      <div
+                        className={`flex items-center justify-center rounded-full ${txType.color} min-w-[44px] min-h-[44px]`}
+                      >
+                        {txType.icon}
                       </div>
-                      <div className="flex row items-center gap-2 mt-1">
-                        <span className="text-sm text-white/80 font-medium">
-                          {truncateHash(transactionHash.toUpperCase())}
-                        </span>
-                        <a
-                          href={getTxLink(transactionHash)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-1 -top-1 hover:underline"
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="inline h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                      {/* Info */}
+                      <div className="flex-1 flex flex-col justify-center">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-semibold ${txType.color}`}>
+                            {txType.label}
+                          </span>
+                        </div>
+                        <div className="flex row items-center gap-2 mt-1">
+                          <span className="text-sm text-white/80 font-medium">
+                            {truncateHash(transactionHash.toUpperCase())}
+                          </span>
+                          <a
+                            href={getTxLink(transactionHash)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-1 -top-1 hover:underline"
+                            onClick={e => e.stopPropagation()}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M18 13v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h6m5-3h3m0 0v3m0-3L10 14"
-                            />
-                          </svg>
-                        </a>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="inline h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M18 13v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h6m5-3h3m0 0v3m0-3L10 14"
+                              />
+                            </svg>
+                          </a>
+                        </div>
                       </div>
+                      {/* Amount */}
+                      <span className={`text-base font-bold ml-2 ${txType.amountColor}`}>
+                        {amountStr}
+                      </span>
                     </div>
-                    {/* Amount */}
-                    <span className={`text-base font-bold ml-2 ${txType.amountColor}`}>
-                      {amountStr}
-                    </span>
-                  </div>
+                  </>
                 );
               })}
             </div>

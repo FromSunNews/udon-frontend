@@ -116,62 +116,62 @@ async function initSupply() {
     console.log(chalk.green(`✅ Minted ${chalk.yellow(formatRay(mintAmount))} tokens to user`));
 
     // Supply operation
-    console.log(chalk.blue('🔄 Performing supply operation...'));
-    const supplyAmount = BigNumber.from(RAY).mul(30); //30 RAY
-    const result = await userSession.call(
-      op(
-        'supply',
-        userAccountId,
-        underlyingAssetId,
-        BigInt(supplyAmount.toString()),
-        userAccountId,
-        BigInt(0), // referral code
-        // get current block timestamp
-        Date.now()
-      )
-    );
-    const isSuccess = result.receipt.statusCode === 200;
-    console.log(
-      isSuccess
-        ? chalk.green('✅ Supply operation completed successfully')
-        : chalk.red('❌ Supply operation failed')
-    );
+    // console.log(chalk.blue('🔄 Performing supply operation...'));
+    // const supplyAmount = BigNumber.from(RAY).mul(30); //30 RAY
+    // const result = await userSession.call(
+    //   op(
+    //     'supply',
+    //     userAccountId,
+    //     underlyingAssetId,
+    //     BigInt(supplyAmount.toString()),
+    //     userAccountId,
+    //     BigInt(0), // referral code
+    //     // get current block timestamp
+    //     Date.now()
+    //   )
+    // );
+    // const isSuccess = result.receipt.statusCode === 200;
+    // console.log(
+    //   isSuccess
+    //     ? chalk.green('✅ Supply operation completed successfully')
+    //     : chalk.red('❌ Supply operation failed')
+    // );
 
-    const result2 = await userSession.call(
-      op(
-        'supply',
-        userAccountId,
-        underlyingAssetId,
-        BigInt(supplyAmount.toString()),
-        userAccountId,
-        BigInt(0), // referral code
-        // get current block timestamp
-        Date.now()
-      )
-    );
-    const isSuccess2 = result2.receipt.statusCode === 200;
-    console.log(
-      isSuccess2
-        ? chalk.green('✅ Supply 2 operation completed successfully')
-        : chalk.red('❌ Supply 2 operation failed')
-    );
+    // const result2 = await userSession.call(
+    //   op(
+    //     'supply',
+    //     userAccountId,
+    //     underlyingAssetId,
+    //     BigInt(supplyAmount.toString()),
+    //     userAccountId,
+    //     BigInt(0), // referral code
+    //     // get current block timestamp
+    //     Date.now()
+    //   )
+    // );
+    // const isSuccess2 = result2.receipt.statusCode === 200;
+    // console.log(
+    //   isSuccess2
+    //     ? chalk.green('✅ Supply 2 operation completed successfully')
+    //     : chalk.red('❌ Supply 2 operation failed')
+    // );
 
-    // Check final balances using getBalanceByAssetId
-    console.log(chalk.blue('🔄 Checking final balances...'));
+    // // Check final balances using getBalanceByAssetId
+    // console.log(chalk.blue('🔄 Checking final balances...'));
 
-    // Get user's underlying balance
-    const userUnderlyingBalance = await userSession.account.getBalanceByAssetId(underlyingAssetId);
+    // // Get user's underlying balance
+    // const userUnderlyingBalance = await userSession.account.getBalanceByAssetId(underlyingAssetId);
 
-    // Get user's a-asset balance
-    const userAAssetBalance = await userSession.account.getBalanceByAssetId(aAssetId);
+    // // Get user's a-asset balance
+    // const userAAssetBalance = await userSession.account.getBalanceByAssetId(aAssetId);
 
-    console.log(chalk.green('✅ Final balances:'));
-    console.log(
-      chalk.yellow(`   Underlying balance: ${formatRay(userUnderlyingBalance.amount.value)}`)
-    );
-    console.log(chalk.yellow(`   A-asset balance: ${formatRay(userAAssetBalance.amount.value)}`));
+    // console.log(chalk.green('✅ Final balances:'));
+    // console.log(
+    //   chalk.yellow(`   Underlying balance: ${formatRay(userUnderlyingBalance.amount.value)}`)
+    // );
+    // console.log(chalk.yellow(`   A-asset balance: ${formatRay(userAAssetBalance.amount.value)}`));
 
-    console.log(chalk.bold.green('✅✅✅ Supply initialization completed successfully ✅✅✅'));
+    // console.log(chalk.bold.green('✅✅✅ Supply initialization completed successfully ✅✅✅'));
 
     // // init emode
     // console.log(chalk.blue('🔄 Initializing emode...'));

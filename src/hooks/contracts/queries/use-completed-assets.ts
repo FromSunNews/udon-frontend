@@ -3,7 +3,7 @@ import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { toast } from 'sonner';
 import { formatRay } from '@/utils/wadraymath';
 import { keysToCamelCase } from '@/utils/object';
-import { AssetPrice, UserReserveData } from '@/app/(protected)/supply/types';
+import { AssetPrice, UserReserveData } from '@/app/(protected)/dashboard/types';
 import { calculateCompoundedRate } from '@/utils/math/compounded-interest';
 import { SECONDS_PER_YEAR } from '@/utils/constants';
 import { normalize } from '@/utils/bignumber';
@@ -76,7 +76,7 @@ export function useCompletedAssets() {
           reserveVariableBorrowIndex: Number(formatRay(r.reserveVariableBorrowIndex)),
           reserveLastUpdateTimestamp: Number(r.reserveLastUpdateTimestamp),
           usageAsCollateralEnabled: !!r.usageAsCollateralEnabled,
-          price: Number(priceObj?.price) || 10,
+          price: Number(priceObj?.price),
           supplyCap: Number(formatRay(r.supplyCap)),
           borrowCap: Number(formatRay(r.borrowCap)),
 
