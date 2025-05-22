@@ -16,34 +16,34 @@ const TOKENS = [
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
     price: parseUnits('60000', 18).toString(),
   },
-  // {
-  //   name: 'Ethereum USD',
-  //   symbol: 'ETHUSD',
-  //   decimals: 8,
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
-  //   price: parseUnits('2500', 18).toString(),
-  // },
-  // {
-  //   name: 'MyNeighborAlice',
-  //   symbol: 'ALICEUSD',
-  //   decimals: 8,
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
-  //   price: parseUnits('0.49', 18).toString(),
-  // },
-  // {
-  //   name: 'DAR Open Network',
-  //   symbol: 'DUSD',
-  //   decimals: 8,
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
-  //   price: parseUnits('0.45', 18).toString(),
-  // },
-  // {
-  //   name: 'Chromia USD',
-  //   symbol: 'CHRUSD',
-  //   decimals: 8,
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
-  //   price: parseUnits('0.22', 18).toString(),
-  // },
+  {
+    name: 'Ethereum USD',
+    symbol: 'ETHUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+    price: parseUnits('2500', 18).toString(),
+  },
+  {
+    name: 'MyNeighborAlice',
+    symbol: 'ALICEUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
+    price: parseUnits('0.49', 18).toString(),
+  },
+  {
+    name: 'DAR Open Network',
+    symbol: 'DUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
+    price: parseUnits('0.45', 18).toString(),
+  },
+  {
+    name: 'Chromia USD',
+    symbol: 'CHRUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
+    price: parseUnits('0.22', 18).toString(),
+  },
 ];
 
 async function initSupply() {
@@ -112,8 +112,8 @@ async function initSupply() {
       console.log(chalk.green('✅ Price asset oracle created:'));
 
       // update price asset
-      await adminSession.call(op('update_price_update_op', token.symbol, BigInt(token.price)));
-      console.log(chalk.green('✅ Price asset updated:'));
+      // await adminSession.call(op('update_price_update_op', token.symbol, BigInt(token.price)));
+      // console.log(chalk.green('✅ Price asset updated:'));
 
       // Set interest rate strategy
       await adminSession.call(
