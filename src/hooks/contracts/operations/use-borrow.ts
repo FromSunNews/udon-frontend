@@ -61,8 +61,8 @@ export function useBorrow({
               BigInt(amountValue.toString()), // amount
               2, // interest rate mode (default: variable)
               0, // referral code,
-              account.id // from on_behalf_of_id
-              // BigInt(Date.now()) // Todo: implement this
+              account.id, // from on_behalf_of_id
+              Date.now() // Todo: implement this
             )
           )
           .buildAndSend();

@@ -47,10 +47,10 @@ interface SortableTableProps<T> {
 export function SortableTable<T>({
   data,
   columns,
-  pageSize = 8,
+  pageSize = 5,
   className,
   isLoading = false,
-  skeletonRows = 5,
+  skeletonRows = 3,
 }: SortableTableProps<T>) {
   const [sortColumn, setSortColumn] = useState<keyof T | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);

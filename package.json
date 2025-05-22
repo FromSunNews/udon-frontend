@@ -49,6 +49,7 @@
     "postchain-client": "^1.17.0",
     "postcss": "^8.5.3",
     "react": "^19.1.0",
+    "react-countup": "^6.5.3",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.56.0",
     "recharts": "^2.15.3",

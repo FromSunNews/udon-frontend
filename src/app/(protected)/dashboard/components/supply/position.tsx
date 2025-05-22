@@ -19,23 +19,24 @@ import { WithdrawDialog } from './withdraw-dialog';
 import { CollateralDialog } from './collateral-dialog';
 import { UserReserveData } from '../../types';
 import { useRouter } from 'next/navigation';
+import CountUp from '@/components/common/count-up';
 
 interface SupplyPositionTableProps {
   positions: UserReserveData[];
   isLoading: boolean;
   mutateAssets: () => void;
-  yourBalancePosition: number;
-  yourCollateralPosition: number;
-  yourAPYPosition: number;
+  yourSupplyBalancePosition: number;
+  yourSupplyCollateralPosition: number;
+  yourSupplyAPYPosition: number;
 }
 
 export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   positions,
   isLoading,
   mutateAssets,
-  yourBalancePosition,
-  yourCollateralPosition,
-  yourAPYPosition,
+  yourSupplyBalancePosition,
+  yourSupplyCollateralPosition,
+  yourSupplyAPYPosition,
 }) => {
   const router = useRouter();
 
@@ -120,10 +121,10 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
         const balance = row.currentATokenBalance;
         const balanceUsd = Number(balance) * (row.price || 0);
         return (
-          <div>
-            <Typography weight="medium">{balance.toString()}</Typography>
+          <div className="flex flex-col gap-2">
+            <CountUp value={Number(balance)} className="text-base" />
             <Typography variant="small" color="submerged">
-              ${balanceUsd.toFixed(2)}
+              <CountUp value={balanceUsd} prefix="$" className="text-sm text-submerged" />
             </Typography>
           </div>
         );
@@ -139,10 +140,14 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     },
     {
       header: 'APY',
-      accessorKey: 'reserveCurrentLiquidityRate',
+      accessorKey: 'supplyAPY',
       enableSorting: true,
       cell: ({ row }) => {
-        return <Typography weight="medium">{row.supplyAPY.toFixed(4)}%</Typography>;
+        if (row.supplyAPY === 0) {
+          return <Typography>_</Typography>;
+        } else {
+          return <CountUp value={row.supplyAPY} suffix="%" className="text-base" />;
+        }
       },
       meta: {
         skeleton: <Skeleton className="w-16 h-5" />,
@@ -229,20 +234,42 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           {positions.length > 0 ? (
             <>
               <div className="flex gap-4 mb-4 flex-wrap">
-                <Badge variant="outline" className="text-base px-3">
-                  Balance: ${yourBalancePosition?.toFixed(2)}
+                <Badge variant="outline" className="text-base px-3 gap-1">
+                  <Typography weight="medium">Balance:</Typography>
+                  {yourSupplyBalancePosition ? (
+                    <CountUp
+                      value={yourSupplyBalancePosition}
+                      prefix="$"
+                      className="text-base ml-1"
+                    />
+                  ) : (
+                    <Typography>_</Typography>
+                  )}
                 </Badge>
-                <Badge variant="outline" className="text-base px-3">
-                  APY: {yourAPYPosition?.toFixed(2)}%
+                <Badge variant="outline" className="text-base px-3 gap-1">
+                  <Typography weight="medium">APY:</Typography>
+                  {yourSupplyAPYPosition ? (
+                    <CountUp value={yourSupplyAPYPosition} suffix="%" className="text-base ml-1" />
+                  ) : (
+                    <Typography>_</Typography>
+                  )}
                 </Badge>
-                <Badge variant="outline" className="text-base px-3">
-                  Collateral: ${yourCollateralPosition?.toFixed(2)}
+                <Badge variant="outline" className="text-base px-3 gap-1">
+                  <Typography weight="medium">Collateral:</Typography>
+                  {yourSupplyCollateralPosition ? (
+                    <CountUp
+                      value={yourSupplyCollateralPosition}
+                      prefix="$"
+                      className="text-base ml-1"
+                    />
+                  ) : (
+                    <Typography>_</Typography>
+                  )}
                 </Badge>
               </div>
-              <SortableTable
+              <SortableTable<UserReserveData>
                 data={positions}
                 columns={columns}
-                pageSize={4}
                 className="bg-transparent border-none"
               />
             </>

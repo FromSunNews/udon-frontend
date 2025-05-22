@@ -8,7 +8,7 @@ import { SupplyPositionTable } from './components/supply/position';
 import { BorrowPositionTable } from './components/borrow/position';
 import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
 
-export default function SupplyPage() {
+export default function DashboardPage() {
   // Use the enhanced custom hook to get all data
   const {
     assets: processedAssets,
@@ -18,9 +18,12 @@ export default function SupplyPage() {
     totalBorrow,
     isLoading,
     refresh: refetchAssets,
-    yourBalancePosition,
-    yourCollateralPosition,
-    yourAPYPosition,
+    yourSupplyBalancePosition,
+    yourSupplyCollateralPosition,
+    yourSupplyAPYPosition,
+    yourBorrowBalancePosition,
+    yourBorrowPowerUsagePosition,
+    yourBorrowAPYPosition,
   } = useCompletedAssets();
 
   return (
@@ -52,27 +55,32 @@ export default function SupplyPage() {
 
       <section className="flex flex-col sm:flex-row gap-4 sm:gap-5 mt-6 sm:mt-10">
         <StatCard
-          value={`$${totalDeposit.toFixed(2)}`}
+          value={totalDeposit}
           label="Total Deposit"
           iconUrl="/images/supply/coin-stack.gif"
+          isLoading={isLoading}
         />
         <StatCard
-          value={`$${totalBorrow.toFixed(2)}`}
+          value={totalBorrow}
           label="Total Borrows"
           iconUrl="/images/supply/saving-piggy.gif"
+          isLoading={isLoading}
         />
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
         <SupplyPositionTable
-          yourBalancePosition={yourBalancePosition}
-          yourCollateralPosition={yourCollateralPosition}
-          yourAPYPosition={yourAPYPosition}
+          yourSupplyBalancePosition={yourSupplyBalancePosition}
+          yourSupplyCollateralPosition={yourSupplyCollateralPosition}
+          yourSupplyAPYPosition={yourSupplyAPYPosition}
           positions={supplyPositions}
           isLoading={isLoading}
           mutateAssets={refetchAssets}
         />
         <BorrowPositionTable
+          yourBorrowBalancePosition={yourBorrowBalancePosition}
+          yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
+          yourBorrowAPYPosition={yourBorrowAPYPosition}
           positions={borrowPositions}
           isLoading={isLoading}
           mutateAssets={refetchAssets}

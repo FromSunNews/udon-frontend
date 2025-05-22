@@ -15,6 +15,7 @@ import {
 import { BorrowDialog } from './borrow-dialog';
 import { UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
+import CountUp from '@/components/common/count-up';
 
 // Define type for borrow reserves
 
@@ -90,7 +91,13 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
       header: 'Available',
       accessorKey: 'availableBorrow',
       enableSorting: true,
-      cell: ({ row }) => <Typography>{row.availableBorrow ? row.availableBorrow : '_'}</Typography>,
+      cell: ({ row }) => {
+        if (row.availableBorrow === 0) {
+          return <Typography>_</Typography>;
+        } else {
+          return <CountUp value={row.availableBorrow} className="text-base" />;
+        }
+      },
       meta: {
         skeleton: <Skeleton className="w-20 h-5" />,
       },
@@ -99,7 +106,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
       header: 'Price',
       accessorKey: 'price',
       enableSorting: true,
-      cell: ({ row }) => <Typography>${row.price != null ? row.price.toFixed(2) : '—'}</Typography>,
+      cell: ({ row }) => <CountUp value={row.price} prefix="$" className="text-base" />,
       meta: {
         skeleton: <Skeleton className="w-16 h-5" />,
       },
@@ -108,7 +115,13 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
       header: 'APY',
       accessorKey: 'borrowAPY',
       enableSorting: true,
-      cell: ({ row }) => <Typography>{row.borrowAPY.toFixed(4)}%</Typography>,
+      cell: ({ row }) => {
+        if (row.borrowAPY === 0) {
+          return <Typography>_</Typography>;
+        } else {
+          return <CountUp value={row.borrowAPY} suffix="%" className="text-base" />;
+        }
+      },
       meta: {
         skeleton: <Skeleton className="w-16 h-5" />,
       },
@@ -177,18 +190,14 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
           </div>
         )}
 
-        {reserves.length > 0 && (
-          <div className="mt-3 sm:mt-5">
-            <SortableTable<UserReserveData>
-              data={reserves}
-              columns={borrowColumns}
-              pageSize={5}
-              className="p-0 border-none"
-              isLoading={isLoading}
-              skeletonRows={5}
-            />
-          </div>
-        )}
+        <div className="mt-3 sm:mt-5">
+          <SortableTable<UserReserveData>
+            data={reserves}
+            columns={borrowColumns}
+            className="p-0 border-none"
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {selectedAsset && dialogOpen && (

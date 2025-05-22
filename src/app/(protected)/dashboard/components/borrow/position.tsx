@@ -17,17 +17,24 @@ import { RepayDialog } from './repay-dialog';
 import { BorrowDialog } from './borrow-dialog';
 import { UserReserveData } from '../../types';
 import { useRouter } from 'next/navigation';
+import CountUp from '@/components/common/count-up';
 
 interface BorrowPositionTableProps {
   positions: UserReserveData[];
   isLoading: boolean;
   mutateAssets: () => void;
+  yourBorrowBalancePosition: number;
+  yourBorrowPowerUsagePosition: number;
+  yourBorrowAPYPosition: number;
 }
 
 export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
   positions,
   isLoading,
   mutateAssets,
+  yourBorrowBalancePosition,
+  yourBorrowPowerUsagePosition,
+  yourBorrowAPYPosition,
 }) => {
   const router = useRouter();
   // Dialog state management
@@ -46,21 +53,6 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
     setSelectedPosition(position);
     setBorrowDialogOpen(true);
   };
-
-  // Calculate total debt balance in USD
-  const totalBalanceUsd = positions.reduce((sum, position) => {
-    const balance = Number(position.currentVariableDebt) / Math.pow(10, position.decimals);
-    return sum + balance * (position.price || 0);
-  }, 0);
-
-  // Calculate average APY
-  const averageApy =
-    positions.length > 0
-      ? positions.reduce(
-          (sum, position) => sum + Number(position.reserveCurrentLiquidityRate) / 1e25,
-          0
-        ) / positions.length
-      : 0;
 
   // Handle asset click
   const handleAssetClick = (asset: string) => {
@@ -112,16 +104,21 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
       accessorKey: 'currentVariableDebt',
       enableSorting: true,
       cell: ({ row }) => {
-        const balance = Number(row.currentVariableDebt) / Math.pow(10, row.decimals);
-        const balanceUsd = balance * (row.price || 0);
-        return (
-          <div>
-            <Typography weight="medium">{balance.toFixed(4)}</Typography>
-            <Typography variant="small" color="submerged">
-              ${balanceUsd.toFixed(2)}
-            </Typography>
-          </div>
-        );
+        if (row.currentVariableDebt === 0) {
+          return <Typography>_</Typography>;
+        } else {
+          return (
+            <div className="flex flex-col gap-2">
+              <CountUp value={row.currentVariableDebt} className="text-base" />
+              <CountUp
+                value={row.price * row.currentVariableDebt}
+                prefix="$"
+                decimals={2}
+                className="text-sm text-submerged"
+              />
+            </div>
+          );
+        }
       },
       meta: {
         skeleton: (
@@ -134,13 +131,14 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
     },
     {
       header: 'APY',
-      accessorKey: 'reserveCurrentLiquidityRate',
+      accessorKey: 'borrowAPY',
       enableSorting: true,
       cell: ({ row }) => {
-        // For borrow APY, we might use a different rate (variable borrow rate)
-        // This is a placeholder - adjust based on actual data structure
-        const apy = Number(row.reserveCurrentLiquidityRate) / 1e25;
-        return <Typography weight="medium">{apy.toFixed(2)}%</Typography>;
+        if (row.borrowAPY === 0) {
+          return <Typography>_</Typography>;
+        } else {
+          return <CountUp value={row.borrowAPY} suffix="%" className="text-base" />;
+        }
       },
       meta: {
         skeleton: <Skeleton className="w-16 h-5" />,
@@ -197,10 +195,8 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           <SortableTable<UserReserveData>
             data={[]}
             columns={columns}
-            pageSize={4}
             className="bg-transparent border-none"
             isLoading={true}
-            skeletonRows={3}
           />
         </div>
       ) : (
@@ -208,22 +204,39 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           {positions.length > 0 ? (
             <>
               <div className="flex gap-3 mb-4 flex-wrap">
-                <Badge variant="outline" className="text-base px-3">
-                  Balance: ${totalBalanceUsd.toFixed(2)}
+                <Badge variant="outline" className="text-base px-3 gap-1">
+                  <Typography weight="medium">Balance:</Typography>
+                  {yourBorrowBalancePosition ? (
+                    <CountUp
+                      value={yourBorrowBalancePosition}
+                      prefix="$"
+                      className="text-base ml-1"
+                    />
+                  ) : (
+                    <Typography>_</Typography>
+                  )}
                 </Badge>
-                <Badge variant="outline" className="text-base px-3">
-                  APY: {averageApy.toFixed(2)}%
+                <Badge variant="outline" className="text-base px-3 gap-1">
+                  <Typography weight="medium">APY:</Typography>
+                  {yourBorrowAPYPosition ? (
+                    <CountUp value={yourBorrowAPYPosition} suffix="%" className="text-base ml-1" />
+                  ) : (
+                    <Typography>_</Typography>
+                  )}
                 </Badge>
-                <Badge variant="outline" className="text-base px-3">
-                  Health Factor: {positions.length > 0 ? '1.75' : 'N/A'}
+                <Badge variant="outline" className="text-base px-3 gap-1">
+                  <Typography weight="medium">Power Usage:</Typography>
+                  {yourBorrowPowerUsagePosition ? (
+                    <CountUp value={yourBorrowPowerUsagePosition} className="text-base ml-1" />
+                  ) : (
+                    <Typography>_</Typography>
+                  )}
                 </Badge>
               </div>
               <SortableTable<UserReserveData>
                 data={positions}
                 columns={columns}
-                pageSize={4}
                 className="bg-transparent border-none"
-                skeletonRows={5}
               />
             </>
           ) : (

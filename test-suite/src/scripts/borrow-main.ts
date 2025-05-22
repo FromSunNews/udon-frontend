@@ -1,458 +1,287 @@
 import { op } from '@chromia/ft4';
-import chalk from 'chalk';
+import { admin_kp, user_a_kp } from '../configs/key-pair';
+import { registerAccountOpen } from '../common/operations/accounts';
 import { getClient } from '../clients';
-import { admin_kp } from '../configs/key-pair';
-import { getSessionOrRegister } from '../helpers';
-import { createHash } from 'crypto';
+import chalk from 'chalk';
+import { formatRay, RAY } from '../helpers/wadraymath';
+import { BigNumber } from 'ethers';
+import { parseUnits } from 'ethers/lib/utils';
 
-/**
- * @title User Config Tests
- * @notice Unit tests for user configuration in TypeScript
- */
+// Token definitions
+const TOKENS = [
+  {
+    name: 'Bitcoin USD',
+    symbol: 'BTCUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
+    price: parseUnits('60000', 18).toString(),
+  },
+  // {
+  //   name: 'Ethereum USD',
+  //   symbol: 'ETHUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+  //   price: parseUnits('2500', 18).toString(),
+  // },
+  // {
+  //   name: 'MyNeighborAlice',
+  //   symbol: 'ALICEUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
+  //   price: parseUnits('0.49', 18).toString(),
+  // },
+  // {
+  //   name: 'DAR Open Network',
+  //   symbol: 'DUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
+  //   price: parseUnits('0.45', 18).toString(),
+  // },
+  // {
+  //   name: 'Chromia USD',
+  //   symbol: 'CHRUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
+  //   price: parseUnits('0.22', 18).toString(),
+  // },
+];
 
-// Test user
-const user = admin_kp;
-
-/**
- * Helper function to create a hash from name and blockchain RID
- */
-function createReserveId(name: string, blockchainRid: string): Buffer {
-  const hash = createHash('sha256').update(`${name}${blockchainRid}`).digest();
-  return Buffer.from(hash);
-}
-
-/**
- * Helper function to initialize a test user configuration
- */
-async function initTestUserConfig() {
+async function initSupply() {
   try {
-    console.log(chalk.cyan('Initializing test user config...'));
+    console.log(chalk.bold.cyan('=== Starting Supply Initialization Process ==='));
+
+    // Get client and setup sessions
+    console.log(chalk.blue('🔄 Setting up client and sessions...'));
     const client = await getClient();
-    const userSession = await getSessionOrRegister(client, user);
+    const adminSession = await registerAccountOpen(client, admin_kp);
+    const adminAccountId = adminSession.account.id;
+
+    const userSession = await registerAccountOpen(client, user_a_kp);
     const userAccountId = userSession.account.id;
 
-    console.log(chalk.green(`User account initialized with ID: ${userAccountId.toString('hex')}`));
+    console.log(chalk.green('✅ Sessions created successfully'));
 
-    // Create user config
-    await userSession.call(op('create_user_config_op', userAccountId));
-    console.log(chalk.green('User configuration created successfully'));
+    // Initialize ACL module
+    console.log(chalk.blue('🔄 Initializing ACL module...'));
+    await adminSession.call(op('initialize', admin_kp.pubKey));
+    await adminSession.call(op('grant_role', 'POOL_ADMIN', adminAccountId, admin_kp.pubKey));
+    console.log(chalk.green('✅ ACL module initialized'));
 
-    // Generate reserve IDs
-    const blockchainRid = client.blockchainRid;
-    const reserveName1 = 'Test Reserve 1';
-    const reserveName2 = 'Test Reserve 2';
+    // Initialize required factories
+    console.log(chalk.blue('🔄 Initializing asset factories...'));
+    await adminSession.call(op('initialize_asset_base'));
+    await adminSession.call(op('initialize_underlying_asset_factory'));
+    await adminSession.call(op('initialize_a_asset_factory'));
+    await adminSession.call(op('initialize_variable_debt_asset_factory'));
+    await adminSession.call(op('initialize_emode_logic'));
+    console.log(chalk.green('✅ Asset factories initialized'));
 
-    const reserveId1 = createReserveId(reserveName1, blockchainRid);
-    const reserveId2 = createReserveId(reserveName2, blockchainRid);
-
-    return {
-      userSession,
-      userAccountId,
-      reserveId1,
-      reserveId2,
+    // Set interest rate strategy parameters (will be used for all tokens)
+    const interestRateParams = {
+      optimalUsageRatio: BigNumber.from(RAY).mul(80).div(100), // 0.8 in RAY
+      baseVariableBorrowRate: BigNumber.from(RAY).mul(5).div(100), // 0.05 in RAY
+      variableRateSlope1: BigNumber.from(RAY).mul(4).div(100), // 0.04 in RAY
+      variableRateSlope2: BigNumber.from(RAY).mul(60).div(100), // 0.6 in RAY
     };
-  } catch (error) {
-    console.error(chalk.red('Error initializing test user config:'), error);
-    throw error;
-  }
-}
 
-/**
- * Test the constants in user configuration
- */
-async function testUserConfigConstants() {
-  try {
-    console.log(chalk.cyan('\nTesting user config constants...'));
-    const client = await getClient();
-    const userSession = await getSessionOrRegister(client, user);
+    // Create all tokens and their A-tokens
+    console.log(chalk.blue('🔄 Creating tokens and initializing reserves...'));
 
-    // Query minimum health factor liquidation threshold
-    const minHealthFactorResult = await userSession.query(
-      'get_minimum_health_factor_liquidation_threshold'
-    );
-    console.log(`Minimum health factor liquidation threshold: ${minHealthFactorResult}`);
+    const createdTokens = [];
 
-    // Query health factor liquidation threshold
-    const healthFactorResult = await userSession.query('get_health_factor_liquidation_threshold');
-    console.log(`Health factor liquidation threshold: ${healthFactorResult}`);
+    // Process each token
+    for (const token of TOKENS) {
+      console.log(chalk.blue(`🔄 Creating ${token.symbol}...`));
 
-    // Query isolated collateral supplier role
-    const isolatedRoleResult = await userSession.query('get_isolated_collateral_supplier_role');
-    console.log(`Isolated collateral supplier role: ${isolatedRoleResult}`);
-
-    console.log(chalk.green('Constants test completed successfully'));
-  } catch (error) {
-    console.error(chalk.red('Error testing user config constants:'), error);
-  }
-}
-
-/**
- * Test the default values of a new user configuration
- */
-async function testUserConfigDefaultValues() {
-  try {
-    console.log(chalk.cyan('\nTesting user config default values...'));
-    const { userSession, userAccountId } = await initTestUserConfig();
-
-    // Query user config
-    const isEmpty = await userSession.query('is_empty', { user_id: userAccountId });
-    const isBorrowingAny = await userSession.query('is_borrowing_any', { user_id: userAccountId });
-    const isUsingAsCollateralAny = await userSession.query('is_using_as_collateral_any', {
-      user_id: userAccountId,
-    });
-
-    console.log(`Is empty: ${isEmpty}`);
-    console.log(`Is borrowing any: ${isBorrowingAny}`);
-    console.log(`Is using as collateral any: ${isUsingAsCollateralAny}`);
-
-    if (isEmpty === true && isBorrowingAny === false && isUsingAsCollateralAny === false) {
-      console.log(chalk.green('Default values test passed'));
-    } else {
-      console.log(chalk.red('Default values test failed'));
-    }
-  } catch (error) {
-    console.error(chalk.red('Error testing user config default values:'), error);
-  }
-}
-
-/**
- * Test borrowing functionality
- */
-async function testBorrowing() {
-  try {
-    console.log(chalk.cyan('\nTesting borrowing functionality...'));
-    const { userSession, userAccountId, reserveId1 } = await initTestUserConfig();
-
-    // Set borrowing to true
-    console.log(`Setting borrowing to true for reserve ID: ${reserveId1.toString('hex')}`);
-    await userSession.call(op('set_borrowing_op', userAccountId, reserveId1, true));
-
-    // Query borrowing state
-    const isBorrowing = await userSession.query('is_borrowing', {
-      user_id: userAccountId,
-      reserve_id: reserveId1,
-    });
-
-    const isBorrowingAny = await userSession.query('is_borrowing_any', { user_id: userAccountId });
-    const isBorrowingOne = await userSession.query('is_borrowing_one', { user_id: userAccountId });
-    const isUsingAsCollateralOrBorrowing = await userSession.query(
-      'is_using_as_collateral_or_borrowing',
-      {
-        user_id: userAccountId,
-        reserve_id: reserveId1,
-      }
-    );
-
-    console.log(`Is borrowing specific reserve: ${isBorrowing}`);
-    console.log(`Is borrowing any: ${isBorrowingAny}`);
-    console.log(`Is borrowing one: ${isBorrowingOne}`);
-    console.log(`Is using as collateral or borrowing: ${isUsingAsCollateralOrBorrowing}`);
-
-    // Set borrowing to false
-    console.log(`Setting borrowing to false for reserve ID: ${reserveId1.toString('hex')}`);
-    await userSession.call(op('set_borrowing_op', userAccountId, reserveId1, false));
-
-    // Query borrowing state after setting to false
-    const isBorrowingAfter = await userSession.query('is_borrowing', {
-      user_id: userAccountId,
-      reserve_id: reserveId1,
-    });
-
-    const isBorrowingAnyAfter = await userSession.query('is_borrowing_any', {
-      user_id: userAccountId,
-    });
-
-    console.log(`Is borrowing specific reserve after setting to false: ${isBorrowingAfter}`);
-    console.log(`Is borrowing any after setting to false: ${isBorrowingAnyAfter}`);
-
-    console.log(chalk.green('Borrowing test completed'));
-  } catch (error) {
-    console.error(chalk.red('Error testing borrowing functionality:'), error);
-  }
-}
-
-/**
- * Test collateral functionality
- */
-async function testCollateral() {
-  try {
-    console.log(chalk.cyan('\nTesting collateral functionality...'));
-    const { userSession, userAccountId, reserveId1 } = await initTestUserConfig();
-
-    // Set using as collateral to true
-    console.log(
-      `Setting using as collateral to true for reserve ID: ${reserveId1.toString('hex')}`
-    );
-    await userSession.call(op('set_using_as_collateral_op', userAccountId, reserveId1, true));
-
-    // Query collateral state
-    const isUsingAsCollateral = await userSession.query('is_using_as_collateral', {
-      user_id: userAccountId,
-      reserve_id: reserveId1,
-    });
-
-    const isUsingAsCollateralAny = await userSession.query('is_using_as_collateral_any', {
-      user_id: userAccountId,
-    });
-
-    const isUsingAsCollateralOne = await userSession.query('is_using_as_collateral_one', {
-      user_id: userAccountId,
-    });
-
-    console.log(`Is using as collateral: ${isUsingAsCollateral}`);
-    console.log(`Is using as collateral any: ${isUsingAsCollateralAny}`);
-    console.log(`Is using as collateral one: ${isUsingAsCollateralOne}`);
-
-    // Set using as collateral to false
-    console.log(
-      `Setting using as collateral to false for reserve ID: ${reserveId1.toString('hex')}`
-    );
-    await userSession.call(op('set_using_as_collateral_op', userAccountId, reserveId1, false));
-
-    // Query collateral state after setting to false
-    const isUsingAsCollateralAfter = await userSession.query('is_using_as_collateral', {
-      user_id: userAccountId,
-      reserve_id: reserveId1,
-    });
-
-    console.log(`Is using as collateral after setting to false: ${isUsingAsCollateralAfter}`);
-
-    console.log(chalk.green('Collateral test completed'));
-  } catch (error) {
-    console.error(chalk.red('Error testing collateral functionality:'), error);
-  }
-}
-
-/**
- * Test both borrowing and collateral functionality together
- */
-async function testBorrowingAndCollateral() {
-  try {
-    console.log(chalk.cyan('\nTesting borrowing and collateral together...'));
-    const { userSession, userAccountId, reserveId1 } = await initTestUserConfig();
-
-    // Set borrowing to true
-    await userSession.call(op('set_borrowing_op', userAccountId, reserveId1, true));
-    console.log(`Set borrowing to true for reserve ID: ${reserveId1.toString('hex')}`);
-
-    // Set using as collateral to true
-    await userSession.call(op('set_using_as_collateral_op', userAccountId, reserveId1, true));
-    console.log(`Set using as collateral to true for reserve ID: ${reserveId1.toString('hex')}`);
-
-    // Query state
-    const isBorrowing = await userSession.query('is_borrowing', {
-      user_id: userAccountId,
-      reserve_id: reserveId1,
-    });
-
-    const isUsingAsCollateral = await userSession.query('is_using_as_collateral', {
-      user_id: userAccountId,
-      reserve_id: reserveId1,
-    });
-
-    const isEmpty = await userSession.query('is_empty', { user_id: userAccountId });
-
-    console.log(`Is borrowing: ${isBorrowing}`);
-    console.log(`Is using as collateral: ${isUsingAsCollateral}`);
-    console.log(`Is empty: ${isEmpty}`);
-
-    console.log(chalk.green('Borrowing and collateral test completed'));
-  } catch (error) {
-    console.error(chalk.red('Error testing borrowing and collateral together:'), error);
-  }
-}
-
-/**
- * Test multiple reserves
- */
-async function testMultipleReserves() {
-  try {
-    console.log(chalk.cyan('\nTesting multiple reserves...'));
-    const { userSession, userAccountId, reserveId1, reserveId2 } = await initTestUserConfig();
-
-    // Set borrowing for reserve 1
-    await userSession.call(op('set_borrowing_op', userAccountId, reserveId1, true));
-    console.log(`Set borrowing to true for reserve ID 1: ${reserveId1.toString('hex')}`);
-
-    // Set using as collateral for reserve 2
-    await userSession.call(op('set_using_as_collateral_op', userAccountId, reserveId2, true));
-    console.log(`Set using as collateral to true for reserve ID 2: ${reserveId2.toString('hex')}`);
-
-    // Query state
-    const isBorrowingReserve1 = await userSession.query('is_borrowing', {
-      user_id: userAccountId,
-      reserve_id: reserveId1,
-    });
-
-    const isBorrowingReserve2 = await userSession.query('is_borrowing', {
-      user_id: userAccountId,
-      reserve_id: reserveId2,
-    });
-
-    const isUsingAsCollateralReserve1 = await userSession.query('is_using_as_collateral', {
-      user_id: userAccountId,
-      reserve_id: reserveId1,
-    });
-
-    const isUsingAsCollateralReserve2 = await userSession.query('is_using_as_collateral', {
-      user_id: userAccountId,
-      reserve_id: reserveId2,
-    });
-
-    console.log(
-      `Reserve 1 - Is borrowing: ${isBorrowingReserve1}, Is using as collateral: ${isUsingAsCollateralReserve1}`
-    );
-    console.log(
-      `Reserve 2 - Is borrowing: ${isBorrowingReserve2}, Is using as collateral: ${isUsingAsCollateralReserve2}`
-    );
-
-    // Test one reserve checks
-    const isBorrowingOne = await userSession.query('is_borrowing_one', { user_id: userAccountId });
-    const isUsingAsCollateralOne = await userSession.query('is_using_as_collateral_one', {
-      user_id: userAccountId,
-    });
-
-    console.log(`Is borrowing one: ${isBorrowingOne}`);
-    console.log(`Is using as collateral one: ${isUsingAsCollateralOne}`);
-
-    // Add another borrowing
-    await userSession.call(op('set_borrowing_op', userAccountId, reserveId2, true));
-    console.log(`Set borrowing to true for reserve ID 2: ${reserveId2.toString('hex')}`);
-
-    // Test one reserve checks again
-    const isBorrowingOneAfter = await userSession.query('is_borrowing_one', {
-      user_id: userAccountId,
-    });
-
-    console.log(`Is borrowing one after second borrow: ${isBorrowingOneAfter}`);
-
-    console.log(chalk.green('Multiple reserves test completed'));
-  } catch (error) {
-    console.error(chalk.red('Error testing multiple reserves:'), error);
-  }
-}
-
-/**
- * Test get first asset ID functions
- */
-async function testGetFirstAssetId() {
-  try {
-    console.log(chalk.cyan('\nTesting first asset ID functions...'));
-    const { userSession, userAccountId, reserveId1, reserveId2 } = await initTestUserConfig();
-
-    // Test with no assets
-    const firstCollateralAssetIdEmpty = await userSession.query('get_first_collateral_asset_id', {
-      user_id: userAccountId,
-    });
-
-    const firstBorrowingAssetIdEmpty = await userSession.query('get_first_borrowing_asset_id', {
-      user_id: userAccountId,
-    });
-
-    console.log(
-      `First collateral asset ID (empty): ${(firstCollateralAssetIdEmpty as Buffer)?.toString('hex') || 'empty'}`
-    );
-    console.log(
-      `First borrowing asset ID (empty): ${(firstBorrowingAssetIdEmpty as Buffer)?.toString('hex') || 'empty'}`
-    );
-
-    // Set collateral for reserves
-    await userSession.call(op('set_using_as_collateral_op', userAccountId, reserveId1, true));
-    await userSession.call(op('set_using_as_collateral_op', userAccountId, reserveId2, true));
-
-    // Set borrowing for reserve
-    await userSession.call(op('set_borrowing_op', userAccountId, reserveId2, true));
-
-    // Test first asset IDs after setting
-    const firstCollateralAssetId = await userSession.query('get_first_collateral_asset_id', {
-      user_id: userAccountId,
-    });
-
-    const firstBorrowingAssetId = await userSession.query('get_first_borrowing_asset_id', {
-      user_id: userAccountId,
-    });
-
-    console.log(
-      `First collateral asset ID: ${(firstCollateralAssetId as Buffer)?.toString('hex') || 'none'}`
-    );
-    console.log(
-      `First borrowing asset ID: ${(firstBorrowingAssetId as Buffer)?.toString('hex') || 'none'}`
-    );
-
-    console.log(chalk.green('First asset ID test completed'));
-  } catch (error) {
-    console.error(chalk.red('Error testing first asset ID functions:'), error);
-  }
-}
-
-/**
- * Test invalid reserve index
- */
-async function testInvalidReserveIndex() {
-  try {
-    console.log(chalk.cyan('\nTesting invalid reserve index...'));
-    const { userSession, userAccountId } = await initTestUserConfig();
-
-    // Create an invalid reserve ID
-    const invalidReserveId = createReserveId('Invalid Reserve', 'invalid_blockchain_rid');
-
-    // Test set_borrowing with invalid index
-    console.log(
-      `Testing set_borrowing with invalid reserve ID: ${invalidReserveId.toString('hex')}`
-    );
-    try {
-      await userSession.call(op('set_borrowing_op', userAccountId, invalidReserveId, true));
-      console.log(chalk.red('Expected failure but operation succeeded'));
-    } catch (error) {
-      console.log(chalk.green(`Got expected error: ${error.message}`));
-    }
-
-    // Test set_using_as_collateral with invalid index
-    console.log(
-      `Testing set_using_as_collateral with invalid reserve ID: ${invalidReserveId.toString('hex')}`
-    );
-    try {
-      await userSession.call(
-        op('set_using_as_collateral_op', userAccountId, invalidReserveId, true)
+      // Create underlying asset
+      await adminSession.call(
+        op('create_underlying_asset', token.name, token.symbol, token.decimals, token.icon)
       );
-      console.log(chalk.red('Expected failure but operation succeeded'));
-    } catch (error) {
-      console.log(chalk.green(`Got expected error: ${error.message}`));
+
+      const underlyingAssetResult = await adminSession.getAssetsBySymbol(token.symbol);
+      const underlyingAssetId = underlyingAssetResult.data[0].id;
+      console.log(
+        chalk.green(`✅ ${token.symbol} created:`),
+        chalk.yellow(`(${underlyingAssetId})`)
+      );
+
+      // Create price asset
+      await adminSession.call(
+        op('create_price_asset', admin_kp.pubKey, token.symbol, underlyingAssetId)
+      );
+      console.log(chalk.green('✅ Price asset oracle created:'));
+
+      // update price asset
+      await adminSession.call(op('update_price_update_op', token.symbol, BigInt(token.price)));
+      console.log(chalk.green('✅ Price asset updated:'));
+
+      // Set interest rate strategy
+      await adminSession.call(
+        op(
+          'set_default_reserve_interest_rate_strategy',
+          underlyingAssetId,
+          BigInt(interestRateParams.optimalUsageRatio.toString()),
+          BigInt(interestRateParams.baseVariableBorrowRate.toString()),
+          BigInt(interestRateParams.variableRateSlope1.toString()),
+          BigInt(interestRateParams.variableRateSlope2.toString())
+        )
+      );
+      console.log(chalk.green(`✅ Interest rate strategy set for ${token.symbol}`));
+
+      // Configure reserve with a-asset
+      const aAsset = {
+        name: `A ${token.name}`,
+        symbol: `A${token.symbol}`,
+        decimals: token.decimals,
+      };
+
+      const vAsset = {
+        name: `V ${token.name}`,
+        symbol: `V${token.symbol}`,
+        decimals: token.decimals,
+      };
+
+      console.log('aAsset', aAsset);
+      console.log('vAsset', vAsset);
+      await adminSession.call(
+        op(
+          'init_reserve_op',
+          underlyingAssetId,
+          adminAccountId,
+          aAsset.name,
+          aAsset.symbol,
+          vAsset.name,
+          vAsset.symbol
+        )
+      );
+
+      const aAssetResult = await adminSession.getAssetsBySymbol(aAsset.symbol);
+      const aAssetId = aAssetResult.data[0].id;
+      console.log(
+        chalk.green(`✅ Reserve initialized with a-asset:`),
+        chalk.yellow(`${aAsset.symbol} (${aAssetId})`)
+      );
+
+      // Set field for reserve_configuration
+      await adminSession.call(
+        op(
+          'configure_reserve_as_collateral',
+          underlyingAssetId,
+          7000, // ltv = 70%
+          7500, // liquidation threshold = 75%
+          10500 // liquidation bonus = 5%
+        )
+      );
+
+      console.log(chalk.green(`✅ Set field for reserve_configuration`));
+
+      // set debt ceiling = 0
+      await adminSession.call(op('set_debt_ceiling_op', underlyingAssetId, 0));
+      console.log(chalk.green(`✅ Set field for debt_ceiling`));
+
+      // no borrowing in isolation
+      await adminSession.call(op('set_borrowable_in_isolation_op', underlyingAssetId, false));
+      console.log(chalk.green(`✅ Set field for borrowing_in_isolation`));
+
+      // no siloed borrowing
+      await adminSession.call(op('set_siloed_borrowing_op', underlyingAssetId, false));
+      console.log(chalk.green(`✅ Set field for set_siloed_borrowing_op`));
+
+      // set_reserve_flash_loaning
+      await adminSession.call(op('set_reserve_flash_loaning', underlyingAssetId, false));
+      console.log(chalk.green(`✅ Set field for set_reserve_flash_loaning`));
+
+      // set_reserve_borrowing. borrowing enabled
+      await adminSession.call(op('set_reserve_borrowing', underlyingAssetId, true));
+      console.log(chalk.green(`✅ Set field for set_reserve_borrowing`));
+
+      // Mint underlying tokens to user
+      const mintAmount = BigNumber.from(RAY).mul(1000); // 1000 RAY
+      await adminSession.call(
+        op('mint_underlying_asset', userAccountId, BigInt(mintAmount.toString()), underlyingAssetId)
+      );
+      console.log(
+        chalk.green(
+          `✅ Minted ${chalk.yellow(formatRay(mintAmount))} ${token.symbol} tokens to user`
+        )
+      );
+
+      createdTokens.push({
+        underlying: {
+          id: underlyingAssetId,
+          symbol: token.symbol,
+        },
+        aToken: {
+          id: aAssetId,
+          symbol: aAsset.symbol,
+        },
+      });
     }
 
-    console.log(chalk.green('Invalid reserve index test completed'));
+    // console.log(chalk.green('✅ All tokens created successfully'));
+
+    // // Supply operation for the first token (TUT)
+    // console.log(chalk.blue('🔄 Performing supply operation for TUT...'));
+    // const supplyToken = createdTokens[0];
+    // const supplyAmount = BigNumber.from(RAY).mul(100); // 30 RAY
+    // const result = await userSession.call(
+    //   op(
+    //     'supply',
+    //     userAccountId,
+    //     supplyToken.underlying.id,
+    //     BigInt(supplyAmount.toString()),
+    //     userAccountId,
+    //     BigInt(0), // referral code
+    //     Date.now() // referral code timestamp
+    //   )
+    // );
+    // const isSuccess = result.receipt.statusCode === 200;
+    // console.log(
+    //   isSuccess
+    //     ? chalk.green('✅ Supply operation completed successfully')
+    //     : chalk.red('❌ Supply operation failed')
+    // );
+
+    // // Check final balances using getBalanceByAssetId
+    // console.log(chalk.blue('🔄 Checking final balances...'));
+
+    // // Display balances for all tokens
+    // for (const token of createdTokens) {
+    //   console.log(chalk.yellow(`\n--- ${token.underlying.symbol} Balances ---`));
+
+    //   // Get user's underlying balance
+    //   const underlyingBalance = await userSession.account.getBalanceByAssetId(token.underlying.id);
+    //   console.log(
+    //     chalk.yellow(`   Underlying balance: ${formatRay(underlyingBalance.amount.value)}`)
+    //   );
+
+    //   // Get user's a-asset balance
+    //   const aTokenBalance = await userSession.account.getBalanceByAssetId(token.aToken.id);
+    //   console.log(chalk.yellow(`   A-token balance: ${formatRay(aTokenBalance.amount.value)}`));
+    // }
+
+    // console.log(chalk.bold.green('✅✅✅ Supply initialization completed successfully ✅✅✅'));
+
+    // // Borrow operation
+    // const borrowAmount = BigNumber.from(RAY).mul(10);
+    // console.log(chalk.blue('🔄 Initializing borrow mode...'));
+    // await userSession.call(
+    //   op(
+    //     'borrow',
+    //     supplyToken.underlying.id,
+    //     BigInt(borrowAmount.toString()),
+    //     2,
+    //     0,
+    //     userAccountId,
+    //     Date.now()
+    //   )
+    // );
+    // console.log(chalk.green('✅ Borrow mode initialized'));
   } catch (error) {
-    console.error(chalk.red('Error testing invalid reserve index:'), error);
+    console.error(chalk.bold.red('❌❌❌ ERROR IN INIT SUPPLY ❌❌❌'));
+    console.error(chalk.red(error));
   }
 }
 
-// Main function to run all tests
-async function main() {
-  try {
-    console.log(chalk.bold.cyan('=== Running User Configuration Tests ==='));
-
-    // Run tests in sequence
-    await testUserConfigConstants();
-    await testUserConfigDefaultValues();
-    await testBorrowing();
-    await testCollateral();
-    await testBorrowingAndCollateral();
-    await testMultipleReserves();
-    await testGetFirstAssetId();
-    await testInvalidReserveIndex();
-
-    console.log(chalk.bold.green('\n=== All tests completed successfully ==='));
-  } catch (error) {
-    console.error(chalk.bold.red('\n=== Tests failed with error ==='));
-    console.error(error);
-    process.exit(1);
-  }
-}
-
-// Execute the tests
-main()
-  .then(() => process.exit(0))
-  .catch(error => {
-    console.error(chalk.red('Fatal error:'), error);
-    process.exit(1);
-  });
+// Execute the script
+initSupply().catch(error => console.error(chalk.red('Unhandled error:'), error));

@@ -17,6 +17,7 @@ import { SupplyDialog } from './supply-dialog';
 import { UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
 import { FaucetTestBadge } from '../faucet-badge';
+import CountUp from '@/components/common/count-up';
 
 interface SupplyTableProps {
   title: string;
@@ -93,32 +94,50 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
       header: 'Balance',
       accessorKey: 'balance',
       enableSorting: true,
-      cell: ({ row }) => (
-        <div className="flex flex-col gap-2">
-          <Typography>{row.balance}</Typography>
-          <Typography className="text-sm text-submerged">
-            ${row.price != null ? row.price.toFixed(2) : '—'}
-          </Typography>
-        </div>
-      ),
+      cell: ({ row }) => {
+        if (row.balance === 0) {
+          return <Typography>_</Typography>;
+        } else {
+          return (
+            <div className="flex flex-col gap-2">
+              <CountUp value={row.balance} className="text-base" />
+              <CountUp
+                value={row.price * row.balance}
+                prefix="$"
+                className="text-sm text-submerged"
+              />
+            </div>
+          );
+        }
+      },
       meta: {
         skeleton: <Skeleton className="w-20 h-5" />,
       },
     },
-    // {
-    //   header: 'Price',
-    //   accessorKey: 'price',
-    //   enableSorting: true,
-    //   cell: ({ row }) => <Typography>${row.price != null ? row.price.toFixed(2) : '—'}</Typography>,
-    //   meta: {
-    //     skeleton: <Skeleton className="w-16 h-5" />,
-    //   },
-    // },
+    {
+      header: 'Price',
+      accessorKey: 'price',
+      enableSorting: true,
+      cell: ({ row }) => <CountUp value={row.price} prefix="$" className="text-base" />,
+      meta: {
+        skeleton: <Skeleton className="w-16 h-5" />,
+      },
+    },
     {
       header: 'APY',
       accessorKey: 'supplyAPY',
       enableSorting: true,
-      cell: ({ row }) => <Typography>{row.supplyAPY.toFixed(4)}%</Typography>,
+      cell: ({ row }) => {
+        if (row.supplyAPY === 0) {
+          return <Typography>_</Typography>;
+        } else {
+          return (
+            <div className="flex flex-col gap-2">
+              <CountUp value={row.supplyAPY} suffix="%" className="text-base" />
+            </div>
+          );
+        }
+      },
       meta: {
         skeleton: <Skeleton className="w-16 h-5" />,
       },
@@ -154,6 +173,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
               }}
               aria-label={`Supply ${row.symbol}`}
               className="w-[100px]"
+              disabled={row.balance === 0}
             >
               Supply
             </Button>
@@ -208,18 +228,14 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
             </Typography>
           </div>
         )}
-        {reserves.length > 0 && (
-          <div className="mt-3 sm:mt-5">
-            <SortableTable<UserReserveData>
-              data={reserves}
-              columns={supplyColumns}
-              pageSize={5}
-              className="p-0 border-none"
-              isLoading={isLoading}
-              skeletonRows={5}
-            />
-          </div>
-        )}
+        <div className="mt-3 sm:mt-5">
+          <SortableTable<UserReserveData>
+            data={reserves}
+            columns={supplyColumns}
+            className="p-0 border-none"
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* re-render when close or click outside dialog */}

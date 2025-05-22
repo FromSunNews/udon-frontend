@@ -6,6 +6,7 @@ import { Typography } from '@/components/common/typography';
 import { Skeleton } from '@/components/common/skeleton';
 import { ExternalLinkIcon, Sparkles } from 'lucide-react';
 import { cn } from '@/utils/tailwind';
+import { ShineBorder } from '@/components/common/shine-border';
 
 interface FaucetTestBadgeProps {
   isLoading?: boolean;
@@ -36,10 +37,9 @@ export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadg
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-2 py-1.5 px-3 rounded-full border transition-all duration-300',
-        'bg-gradient-to-r from-background via-background to-background hover:from-primary/5 hover:to-primary/10',
-        'border-border hover:border-primary/20 cursor-pointer',
-        'hover:shadow-md hover:shadow-primary/5',
+        'relative inline-flex items-center gap-2 py-1.5 px-3 rounded-full',
+        'bg-gradient-to-r from-background/20 via-background/50 to-background/20',
+        'cursor-pointer',
         isHovered && 'scale-[1.03]',
         className
       )}
@@ -47,6 +47,7 @@ export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadg
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      <ShineBorder shineColor={['#52E5FF', '#36B1FF', '#E4F5FF']} duration={10} />
       <Sparkles
         className={cn(
           'w-4 h-4 transition-colors duration-300',

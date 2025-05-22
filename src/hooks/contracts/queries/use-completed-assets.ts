@@ -140,21 +140,38 @@ export function useCompletedAssets() {
     );
   }, [userReserves]);
 
-  const yourBalancePosition = useMemo(() => {
+  const yourSupplyBalancePosition = useMemo(() => {
     return userReserves.reduce((sum, r) => sum + Number(r.currentATokenBalance) * r.price, 0);
   }, [userReserves]);
 
-  const yourCollateralPosition = useMemo(() => {
+  const yourSupplyCollateralPosition = useMemo(() => {
     return userReserves.reduce(
       (sum, r) => sum + (r.usageAsCollateralEnabled ? Number(r.currentATokenBalance) * r.price : 0),
       0
     );
   }, [userReserves]);
 
-  const yourAPYPosition = useMemo(() => {
+  const yourSupplyAPYPosition = useMemo(() => {
     if (!userReserves.length) return 0;
     const total = userReserves.reduce((sum, r) => sum + (r.supplyAPY || 0), 0);
     return total / userReserves.length;
+  }, [userReserves]);
+
+  const yourBorrowBalancePosition = useMemo(() => {
+    return userReserves.reduce((sum, r) => sum + Number(r.currentVariableDebt) * r.price, 0);
+  }, [userReserves]);
+
+  const yourBorrowAPYPosition = useMemo(() => {
+    if (!userReserves.length) return 0;
+    const total = userReserves.reduce((sum, r) => sum + (r.borrowAPY || 0), 0);
+    return total / userReserves.length;
+  }, [userReserves]);
+
+  const yourBorrowPowerUsagePosition = useMemo(() => {
+    return userReserves.reduce(
+      (sum, r) => sum + r.currentVariableDebtTokenTotalSupply / r.currentVariableDebt,
+      0
+    );
   }, [userReserves]);
 
   return {
@@ -163,9 +180,12 @@ export function useCompletedAssets() {
     borrowPositions,
     totalDeposit,
     totalBorrow,
-    yourBalancePosition,
-    yourCollateralPosition,
-    yourAPYPosition,
+    yourSupplyBalancePosition,
+    yourSupplyCollateralPosition,
+    yourSupplyAPYPosition,
+    yourBorrowBalancePosition,
+    yourBorrowAPYPosition,
+    yourBorrowPowerUsagePosition,
     isLoading,
     error,
     refresh: fetchUserReserves,

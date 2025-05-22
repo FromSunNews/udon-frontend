@@ -55,13 +55,6 @@ export function useFaucet(): UseFaucetReturn {
               underlyingAssetId
             )
           )
-          .buildAndSend();
-
-        console.log('Mint operation result:', result);
-
-        // Enable collateral for the asset
-        await session
-          .transactionBuilder()
           .add(
             op(
               'set_using_as_collateral_op',
@@ -71,6 +64,8 @@ export function useFaucet(): UseFaucetReturn {
             )
           )
           .buildAndSend();
+
+        console.log('Mint operation result:', result);
 
         toast.success(`Successfully minted 1000 ${symbol} tokens to your wallet`);
       } catch (err) {

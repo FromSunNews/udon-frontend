@@ -119,6 +119,16 @@ const config: Config = {
         'md:14xl': ['72px', { lineHeight: '74px' }],
         'md:15xl': ['76px', { lineHeight: '78px' }],
       },
+      animation: {
+        shine: 'shine var(--duration, 2s) infinite linear',
+      },
+      keyframes: {
+        shine: {
+          '0%': { backgroundPosition: '0% 0%' },
+          '50%': { backgroundPosition: '100% 100%' },
+          '100%': { backgroundPosition: '0% 0%' },
+        },
+      },
     },
   },
   plugins: [animate],
