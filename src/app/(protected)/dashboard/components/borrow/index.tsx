@@ -91,13 +91,13 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
     },
     {
       header: 'Available',
-      accessorKey: 'availableBorrow',
+      accessorKey: 'availableLiquidity',
       enableSorting: true,
       cell: ({ row }) => {
-        if (row.availableBorrow === 0) {
+        if (row.availableLiquidity === 0) {
           return <Typography>_</Typography>;
         } else {
-          return <CountUp value={row.availableBorrow} className="text-base" />;
+          return <CountUp value={row.availableLiquidity} className="text-base" />;
         }
       },
       meta: {

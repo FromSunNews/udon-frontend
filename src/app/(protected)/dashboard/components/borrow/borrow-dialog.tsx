@@ -66,7 +66,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
-  const hf = 0;
+  // const hf = 0;
 
   const form = useForm<BorrowFormValues>({
     resolver: zodResolver(borrowFormSchema),
@@ -97,11 +97,13 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
       // Don't allow value > available borrow
-      const availableBorrowActual =
-        Number(reserve.availableBorrow) === 0 ? Number.MAX_VALUE : Number(reserve.availableBorrow);
+      const availableLiquidityActual =
+        Number(reserve.availableLiquidity) === 0
+          ? Number.MAX_VALUE
+          : Number(reserve.availableLiquidity);
       const valueWithBalance =
-        Number(form.watch('amount')) > availableBorrowActual
-          ? availableBorrowActual
+        Number(form.watch('amount')) > availableLiquidityActual
+          ? availableLiquidityActual
           : form.watch('amount');
       const needToChangeValue = valueWithBalance !== form.watch('amount');
       if (needToChangeValue) {
@@ -111,7 +113,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
       setIsRefetchEnabled(true);
       fetchPrice();
     });
-  }, [fetchPrice, form, reserve.availableBorrow]);
+  }, [fetchPrice, form, reserve.availableLiquidity]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -149,8 +151,8 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   };
 
   const handleMaxAmount = () => {
-    form.setValue('amount', reserve.availableBorrow.toString());
-    setInputAmount(reserve.availableBorrow.toString());
+    form.setValue('amount', reserve.availableLiquidity.toString());
+    setInputAmount(reserve.availableLiquidity.toString());
     handleFetchPrice();
   };
 
@@ -164,11 +166,13 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
         return;
       }
 
-      const availableBorrow =
-        Number(reserve.availableBorrow) === 0 ? Number.MAX_VALUE : Number(reserve.availableBorrow);
-      if (amount > availableBorrow) {
+      const availableLiquidity =
+        Number(reserve.availableLiquidity) === 0
+          ? Number.MAX_VALUE
+          : Number(reserve.availableLiquidity);
+      if (amount > availableLiquidity) {
         toast.error(
-          `Amount exceeds your available borrow of ${reserve.availableBorrow} ${reserve.symbol}`
+          `Amount exceeds your available borrow of ${reserve.availableLiquidity} ${reserve.symbol}`
         );
         return;
       }
@@ -204,7 +208,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   };
 
   // Calculate new health factor after borrowing (simplified estimation)
-  const newHealthFactor = Math.max(0, hf - parseFloat(inputAmount || '0') * 0.2).toFixed(2);
+  // const newHealthFactor = Math.max(0, hf - parseFloat(inputAmount || '0') * 0.2).toFixed(2);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -233,7 +237,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                       inputMode="decimal"
                       pattern="[0-9]*[.]?[0-9]*"
                       min={0.0}
-                      max={reserve.availableBorrow}
+                      max={reserve.availableLiquidity}
                       step="any"
                       onChange={handleAmountChange}
                     />
@@ -276,13 +280,13 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                     <div
                       className={cn(
                         'flex flex-row items-center gap-1 text-primary cursor-pointer',
-                        !reserve.availableBorrow && 'opacity-50 cursor-not-allowed'
+                        !reserve.availableLiquidity && 'opacity-50 cursor-not-allowed'
                       )}
                       onClick={handleMaxAmount}
                     >
                       <Typography>Available:</Typography>
                       <CountUp
-                        value={reserve.availableBorrow || 0}
+                        value={reserve.availableLiquidity || 0}
                         className="font-bold"
                         animateOnlyOnce={true}
                       />
@@ -304,6 +308,18 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                 </Typography>
 
                 <div className="flex justify-between items-center">
+                  <Typography className="flex items-center gap-1">Interest Rate</Typography>
+                  <Typography weight="medium">
+                    <CountUp
+                      value={reserve.borrowAPY}
+                      decimals={4}
+                      suffix="%"
+                      animateOnlyOnce={true}
+                    />
+                  </Typography>
+                </div>
+
+                <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">
                     Health factor
                     <Tooltip>
@@ -315,7 +331,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   </Typography>
-                  <Typography
+                  {/* <Typography
                     weight="medium"
                     className={
                       parseFloat(newHealthFactor) >= 1.5
@@ -326,25 +342,33 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                     }
                   >
                     <CountUp value={hf} decimals={2} animateOnlyOnce={true} /> → {newHealthFactor}
-                  </Typography>
+                  </Typography> */}
+                  <Typography weight="medium">_ </Typography>
                 </div>
 
-                <div className="text-sm text-muted-foreground">
+                {/* <div className="text-sm text-muted-foreground">
                   <Typography>Liquidation at &lt;1.0</Typography>
-                </div>
+                </div> */}
 
                 <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">
-                    Interest Rate (variable)
-                  </Typography>
-                  <Typography weight="medium">
+                  <Typography className="flex items-center gap-1">Borrow amount</Typography>
+                  <div className="font-medium text-base">
                     <CountUp
-                      value={reserve.borrowAPY}
-                      decimals={4}
-                      suffix="%"
-                      animateOnlyOnce={true}
+                      value={Number(form.watch('amount'))}
+                      suffix={` ${reserve.symbol}`}
+                      decimals={6}
                     />
-                  </Typography>
+                    ~{' '}
+                    {isPriceFetching ? (
+                      <Skeleton className="inline-block h-5 w-20" />
+                    ) : (
+                      <CountUp
+                        value={(currentPrice || 0) * Number(form.watch('amount'))}
+                        prefix="$"
+                        className="text-base"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -47,6 +47,7 @@ export interface UserReserveDataResponse {
 
   supplyCap: number;
   borrowCap: number;
+  availableLiquidity: number;
 }
 
 export interface UserReserveData {
@@ -76,7 +77,7 @@ export interface UserReserveData {
   price: number;
   supplyAPY: number;
   borrowAPY: number;
-  availableBorrow: number;
+  availableLiquidity: number;
 
   supplyCap: number;
   borrowCap: number;

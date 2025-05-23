@@ -59,7 +59,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   open,
   onOpenChange,
   reserve,
-  healthFactor = 1.0,
+  // healthFactor = 1.0,
   mutateAssets,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -311,12 +311,13 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   </Typography>
-                  <Typography
+                  {/* <Typography
                     weight="medium"
                     className={healthFactor >= 1.0 ? 'text-amber-500' : 'text-red-500'}
                   >
                     <CountUp value={healthFactor} decimals={2} />
-                  </Typography>
+                  </Typography> */}
+                  <Typography weight="medium">_ </Typography>
                 </div>
 
                 {/* <div className="text-sm text-muted-foreground">

@@ -50,6 +50,18 @@ const TOKENS = [
     decimals: 8,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
   },
+  {
+    name: 'USDT',
+    symbol: 'USDTUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/825.png',
+  },
+  {
+    name: 'USDC',
+    symbol: 'USDCUSD',
+    decimals: 6,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3408.png',
+  },
 ];
 
 interface FaucetAsset {

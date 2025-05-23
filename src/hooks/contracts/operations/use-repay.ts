@@ -59,8 +59,8 @@ export function useRepay({
               'repay',
               params.assetId, // asset ID to repay
               BigInt(amountValue.toString()), // amount
-              account.id, // from account
-              params.useWalletBalance ? BigInt(1) : BigInt(0) // whether to use wallet balance (1) or collateral (0)
+              2, // 2 = interest_rate_mode
+              account.id // from account
             )
           )
           .buildAndSend();

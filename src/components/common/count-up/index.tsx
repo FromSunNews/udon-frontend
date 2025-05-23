@@ -37,6 +37,10 @@ const formatWithAbbreviation = (num: number, decimals: number = 2): string => {
   } else if (num >= 1_000) {
     formatted = (num / 1_000).toFixed(decimals);
     suffix = 'K';
+  } else if (num > 0 && num < 0.01) {
+    // For very small numbers, use enough decimal places to show significant digits
+    const significantDecimals = Math.max(decimals, Math.abs(Math.floor(Math.log10(num))) + 1);
+    formatted = num.toFixed(significantDecimals);
   } else {
     // For numbers less than 1000, ensure decimal places are preserved
     formatted = num.toFixed(decimals);
@@ -90,6 +94,15 @@ export default function CountUp({
     if (abbreviate) {
       return formatWithAbbreviation(num, decimals);
     } else {
+      // Handle very small numbers with enough decimal places
+      if (num > 0 && num < 0.01) {
+        const significantDecimals = Math.max(decimals, Math.abs(Math.floor(Math.log10(num))) + 1);
+        return num
+          .toFixed(significantDecimals)
+          .replace(/(\.\d*?)0+$/, '$1')
+          .replace(/\.$/, '');
+      }
+
       // Format to fixed decimals and trim trailing zeros
       return num
         .toFixed(decimals)
@@ -124,18 +137,34 @@ export default function CountUp({
       <CountUpLib
         end={value}
         duration={duration}
-        decimals={decimals}
+        decimals={
+          value > 0 && value < 0.01
+            ? Math.max(decimals, Math.abs(Math.floor(Math.log10(value))) + 1)
+            : decimals
+        }
         formattingFn={(n: number) => {
           let formattedNumber;
 
           if (abbreviate) {
             formattedNumber = formatWithAbbreviation(n, decimals);
           } else {
-            // Format with the specified decimals, then trim trailing zeros
-            formattedNumber = n
-              .toFixed(decimals)
-              .replace(/(\.\d*?)0+$/, '$1')
-              .replace(/\.$/, '');
+            // Handle very small numbers
+            if (n > 0 && n < 0.01) {
+              const significantDecimals = Math.max(
+                decimals,
+                Math.abs(Math.floor(Math.log10(n))) + 1
+              );
+              formattedNumber = n
+                .toFixed(significantDecimals)
+                .replace(/(\.\d*?)0+$/, '$1')
+                .replace(/\.$/, '');
+            } else {
+              // Format with the specified decimals, then trim trailing zeros
+              formattedNumber = n
+                .toFixed(decimals)
+                .replace(/(\.\d*?)0+$/, '$1')
+                .replace(/\.$/, '');
+            }
           }
 
           return `${prefix}${formattedNumber}${suffix}`;

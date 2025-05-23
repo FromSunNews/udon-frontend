@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { CircleX, Info, ChevronDown } from 'lucide-react';
+import {
+  CircleX,
+  Info,
+  // ChevronDown
+} from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,12 +26,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/common/dropdown-menu';
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from '@/components/common/dropdown-menu';
 import { UserReserveData } from '../../types';
 import CountUp from '@/components/common/count-up';
 
@@ -52,8 +56,6 @@ export interface RepayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   reserve: UserReserveData;
-  debtBalance?: string;
-  walletBalance?: string;
   healthFactor?: number;
   mutateAssets: () => void;
 }
@@ -67,16 +69,21 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
   open,
   onOpenChange,
   reserve,
-  debtBalance = '0.001',
-  walletBalance = '0.0021429',
-  healthFactor = 4.91,
+  // healthFactor = 4.91,
   mutateAssets,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
-  const [repaySource, setRepaySource] = useState<'wallet' | 'collateral'>('wallet');
+  // const [repaySource, setRepaySource] = useState<'wallet' | 'collateral'>('wallet');
+  // const [selectedToken, setSelectedToken] = useState({
+  //   symbol: reserve.symbol,
+  //   type: 'wallet',
+  //   iconUrl: reserve.iconUrl,
+  // });
+
+  const repaySource = 'wallet';
 
   const form = useForm<RepayFormValues>({
     resolver: zodResolver(repayFormSchema),
@@ -107,7 +114,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
       // Don't allow value > max amount based on source
-      const maxAmount = repaySource === 'wallet' ? walletBalance : debtBalance;
+      const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
       const valueWithBalance =
         Number(form.watch('amount')) > Number(maxAmount) ? maxAmount : form.watch('amount');
       const needToChangeValue = valueWithBalance !== form.watch('amount');
@@ -118,7 +125,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
       setIsRefetchEnabled(true);
       fetchPrice();
     });
-  }, [fetchPrice, form, walletBalance, debtBalance, repaySource]);
+  }, [fetchPrice, form, reserve.balance, reserve.currentVariableDebt, repaySource]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -157,10 +164,25 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
 
   const handleMaxAmount = () => {
     // Use the appropriate maximum based on the repayment source
-    const maxAmount = repaySource === 'wallet' ? walletBalance : debtBalance;
-    form.setValue('amount', maxAmount);
-    setInputAmount(maxAmount);
+    const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
+    form.setValue('amount', maxAmount.toString());
+    setInputAmount(maxAmount.toString());
     handleFetchPrice();
+  };
+
+  // const handleSelectToken = (type: 'wallet' | 'collateral') => {
+  //   setRepaySource(type);
+  //   setSelectedToken({
+  //     symbol: type === 'wallet' ? reserve.symbol : `a${reserve.symbol}`,
+  //     type,
+  //     iconUrl: reserve.iconUrl,
+  //   });
+  // };
+
+  const selectedToken = {
+    symbol: reserve.symbol,
+    type: 'wallet',
+    iconUrl: reserve.iconUrl,
   };
 
   const onSubmit = async (data: RepayFormValues) => {
@@ -174,7 +196,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
       }
 
       // Check if amount exceeds max based on source
-      const maxAmount = repaySource === 'wallet' ? walletBalance : debtBalance;
+      const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
       if (amount > Number(maxAmount)) {
         toast.error(
           `Amount exceeds your ${repaySource === 'wallet' ? 'wallet' : 'debt'} balance of ${maxAmount} ${reserve.symbol}`
@@ -184,7 +206,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
 
       setIsSubmitting(true);
 
-      // Use the repay hook
+      // Use the repay hook with the correct source
       const repayResult = await repay({
         assetId: reserve.assetId,
         amount: data.amount,
@@ -199,7 +221,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
       });
 
       if (repayResult.success) {
-        toast.success(`Successfully repaid ${data.amount} ${reserve.symbol}`);
+        toast.success(`Successfully repaid ${data.amount} ${selectedToken.symbol}`);
         // Close dialog after successful operation
         onOpenChange(false);
       } else {
@@ -216,7 +238,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
   // Calculate remaining debt after repayment
   const remainingDebt = Math.max(
     0,
-    parseFloat(debtBalance) - parseFloat(inputAmount || '0')
+    Number(reserve.currentVariableDebt) - Number(inputAmount || '0')
   ).toFixed(7);
 
   return (
@@ -246,7 +268,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                       inputMode="decimal"
                       pattern="[0-9]*[.]?[0-9]*"
                       min={0.0}
-                      max={repaySource === 'wallet' ? walletBalance : debtBalance}
+                      max={repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt}
                       step="any"
                       onChange={handleAmountChange}
                     />
@@ -265,21 +287,21 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                           <CircleX className="h-6 w-6 text-embossed" />
                         </Button>
                       )}
-                      <DropdownMenu>
+                      {/* <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="flex items-center gap-1.5 px-2 py-1">
                             <Avatar className="h-7 w-7">
-                              <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
-                              <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
+                              <AvatarImage src={selectedToken.iconUrl} alt={selectedToken.symbol} />
+                              <AvatarFallback>{selectedToken.symbol.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-row items-center gap-1">
-                              <span className="font-medium text-lg">{reserve.symbol}</span>
+                              <span className="font-medium text-lg">{selectedToken.symbol}</span>
                               <ChevronDown className="h-4 w-4" />
                             </div>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-[180px]">
-                          <DropdownMenuItem onClick={() => setRepaySource('wallet')}>
+                          <DropdownMenuItem onClick={() => handleSelectToken('wallet')}>
                             <div className="flex items-center gap-2">
                               <Avatar className="h-6 w-6">
                                 <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
@@ -293,7 +315,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                               </div>
                             </div>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setRepaySource('collateral')}>
+                          <DropdownMenuItem onClick={() => handleSelectToken('collateral')}>
                             <div className="flex items-center gap-2">
                               <Avatar className="h-6 w-6">
                                 <AvatarImage src={reserve.iconUrl} alt={`a${reserve.symbol}`} />
@@ -306,7 +328,14 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                             </div>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
-                      </DropdownMenu>
+                      </DropdownMenu> */}
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
+                        <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-row items-center gap-1">
+                        <span className="font-medium text-lg">{reserve.symbol}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -330,7 +359,9 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                       </Typography>
                       <CountUp
                         value={
-                          repaySource === 'wallet' ? Number(walletBalance) : Number(debtBalance)
+                          repaySource === 'wallet'
+                            ? Number(reserve.balance)
+                            : Number(reserve.currentVariableDebt)
                         }
                         className="font-bold"
                         animateOnlyOnce={true}
@@ -364,16 +395,6 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                     </Typography>
                   </div>
                 </div>
-                <div className="flex justify-between items-center text-muted-foreground text-sm">
-                  <div></div>
-                  <Typography>
-                    <CountUp
-                      value={parseFloat(remainingDebt) * (currentPrice || 0)}
-                      prefix="$"
-                      animateOnlyOnce={true}
-                    />
-                  </Typography>
-                </div>
 
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">
@@ -387,13 +408,35 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   </Typography>
-                  <Typography weight="medium" className="text-green-500">
+                  {/* <Typography weight="medium" className="text-green-500">
                     <CountUp value={healthFactor} decimals={2} animateOnlyOnce={true} />
-                  </Typography>
+                  </Typography> */}
+                  <Typography weight="medium">_ </Typography>
                 </div>
 
-                <div className="text-sm text-muted-foreground">
+                {/* <div className="text-sm text-muted-foreground">
                   <Typography>Liquidation at &lt;1.0</Typography>
+                </div> */}
+
+                <div className="flex justify-between items-center">
+                  <Typography className="flex items-center gap-1">Repay amount</Typography>
+                  <div className="font-medium text-base">
+                    <CountUp
+                      value={Number(form.watch('amount'))}
+                      suffix={` ${reserve.symbol}`}
+                      decimals={6}
+                    />
+                    ~{' '}
+                    {isPriceFetching ? (
+                      <Skeleton className="inline-block h-5 w-20" />
+                    ) : (
+                      <CountUp
+                        value={(currentPrice || 0) * Number(form.watch('amount'))}
+                        prefix="$"
+                        className="text-base"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -414,7 +457,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                   className="w-full text-lg py-6"
                   disabled={!form.watch('amount')}
                 >
-                  Repay {reserve.symbol}
+                  Repay {selectedToken.symbol}
                 </Button>
               )}
             </div>

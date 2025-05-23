@@ -267,11 +267,6 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           open={repayDialogOpen}
           onOpenChange={setRepayDialogOpen}
           reserve={selectedPosition}
-          debtBalance={(
-            Number(selectedPosition.reserveCurrentLiquidityRate) /
-            Math.pow(10, selectedPosition.decimals)
-          ).toFixed(7)}
-          walletBalance="0.0021429" // This would come from wallet balance query
           healthFactor={4.91} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}
         />

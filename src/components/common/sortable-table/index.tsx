@@ -47,7 +47,7 @@ interface SortableTableProps<T> {
 export function SortableTable<T>({
   data,
   columns,
-  pageSize = 5,
+  pageSize = 10,
   className,
   isLoading = false,
   skeletonRows = 3,

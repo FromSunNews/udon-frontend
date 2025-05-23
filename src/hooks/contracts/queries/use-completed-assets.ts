@@ -58,6 +58,8 @@ export function useCompletedAssets() {
           // asset
 
           ...r,
+          // replace USD with empty string at end of string
+          symbol: r.symbol.replace(/USD$/, ''),
           assetId: Buffer.from(r.assetId, 'hex'),
           // reserve
           totalSupply: Number(formatRay(r.totalSupply)),
@@ -81,10 +83,10 @@ export function useCompletedAssets() {
           borrowCap: Number(formatRay(r.borrowCap)),
 
           // calculate field
-          availableBorrow:
+          availableLiquidity:
             r.borrowCap > 0n
-              ? Number(formatRay(r.borrowCap - r.currentVariableDebtTokenTotalSupply))
-              : 0,
+              ? Number(formatRay(r.borrowCap - r.availableLiquidity))
+              : Number(formatRay(r.availableLiquidity)),
           supplyAPY: Number(
             normalize(
               calculateCompoundedRate({
