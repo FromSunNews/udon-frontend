@@ -83,6 +83,11 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
   //   iconUrl: reserve.iconUrl,
   // });
 
+  const maxAmount =
+    Number(reserve.balance) > Number(reserve.currentVariableDebt)
+      ? Number(reserve.currentVariableDebt)
+      : Number(reserve.balance);
+
   const repaySource = 'wallet';
 
   const form = useForm<RepayFormValues>({
@@ -114,10 +119,11 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
       // Don't allow value > max amount based on source
-      const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
+      // const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
+
       const valueWithBalance =
-        Number(form.watch('amount')) > Number(maxAmount) ? maxAmount : form.watch('amount');
-      const needToChangeValue = valueWithBalance !== form.watch('amount');
+        Number(form.watch('amount')) > Number(maxAmount) ? maxAmount : Number(form.watch('amount'));
+      const needToChangeValue = valueWithBalance !== Number(form.watch('amount'));
       if (needToChangeValue) {
         form.setValue('amount', valueWithBalance.toString());
         setInputAmount(valueWithBalance.toString());
@@ -164,7 +170,12 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
 
   const handleMaxAmount = () => {
     // Use the appropriate maximum based on the repayment source
-    const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
+    // const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
+    // ex: debt : 3, wallet : 2 if debt > wallet, use wallet
+    // const maxAmount =
+    //   Number(reserve.balance) > Number(reserve.currentVariableDebt)
+    //     ? Number(reserve.currentVariableDebt)
+    //     : Number(reserve.balance);
     form.setValue('amount', maxAmount.toString());
     setInputAmount(maxAmount.toString());
     handleFetchPrice();
@@ -196,7 +207,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
       }
 
       // Check if amount exceeds max based on source
-      const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
+      // const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
       if (amount > Number(maxAmount)) {
         toast.error(
           `Amount exceeds your ${repaySource === 'wallet' ? 'wallet' : 'debt'} balance of ${maxAmount} ${reserve.symbol}`
@@ -212,6 +223,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
         amount: data.amount,
         decimals: reserve.decimals,
         useWalletBalance: repaySource === 'wallet',
+        isRepayMax: Number(form.watch('amount')) === Number(reserve.currentVariableDebt),
       });
 
       console.log('Repay submitted:', {
@@ -354,18 +366,8 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                       className="flex flex-row items-center gap-1 text-primary cursor-pointer"
                       onClick={handleMaxAmount}
                     >
-                      <Typography>
-                        {repaySource === 'wallet' ? `Wallet balance` : `Debt balance`}
-                      </Typography>
-                      <CountUp
-                        value={
-                          repaySource === 'wallet'
-                            ? Number(reserve.balance)
-                            : Number(reserve.currentVariableDebt)
-                        }
-                        className="font-bold"
-                        animateOnlyOnce={true}
-                      />
+                      <Typography>{repaySource === 'wallet' ? `Debt` : `Debt balance`}</Typography>
+                      <CountUp value={maxAmount} className="font-bold" animateOnlyOnce={true} />
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>

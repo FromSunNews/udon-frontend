@@ -10,6 +10,7 @@ interface RepayParams {
   amount: number | string;
   decimals: number;
   useWalletBalance?: boolean; // Option to use wallet balance or supplied collateral
+  isRepayMax?: boolean;
 }
 
 interface RepayResult {
@@ -28,8 +29,9 @@ export function useRepay({
 }: {
   onSuccess?: (result: RepayResult, params: RepayParams) => void;
   onError?: (error: Error, params: RepayParams) => void;
+  isRepayMax?: boolean;
 } = {}) {
-  const { account } = useChromiaAccount();
+  const { account, client } = useChromiaAccount();
   const { data: session } = useFtSession(
     account ? { clientConfig: publicClientConfig, account } : null
   );
@@ -46,7 +48,14 @@ export function useRepay({
         console.log('Starting repay operation:', params);
 
         // Convert amount to BigInt format using parseUnits
-        const amountValue = parseUnits(params.amount.toString(), 27);
+        let amountValue;
+        // signal for rell recognize we want to withdraw with max amount
+        if (params.isRepayMax) {
+          if (!client) {
+            throw new Error('Client not available');
+          }
+          amountValue = await client.query('get_u256_max_query', {});
+        } else amountValue = parseUnits(params.amount.toString(), 27);
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
