@@ -65,7 +65,6 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
-  const [isUserWithdrawMax, setIsUserWithdrawMax] = useState(false);
   const form = useForm<WithdrawFormValues>({
     resolver: zodResolver(withdrawFormSchema),
     defaultValues: {
@@ -144,7 +143,6 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   const handleMaxAmount = () => {
     // Use supply balance as the max amount
     form.setValue('amount', reserve.currentATokenBalance.toString());
-    setIsUserWithdrawMax(true);
     handleFetchPrice();
   };
 
@@ -173,7 +171,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
         assetId: reserve.assetId,
         amount: data.amount,
         decimals: reserve.decimals,
-        isUserWithdrawMax,
+        isUserWithdrawMax: Number(form.watch('amount')) === Number(reserve.currentATokenBalance),
       });
 
       console.log('Withdraw submitted:', {
