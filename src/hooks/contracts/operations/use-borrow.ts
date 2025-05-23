@@ -61,11 +61,22 @@ export function useBorrow({
               BigInt(amountValue.toString()), // amount
               2, // interest rate mode (default: variable)
               0, // referral code,
-              account.id, // from on_behalf_of_id
-              Date.now() // Todo: implement this
+              account.id // from on_behalf_of_id
             )
           )
           .buildAndSend();
+
+        // const result = await session.call({
+        //   name: 'borrow',
+        //   args: [
+        //     params.assetId, // asset ID to borrow
+        //     BigInt(amountValue.toString()), // amount
+        //     2, // interest rate mode (default: variable)
+        //     0, // referral code,
+        //     account.id, // from on_behalf_of_id
+        //     Date.now(), // Todo: implement this
+        //   ],
+        // });
 
         console.log('Borrow operation result:', result);
 

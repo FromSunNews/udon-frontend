@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from '@/components/common/tooltip';
 import { UserReserveData } from '../../types';
+import CountUp from '@/components/common/count-up';
 
 const withdrawFormSchema = z.object({
   amount: z
@@ -63,9 +64,8 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
-  const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
-
+  const [isUserWithdrawMax, setIsUserWithdrawMax] = useState(false);
   const form = useForm<WithdrawFormValues>({
     resolver: zodResolver(withdrawFormSchema),
     defaultValues: {
@@ -102,7 +102,6 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
       const needToChangeValue = valueWithBalance !== form.watch('amount');
       if (needToChangeValue) {
         form.setValue('amount', valueWithBalance.toString());
-        setInputAmount(valueWithBalance.toString());
       }
       setIsRefetchEnabled(true);
       fetchPrice();
@@ -132,12 +131,10 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
     if (!regex.test(value)) {
       // if don't pass set input with 0
       form.setValue('amount', '0');
-      setInputAmount('0');
       return;
     }
 
     form.setValue('amount', value);
-    setInputAmount(value);
 
     if (value && parseFloat(value) > 0) {
       handleFetchPrice();
@@ -147,7 +144,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   const handleMaxAmount = () => {
     // Use supply balance as the max amount
     form.setValue('amount', reserve.currentATokenBalance.toString());
-    setInputAmount(reserve.currentATokenBalance.toString());
+    setIsUserWithdrawMax(true);
     handleFetchPrice();
   };
 
@@ -176,6 +173,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
         assetId: reserve.assetId,
         amount: data.amount,
         decimals: reserve.decimals,
+        isUserWithdrawMax,
       });
 
       console.log('Withdraw submitted:', {
@@ -197,17 +195,6 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
       setIsSubmitting(false);
     }
   };
-
-  // Calculate USD amount based on current price if available
-  const usdAmount = inputAmount
-    ? `$${(parseFloat(inputAmount || '0') * (currentPrice || 0)).toFixed(2)}`
-    : '$0';
-
-  // Calculate remaining supply after withdrawal
-  const remainingSupply = Math.max(
-    0,
-    parseFloat(reserve.currentATokenBalance.toString()) - parseFloat(inputAmount || '0')
-  ).toFixed(2);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -250,7 +237,6 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                           size="icon"
                           onClick={() => {
                             form.setValue('amount', '');
-                            setInputAmount('');
                           }}
                           className="hover:opacity-70"
                         >
@@ -271,13 +257,22 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                     {isPriceFetching ? (
                       <Skeleton className="h-5 w-20" />
                     ) : (
-                      <Typography>{usdAmount}</Typography>
+                      <CountUp
+                        value={(currentPrice || 0) * Number(form.watch('amount'))}
+                        prefix="$"
+                        className="text-base"
+                      />
                     )}
                     <div
                       className="flex flex-row items-center gap-1 text-primary cursor-pointer"
                       onClick={handleMaxAmount}
                     >
-                      <Typography>Supply balance {reserve.currentATokenBalance}</Typography>
+                      <Typography>Supply balance</Typography>
+                      <CountUp
+                        value={reserve.currentATokenBalance}
+                        className="font-bold"
+                        decimals={6}
+                      />
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>
@@ -298,7 +293,11 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">Remaining supply</Typography>
                   <Typography weight="medium">
-                    {remainingSupply} {reserve.symbol}
+                    <CountUp
+                      value={reserve.currentATokenBalance - Number(form.watch('amount'))}
+                      suffix={` ${reserve.symbol}`}
+                      decimals={6}
+                    />
                   </Typography>
                 </div>
 
@@ -318,12 +317,33 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                     weight="medium"
                     className={healthFactor >= 1.0 ? 'text-amber-500' : 'text-red-500'}
                   >
-                    {healthFactor.toFixed(2)}
+                    <CountUp value={healthFactor} decimals={2} />
                   </Typography>
                 </div>
 
-                <div className="text-sm text-muted-foreground">
+                {/* <div className="text-sm text-muted-foreground">
                   <Typography>Liquidation at &lt;1.0</Typography>
+                </div> */}
+
+                <div className="flex justify-between items-center">
+                  <Typography className="flex items-center gap-1">Withdraw amount</Typography>
+                  <div className="font-medium text-base">
+                    <CountUp
+                      value={Number(form.watch('amount'))}
+                      suffix={` ${reserve.symbol}`}
+                      decimals={6}
+                    />
+                    ~{' '}
+                    {isPriceFetching ? (
+                      <Skeleton className="inline-block h-5 w-20" />
+                    ) : (
+                      <CountUp
+                        value={(currentPrice || 0) * Number(form.watch('amount'))}
+                        prefix="$"
+                        className="text-base"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -333,7 +353,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                 <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
                   Processing...
                 </Button>
-              ) : !inputAmount || parseFloat(inputAmount) === 0 ? (
+              ) : !form.watch('amount') || parseFloat(form.watch('amount')) === 0 ? (
                 <Button disabled className="w-full text-lg py-6">
                   Enter an amount
                 </Button>

@@ -111,6 +111,7 @@ async function initSupply() {
       );
       console.log(chalk.green('✅ Price asset oracle created:'));
 
+      // TODO: Uncomment this when we have a price asset oracle
       // update price asset
       // await adminSession.call(op('update_price_update_op', token.symbol, BigInt(token.price)));
       // console.log(chalk.green('✅ Price asset updated:'));

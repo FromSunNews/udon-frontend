@@ -26,6 +26,7 @@ interface BorrowPositionTableProps {
   yourBorrowBalancePosition: number;
   yourBorrowPowerUsagePosition: number;
   yourBorrowAPYPosition: number;
+  enableBorrow: boolean;
 }
 
 export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
@@ -35,13 +36,14 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
   yourBorrowBalancePosition,
   yourBorrowPowerUsagePosition,
   yourBorrowAPYPosition,
+  enableBorrow,
 }) => {
   const router = useRouter();
   // Dialog state management
   const [selectedPosition, setSelectedPosition] = useState<UserReserveData | null>(null);
   const [repayDialogOpen, setRepayDialogOpen] = useState(false);
   const [borrowDialogOpen, setBorrowDialogOpen] = useState(false);
-
+  console.log('enableBorrow in position', enableBorrow);
   // Handle repay button click for a position
   const handleRepayClick = (position: UserReserveData) => {
     setSelectedPosition(position);
@@ -137,7 +139,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
         if (row.borrowAPY === 0) {
           return <Typography>_</Typography>;
         } else {
-          return <CountUp value={row.borrowAPY} suffix="%" className="text-base" />;
+          return <CountUp value={row.borrowAPY} suffix="%" className="text-base" decimals={4} />;
         }
       },
       meta: {
@@ -150,7 +152,12 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
       cell: ({ row }) => (
         <div className="flex justify-end">
           <div className="flex flex-col gap-2">
-            <Button variant="gradient" className="w-[100px]" onClick={() => handleBorrowClick(row)}>
+            <Button
+              variant="gradient"
+              className="w-[100px]"
+              onClick={() => handleBorrowClick(row)}
+              disabled={!enableBorrow}
+            >
               Borrow
             </Button>
             <Button
@@ -219,7 +226,12 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
                 <Badge variant="outline" className="text-base px-3 gap-1">
                   <Typography weight="medium">APY:</Typography>
                   {yourBorrowAPYPosition ? (
-                    <CountUp value={yourBorrowAPYPosition} suffix="%" className="text-base ml-1" />
+                    <CountUp
+                      value={yourBorrowAPYPosition}
+                      suffix="%"
+                      className="text-base ml-1"
+                      decimals={4}
+                    />
                   ) : (
                     <Typography>_</Typography>
                   )}

@@ -81,7 +81,10 @@ export function useCompletedAssets() {
           borrowCap: Number(formatRay(r.borrowCap)),
 
           // calculate field
-          availableBorrow: Number(formatRay(r.borrowCap - r.currentVariableDebtTokenTotalSupply)),
+          availableBorrow:
+            r.borrowCap > 0n
+              ? Number(formatRay(r.borrowCap - r.currentVariableDebtTokenTotalSupply))
+              : 0,
           supplyAPY: Number(
             normalize(
               calculateCompoundedRate({
@@ -174,6 +177,14 @@ export function useCompletedAssets() {
     );
   }, [userReserves]);
 
+  const enableBorrow = useMemo(() => {
+    const enable = !!userReserves.some(
+      r => r.currentATokenBalance > 0 && r.usageAsCollateralEnabled
+    );
+    console.log('enableBorrow', enable);
+    return enable;
+  }, [userReserves]);
+
   return {
     assets: userReserves, // all user reserves (with asset info)
     supplyPositions,
@@ -186,6 +197,7 @@ export function useCompletedAssets() {
     yourBorrowBalancePosition,
     yourBorrowAPYPosition,
     yourBorrowPowerUsagePosition,
+    enableBorrow,
     isLoading,
     error,
     refresh: fetchUserReserves,

@@ -24,6 +24,7 @@ interface BorrowTableProps {
   reserves: UserReserveData[];
   isLoading: boolean;
   mutateAssets: () => void;
+  enableBorrow: boolean;
 }
 
 export const BorrowTable: React.FC<BorrowTableProps> = ({
@@ -31,6 +32,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   reserves,
   isLoading,
   mutateAssets,
+  enableBorrow,
 }) => {
   const [selectedAsset, setSelectedAsset] = useState<UserReserveData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -119,7 +121,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
         if (row.borrowAPY === 0) {
           return <Typography>_</Typography>;
         } else {
-          return <CountUp value={row.borrowAPY} suffix="%" className="text-base" />;
+          return <CountUp value={row.borrowAPY} suffix="%" className="text-base" decimals={4} />;
         }
       },
       meta: {
@@ -141,6 +143,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
               }}
               aria-label={`Borrow ${row.symbol}`}
               className="w-[100px]"
+              disabled={!enableBorrow}
             >
               Borrow
             </Button>

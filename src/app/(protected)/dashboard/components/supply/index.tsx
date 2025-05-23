@@ -133,7 +133,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
         } else {
           return (
             <div className="flex flex-col gap-2">
-              <CountUp value={row.supplyAPY} suffix="%" className="text-base" />
+              <CountUp value={row.supplyAPY} suffix="%" className="text-base" decimals={4} />
             </div>
           );
         }

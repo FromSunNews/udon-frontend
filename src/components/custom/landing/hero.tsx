@@ -4,9 +4,10 @@ import { StatCard } from './stat-card';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { useRouter } from 'next/navigation';
-
+import { useStatsSupplyDeposit } from '@/hooks/contracts/queries/use-stats-supply-deposit';
 export default function Hero() {
   const router = useRouter();
+  const { totalValueDeposited, totalValueBorrowed, isLoading } = useStatsSupplyDeposit();
   return (
     <div className="min-h-screen bg-background relative">
       {/* Background Video */}
@@ -100,16 +101,16 @@ export default function Hero() {
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-9 px-4 md:px-0">
             <StatCard
-              value="4,232,090,563"
+              value={totalValueDeposited}
               label="Total Deposits"
               iconUrl="/images/landing/hero/coin-stack.webm"
-              isVideo={true}
+              isLoading={isLoading}
             />
             <StatCard
-              value="4,232,090,563"
+              value={totalValueBorrowed}
               label="Total Borrows"
               iconUrl="/images/landing/hero/saving-piggy.webm"
-              isVideo={true}
+              isLoading={isLoading}
             />
           </div>
         </div>

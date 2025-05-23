@@ -1,14 +1,16 @@
-import Image from 'next/image';
+import CountUp from '@/components/common/count-up';
+import { Skeleton } from '@/components/common/skeleton';
+import { Typography } from '@/components/common/typography';
 import React from 'react';
 
 interface StatCardProps {
-  value: string;
+  value: number;
   label: string;
   iconUrl: string;
-  isVideo?: boolean;
+  isLoading?: boolean;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isVideo }) => {
+export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isLoading }) => {
   return (
     <div className="bg-[rgba(255,255,255,0.71)] border self-stretch flex min-w-60 overflow-hidden flex-col items-stretch flex- spac[-8px]-y-6 shrink basis-[0%] p-6 rounded-3xl border-[rgba(138,183,246,1)] border-solid backdrop-blur-md">
       {/* Top Glow Effect */}
@@ -17,14 +19,24 @@ export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isVid
       {/* Value and Label */}
       <div className="flex flex-row justify-between">
         <div className="w-full text-neutral-800 font-normal">
-          <div className="text-[40px]">
-            <span className="text-[rgba(107,107,107,1)]">$</span>
-            <span className="font-semibold">{value}</span>
-          </div>
-          <div className="text-2xl mt-1.5">{label}</div>
+          {isLoading ? (
+            <>
+              <Skeleton className="h-8 w-36 mb-2" />
+              <Skeleton className="h-5 w-24" />
+            </>
+          ) : (
+            <>
+              <CountUp value={value} prefix="$" className="text-[40px]" />
+              <Typography variant="h5" color="submerged" className="text-2xl mt-1.5">
+                {label}
+              </Typography>
+            </>
+          )}
         </div>
         <div className="w-[100px] h-[100px] relative">
-          {isVideo ? (
+          {isLoading ? (
+            <Skeleton className="w-full h-full rounded-full" />
+          ) : (
             <video
               src={iconUrl}
               autoPlay
@@ -33,8 +45,6 @@ export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isVid
               playsInline
               className="w-full h-full object-contain"
             />
-          ) : (
-            <Image src={iconUrl} fill alt={`Icon Stat Card ${label}`} />
           )}
         </div>
       </div>

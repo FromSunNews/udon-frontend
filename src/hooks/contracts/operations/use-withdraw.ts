@@ -9,6 +9,7 @@ interface WithdrawParams {
   assetId: Buffer<ArrayBufferLike>;
   amount: number | string;
   decimals: number;
+  isUserWithdrawMax?: boolean;
 }
 
 interface WithdrawResult {
@@ -28,7 +29,7 @@ export function useWithdraw({
   onSuccess?: (result: WithdrawResult, params: WithdrawParams) => void;
   onError?: (error: Error, params: WithdrawParams) => void;
 } = {}) {
-  const { account } = useChromiaAccount();
+  const { account, client } = useChromiaAccount();
   const { data: session } = useFtSession(
     account ? { clientConfig: publicClientConfig, account } : null
   );
@@ -45,7 +46,14 @@ export function useWithdraw({
         console.log('Starting withdraw operation:', params);
 
         // Convert amount to BigInt format using parseUnits
-        const amountValue = parseUnits(params.amount.toString(), 27);
+        let amountValue;
+        // signal for rell recognize we want to withdraw with max amount
+        if (params.isUserWithdrawMax) {
+          if (!client) {
+            throw new Error('Client not available');
+          }
+          amountValue = await client.query('get_u256_max_query', {});
+        } else amountValue = parseUnits(params.amount.toString(), 27);
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
@@ -60,7 +68,6 @@ export function useWithdraw({
               params.assetId, // asset ID to withdraw
               BigInt(amountValue.toString()), // amount
               account.id // to_id
-              // Date.now() // timestamp
             )
           )
           .buildAndSend();

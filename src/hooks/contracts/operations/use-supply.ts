@@ -62,8 +62,7 @@ export function useSupply({
               params.assetId, // underlying asset ID
               BigInt(amountValue.toString()), // amount
               account.id, // on behalf of account
-              BigInt(0), // referral code
-              Date.now() // timestamp
+              BigInt(0) // referral code
             )
           )
           .buildAndSend();

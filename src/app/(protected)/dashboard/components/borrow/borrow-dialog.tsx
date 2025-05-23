@@ -24,6 +24,7 @@ import {
 } from '@/components/common/tooltip';
 import { UserReserveData } from '../../types';
 import { cn } from '@/utils/tailwind';
+import CountUp from '@/components/common/count-up';
 
 const borrowFormSchema = z.object({
   amount: z
@@ -202,11 +203,6 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     }
   };
 
-  // Calculate USD amount based on current price if available
-  const usdAmount = inputAmount
-    ? `$${(parseFloat(inputAmount || '0') * (currentPrice || 0)).toFixed(2)}`
-    : '$0';
-
   // Calculate new health factor after borrowing (simplified estimation)
   const newHealthFactor = Math.max(0, hf - parseFloat(inputAmount || '0') * 0.2).toFixed(2);
 
@@ -270,7 +266,12 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                     {isPriceFetching ? (
                       <Skeleton className="h-5 w-20" />
                     ) : (
-                      <Typography>{usdAmount}</Typography>
+                      <CountUp
+                        value={(currentPrice || 0) * Number(form.watch('amount'))}
+                        prefix="$"
+                        className="text-base"
+                        animateOnlyOnce={true}
+                      />
                     )}
                     <div
                       className={cn(
@@ -279,7 +280,12 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                       )}
                       onClick={handleMaxAmount}
                     >
-                      <Typography>Available: {reserve.availableBorrow || '_'}</Typography>
+                      <Typography>Available:</Typography>
+                      <CountUp
+                        value={reserve.availableBorrow || 0}
+                        className="font-bold"
+                        animateOnlyOnce={true}
+                      />
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>
@@ -319,7 +325,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                           : 'text-red-500'
                     }
                   >
-                    {hf.toFixed(2)} → {newHealthFactor}
+                    <CountUp value={hf} decimals={2} animateOnlyOnce={true} /> → {newHealthFactor}
                   </Typography>
                 </div>
 
@@ -331,7 +337,14 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                   <Typography className="flex items-center gap-1">
                     Interest Rate (variable)
                   </Typography>
-                  <Typography weight="medium">{reserve.borrowAPY.toFixed(4)}%</Typography>
+                  <Typography weight="medium">
+                    <CountUp
+                      value={reserve.borrowAPY}
+                      decimals={4}
+                      suffix="%"
+                      animateOnlyOnce={true}
+                    />
+                  </Typography>
                 </div>
               </div>
             </div>

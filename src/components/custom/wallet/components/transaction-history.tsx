@@ -6,6 +6,7 @@ import { getTxLink } from '@/utils/get-tx-link';
 import React from 'react';
 import { cn } from '@/utils/tailwind';
 import { formatRay } from '@/utils/wadraymath';
+import CountUp from '@/components/common/count-up';
 
 interface TransactionHistoryProps {
   compact?: boolean;
@@ -122,9 +123,9 @@ export function TransactionHistory({
                 // Format amount using decimals
                 const symbol = transfer.asset?.symbol ?? '';
                 const value = formatRay(transfer.delta.value);
+                const numericValue = Number(value);
                 // Show sign for positive/negative
-                const amountStr =
-                  Number(value) > 0 ? `+${value} ${symbol}` : `- ${value} ${symbol}`;
+                const isPositive = numericValue > 0;
                 return (
                   <>
                     {(index > 0 || !fullList) && (
@@ -177,7 +178,13 @@ export function TransactionHistory({
                       </div>
                       {/* Amount */}
                       <span className={`text-base font-bold ml-2 ${txType.amountColor}`}>
-                        {amountStr}
+                        {isPositive ? '+' : '- '}
+                        <CountUp
+                          value={Math.abs(numericValue)}
+                          decimals={6}
+                          suffix={` ${symbol}`}
+                          className={txType.amountColor}
+                        />
                       </span>
                     </div>
                   </>

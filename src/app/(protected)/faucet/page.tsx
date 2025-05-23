@@ -44,6 +44,12 @@ const TOKENS = [
     decimals: 8,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
   },
+  {
+    name: 'Chromia USD',
+    symbol: 'CHRUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
+  },
 ];
 
 interface FaucetAsset {

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import React from 'react';
 import { cn } from '@/utils/tailwind';
 import { formatRay } from '@/utils/wadraymath';
+import CountUp from '@/components/common/count-up';
 
 // Extend the Balance type with additional properties
 
@@ -75,6 +76,7 @@ export function TokenList({
               {displayBalances.map((balance, index) => {
                 const tokenBalance = balance as unknown as Balance;
                 const usdValue = calculateUsdValue(tokenBalance);
+                const formattedBalance = Number(formatRay(tokenBalance.amount.value));
 
                 return (
                   <>
@@ -100,7 +102,7 @@ export function TokenList({
                             {tokenBalance.asset.name}
                           </span>
                           <span className="text-base text-embossed font-bold">
-                            {formatRay(tokenBalance.amount.value)}{' '}
+                            <CountUp value={formattedBalance} decimals={6} />
                           </span>
                           <span className="text-sm text-embossed font-medium">
                             {tokenBalance.asset.symbol}
@@ -111,7 +113,12 @@ export function TokenList({
                         {isLoadingPrices ? (
                           <span className="inline-block w-16 h-6 bg-secondary/30 rounded-md animate-pulse"></span>
                         ) : (
-                          `$${usdValue.toFixed(2)}`
+                          <CountUp
+                            value={usdValue}
+                            prefix="$"
+                            decimals={2}
+                            className="text-base text-green-500"
+                          />
                         )}
                       </span>
                     </div>

@@ -24,6 +24,7 @@ export default function DashboardPage() {
     yourBorrowBalancePosition,
     yourBorrowPowerUsagePosition,
     yourBorrowAPYPosition,
+    enableBorrow,
   } = useCompletedAssets();
 
   return (
@@ -84,6 +85,7 @@ export default function DashboardPage() {
           positions={borrowPositions}
           isLoading={isLoading}
           mutateAssets={refetchAssets}
+          enableBorrow={enableBorrow}
         />
         <SupplyTable
           title="Assets to supply"
@@ -96,6 +98,7 @@ export default function DashboardPage() {
           reserves={processedAssets}
           isLoading={isLoading}
           mutateAssets={refetchAssets}
+          enableBorrow={enableBorrow}
         />
       </section>
     </main>

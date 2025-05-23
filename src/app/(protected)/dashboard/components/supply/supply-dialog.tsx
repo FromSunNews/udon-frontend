@@ -2,11 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-import {
-  CircleX,
-  Info,
-  // AlertCircle
-} from 'lucide-react';
+import { CircleX, Info } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +24,7 @@ import {
   TooltipTrigger,
 } from '@/components/common/tooltip';
 import { UserReserveData } from '../../types';
+import CountUp from '@/components/common/count-up';
 // import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 
 const supplyFormSchema = z.object({
@@ -69,7 +66,6 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   // const [useAsCollateral, setUseAsCollateral] = useState(true);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
-  const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
 
   const form = useForm<SupplyFormValues>({
@@ -109,7 +105,6 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
       const needToChangeValue = valueWithBalance !== form.watch('amount');
       if (needToChangeValue) {
         form.setValue('amount', valueWithBalance.toString());
-        setInputAmount(valueWithBalance.toString());
       }
       setIsRefetchEnabled(true);
       fetchPrice();
@@ -140,12 +135,10 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
     if (!regex.test(value)) {
       // if don't pass set input with 0
       form.setValue('amount', '0');
-      setInputAmount('0');
       return;
     }
 
     form.setValue('amount', value);
-    setInputAmount(value);
 
     if (value && parseFloat(value) > 0) {
       handleFetchPrice();
@@ -154,7 +147,6 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
 
   const handleMaxAmount = () => {
     form.setValue('amount', reserve.balance.toString() || '0');
-    setInputAmount(reserve.balance.toString() || '0');
     handleFetchPrice();
   };
 
@@ -203,11 +195,6 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
     }
   };
 
-  // Calculate USD amount based on current price if available
-  const usdAmount = inputAmount
-    ? `$${(parseFloat(inputAmount || '0') * (currentPrice || 0)).toFixed(2)}`
-    : '$0';
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -247,7 +234,6 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
                           size="icon"
                           onClick={() => {
                             form.setValue('amount', '');
-                            setInputAmount('');
                           }}
                           className="hover:opacity-70"
                         >
@@ -268,13 +254,18 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
                     {isPriceFetching ? (
                       <Skeleton className="h-5 w-20" />
                     ) : (
-                      <Typography>{usdAmount}</Typography>
+                      <CountUp
+                        value={(currentPrice || 0) * Number(form.watch('amount'))}
+                        prefix="$"
+                        className="text-base"
+                      />
                     )}
                     <div
                       className="flex flex-row items-center gap-1 text-primary cursor-pointer"
                       onClick={handleMaxAmount}
                     >
-                      <Typography>Balance {reserve.balance}</Typography>
+                      <Typography>Balance</Typography>
+                      <CountUp value={reserve.balance} className="font-bold" decimals={6} />
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>
@@ -304,7 +295,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   </Typography>
-                  <Typography weight="medium">{reserve.supplyAPY.toFixed(2)}%</Typography>
+                  <CountUp value={reserve.supplyAPY} suffix="%" className="font-medium" />
                 </div>
 
                 <div className="flex justify-between items-center">
@@ -331,12 +322,24 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">Supply amount</Typography>
                   <div className="font-medium text-base">
-                    {inputAmount || 0} {reserve.symbol} ~{' '}
-                    {isPriceFetching ? <Skeleton className="inline-block h-5 w-20" /> : usdAmount}
+                    <CountUp
+                      value={Number(form.watch('amount'))}
+                      suffix={` ${reserve.symbol}`}
+                      decimals={6}
+                    />
+                    ~{' '}
+                    {isPriceFetching ? (
+                      <Skeleton className="inline-block h-5 w-20" />
+                    ) : (
+                      <CountUp
+                        value={(currentPrice || 0) * Number(form.watch('amount'))}
+                        prefix="$"
+                        className="text-base"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
-
               {/* price fee */}
               {/* <div className="flex items-center gap-2 text-muted-foreground">
                 <Typography className="flex items-center gap-1">

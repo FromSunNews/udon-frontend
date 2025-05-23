@@ -146,7 +146,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
         if (row.supplyAPY === 0) {
           return <Typography>_</Typography>;
         } else {
-          return <CountUp value={row.supplyAPY} suffix="%" className="text-base" />;
+          return <CountUp value={row.supplyAPY} suffix="%" className="text-base" decimals={4} />;
         }
       },
       meta: {
@@ -249,7 +249,12 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                 <Badge variant="outline" className="text-base px-3 gap-1">
                   <Typography weight="medium">APY:</Typography>
                   {yourSupplyAPYPosition ? (
-                    <CountUp value={yourSupplyAPYPosition} suffix="%" className="text-base ml-1" />
+                    <CountUp
+                      value={yourSupplyAPYPosition}
+                      suffix="%"
+                      className="text-base ml-1"
+                      decimals={4}
+                    />
                   ) : (
                     <Typography>_</Typography>
                   )}
