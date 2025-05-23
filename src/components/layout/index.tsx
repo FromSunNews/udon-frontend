@@ -40,7 +40,7 @@ export function MainLayout({ children }: PropsWithChildren) {
         {/* <div className=" z-10"> */}
         {/* This would be the vector.svg */}
         <img
-          className="absolute w-full h-auto top-[321px] left-1/2 -translate-x-1/2"
+          className="absolute w-auto h-[80vh] top-[321px] left-1/2 -translate-x-1/2"
           alt="Vector graphic"
           src="/images/supply/vector-overlay.png"
         />
