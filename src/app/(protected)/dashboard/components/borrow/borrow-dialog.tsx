@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { UserReserveData } from '../../types';
+import { AvailableLiquidityToken, UserReserveData } from '../../types';
 import { cn } from '@/utils/tailwind';
 import CountUp from '@/components/common/count-up';
 
@@ -49,6 +49,7 @@ export interface BorrowDialogProps {
   reserve: UserReserveData;
   healthFactor?: number;
   mutateAssets: () => void;
+  availableLiquidityTokens: AvailableLiquidityToken[];
 }
 
 // Create a debounced fetch function with lodash
@@ -61,6 +62,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   onOpenChange,
   reserve,
   mutateAssets,
+  availableLiquidityTokens,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
@@ -82,6 +84,11 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     refetch: fetchPrice,
   } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
+  const availableLiquidityToken =
+    availableLiquidityTokens.find(
+      t => t.assetId.toString('hex') === reserve.assetId.toString('hex')
+    )?.availableLiquidityToken || 0;
+
   // Use the borrow hook
   const borrow = useBorrow({
     onSuccess: (result, params) => {
@@ -98,9 +105,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     debouncedFn(() => {
       // Don't allow value > available borrow
       const availableLiquidityActual =
-        Number(reserve.availableLiquidity) === 0
-          ? Number.MAX_VALUE
-          : Number(reserve.availableLiquidity);
+        Number(availableLiquidityToken) === 0 ? Number.MAX_VALUE : Number(availableLiquidityToken);
       const valueWithBalance =
         Number(form.watch('amount')) > availableLiquidityActual
           ? availableLiquidityActual
@@ -113,7 +118,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
       setIsRefetchEnabled(true);
       fetchPrice();
     });
-  }, [fetchPrice, form, reserve.availableLiquidity]);
+  }, [fetchPrice, form, availableLiquidityToken]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -151,8 +156,8 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   };
 
   const handleMaxAmount = () => {
-    form.setValue('amount', reserve.availableLiquidity.toString());
-    setInputAmount(reserve.availableLiquidity.toString());
+    form.setValue('amount', availableLiquidityToken.toString());
+    setInputAmount(availableLiquidityToken.toString());
     handleFetchPrice();
   };
 
@@ -167,12 +172,10 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
       }
 
       const availableLiquidity =
-        Number(reserve.availableLiquidity) === 0
-          ? Number.MAX_VALUE
-          : Number(reserve.availableLiquidity);
+        Number(availableLiquidityToken) === 0 ? Number.MAX_VALUE : Number(availableLiquidityToken);
       if (amount > availableLiquidity) {
         toast.error(
-          `Amount exceeds your available borrow of ${reserve.availableLiquidity} ${reserve.symbol}`
+          `Amount exceeds your available borrow of ${availableLiquidityToken} ${reserve.symbol}`
         );
         return;
       }
@@ -237,7 +240,10 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                       inputMode="decimal"
                       pattern="[0-9]*[.]?[0-9]*"
                       min={0.0}
-                      max={reserve.availableLiquidity}
+                      max={
+                        availableLiquidityTokens.find(t => t.assetId === reserve.assetId)
+                          ?.availableLiquidityToken || 0
+                      }
                       step="any"
                       onChange={handleAmountChange}
                     />
@@ -280,13 +286,13 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                     <div
                       className={cn(
                         'flex flex-row items-center gap-1 text-primary cursor-pointer',
-                        !reserve.availableLiquidity && 'opacity-50 cursor-not-allowed'
+                        !availableLiquidityToken && 'opacity-50 cursor-not-allowed'
                       )}
                       onClick={handleMaxAmount}
                     >
                       <Typography>Available:</Typography>
                       <CountUp
-                        value={reserve.availableLiquidity || 0}
+                        value={availableLiquidityToken}
                         className="font-bold"
                         animateOnlyOnce={true}
                       />

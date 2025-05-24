@@ -45,9 +45,9 @@ export interface UserReserveDataResponse {
   usageAsCollateralEnabled: 1 | 0;
   reserveLastUpdateTimestamp: bigint;
 
-  supplyCap: number;
-  borrowCap: number;
-  availableLiquidity: number;
+  supplyCap: bigint;
+  borrowCap: bigint;
+  ltv: bigint;
 }
 
 export interface UserReserveData {
@@ -77,8 +77,14 @@ export interface UserReserveData {
   price: number;
   supplyAPY: number;
   borrowAPY: number;
-  availableLiquidity: number;
 
   supplyCap: number;
   borrowCap: number;
+  ltv: number;
+}
+
+export interface AvailableLiquidityToken {
+  assetId: Buffer<ArrayBufferLike>;
+  symbol: string;
+  availableLiquidityToken: number;
 }

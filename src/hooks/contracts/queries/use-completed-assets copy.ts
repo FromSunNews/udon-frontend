@@ -80,7 +80,13 @@ export function useCompletedAssets() {
           price: Number(priceObj?.price),
           supplyCap: Number(formatRay(r.supplyCap)),
           borrowCap: Number(formatRay(r.borrowCap)),
-          ltv: Number(r.ltv) / 100,
+          ltv: Number(r.ltv / 100),
+
+          // calculate field
+          availableLiquidity:
+            r.borrowCap > 0n
+              ? Number(formatRay(r.borrowCap - r.availableLiquidity))
+              : Number(formatRay(r.availableLiquidity)),
           supplyAPY: Number(
             normalize(
               calculateCompoundedRate({
@@ -183,29 +189,23 @@ export function useCompletedAssets() {
 
   const availableLiquidityTokens = useMemo(() => {
     // caculate available liquidity of user
-    const totalCollateralUSD = userReserves.reduce(
+    const totalCollateral = userReserves.reduce(
       (sum, r) => sum + (r.usageAsCollateralEnabled ? Number(r.currentATokenBalance) * r.price : 0),
       0
     );
-    const totalDebtUSD = userReserves.reduce(
+    const totalDebt = userReserves.reduce(
       (sum, r) => sum + Number(r.currentVariableDebt) * r.price,
       0
     );
+    const totalLiquidityCanBeBorrowedRaw = totalCollateral - totalDebt;
     const availableLiquidityTokens = userReserves.map(r => {
-      const totalLiquidityCanBeBorrowedUSD = totalCollateralUSD * (r.ltv / 100) - totalDebtUSD;
-      let availableLiquidityToken = 0;
-      if (totalLiquidityCanBeBorrowedUSD > 0) {
-        availableLiquidityToken = totalLiquidityCanBeBorrowedUSD / r.price;
-      }
+      const availableLiquidityToken = (totalLiquidityCanBeBorrowedRaw * r.ltv) / r.price;
       return {
         assetId: r.assetId,
         symbol: r.symbol,
         availableLiquidityToken,
       };
     });
-    console.log('totalCollateralUSD', totalCollateralUSD);
-    console.log('totalDebtUSD', totalDebtUSD);
-    console.log('availableLiquidityTokens', availableLiquidityTokens);
     return availableLiquidityTokens;
   }, [userReserves]);
 

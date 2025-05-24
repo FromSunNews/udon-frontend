@@ -9,20 +9,20 @@ import { parseUnits } from 'ethers/lib/utils';
 
 // Token definitions
 const TOKENS = [
-  // {
-  //   name: 'Bitcoin USD',
-  //   symbol: 'BTCUSD',
-  //   decimals: 8,
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
-  //   price: parseUnits('60000', 18).toString(),
-  // },
-  // {
-  //   name: 'Ethereum USD',
-  //   symbol: 'ETHUSD',
-  //   decimals: 8,
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
-  //   price: parseUnits('2500', 18).toString(),
-  // },
+  {
+    name: 'Bitcoin USD',
+    symbol: 'BTCUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
+    price: parseUnits('60000', 18).toString(),
+  },
+  {
+    name: 'Ethereum USD',
+    symbol: 'ETHUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+    price: parseUnits('2500', 18).toString(),
+  },
   // {
   //   name: 'MyNeighborAlice',
   //   symbol: 'ALICEUSD',
@@ -44,20 +44,20 @@ const TOKENS = [
   //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
   //   price: parseUnits('0.22', 18).toString(),
   // },
-  {
-    name: 'USDT',
-    symbol: 'USDTUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/825.png',
-    price: parseUnits('1', 18).toString(),
-  },
-  {
-    name: 'USDC',
-    symbol: 'USDCUSD',
-    decimals: 6,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3408.png',
-    price: parseUnits('1', 6).toString(),
-  },
+  // {
+  //   name: 'USDT',
+  //   symbol: 'USDTUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/825.png',
+  //   price: parseUnits('1', 18).toString(),
+  // },
+  // {
+  //   name: 'USDC',
+  //   symbol: 'USDCUSD',
+  //   decimals: 6,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3408.png',
+  //   price: parseUnits('1', 6).toString(),
+  // },
 ];
 
 async function initSupply() {
@@ -127,8 +127,8 @@ async function initSupply() {
 
       // TODO: Uncomment this when we have a price asset oracle
       // update price asset
-      // await adminSession.call(op('update_price_update_op', token.symbol, BigInt(token.price)));
-      // console.log(chalk.green('✅ Price asset updated:'));
+      await adminSession.call(op('update_price_update_op', token.symbol, BigInt(token.price)));
+      console.log(chalk.green('✅ Price asset updated:'));
 
       // Set interest rate strategy
       await adminSession.call(

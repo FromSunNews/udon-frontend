@@ -180,7 +180,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
       });
 
       if (withdrawResult.success) {
-        toast.success(`Successfully withdrew ${data.amount} ${reserve.symbol}`);
+        toast.success(`Successfully withdraw ${data.amount} ${reserve.symbol}`);
         // Close dialog after successful operation
         onOpenChange(false);
       } else {
