@@ -20,10 +20,10 @@ const linkFooter = [
     title: 'Documentation',
     url: '/documentation',
   },
-  {
-    title: 'Supply',
-    url: '/supply',
-  },
+  // {
+  //   title: 'Supply',
+  //   url: '/supply',
+  // },
 ];
 
 const linkSocial = [

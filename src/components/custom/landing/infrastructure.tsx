@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Typography } from '@/components/common/typography';
 import Image from 'next/image';
+import Link from 'next/link';
 // import { EllipsisIcon } from 'lucide-react';
 
 type HoverState = 'none' | 'simple' | 'optimized' | 'low-cost' | 'per-market-rates';
@@ -77,9 +78,9 @@ export const InfrastructureSection: React.FC = () => {
           >
             {item.title}
           </Typography>
-          <Typography className={hoverState === item.id ? 'text-white' : 'text-neutral-800'}>
+          {/* <Typography className={hoverState === item.id ? 'text-white' : 'text-neutral-800'}>
             {item.description}
-          </Typography>
+          </Typography> */}
         </div>
       </div>
     ));
@@ -162,11 +163,13 @@ export const InfrastructureSection: React.FC = () => {
                       <Typography as="h3" className="text-xl font-semibold text-black">
                         Earn
                       </Typography>
-                      <Typography className="text-neutral-800">Put your crypto to work</Typography>
+                      <Typography className="text-neutral-800">
+                        Generate yield on your crypto assets
+                      </Typography>
                     </div>
-                    <div className="bg-[#1E1E1E] px-4 py-2 rounded-full">
+                    <Link href="/dashboard" className="bg-[#1E1E1E] px-4 py-2 rounded-full">
                       <Typography className="text-white font-semibold">Earn</Typography>
-                    </div>
+                    </Link>
                   </div>
                   <div className="mt-6 space-y-6">{renderItems('earn')}</div>
                 </div>
@@ -184,11 +187,13 @@ export const InfrastructureSection: React.FC = () => {
                       <Typography as="h3" className="text-xl font-semibold text-black">
                         Borrow
                       </Typography>
-                      <Typography className="text-neutral-800">Put your crypto to work</Typography>
+                      <Typography className="text-neutral-800">
+                        Access liquidity without selling your assets
+                      </Typography>
                     </div>
-                    <div className="bg-[#1E1E1E] px-4 py-2 rounded-full">
+                    <Link href="/dashboard" className="bg-[#1E1E1E] px-4 py-2 rounded-full">
                       <Typography className="text-white font-semibold">Borrow</Typography>
-                    </div>
+                    </Link>
                   </div>
                   <div className="mt-6 space-y-6">{renderItems('borrow')}</div>
                 </div>
