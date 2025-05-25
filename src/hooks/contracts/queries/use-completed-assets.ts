@@ -192,6 +192,16 @@ export function useCompletedAssets() {
       0
     );
     const availableLiquidityTokens = userReserves.map(r => {
+      const availableTokenInPoolRaw =
+        r.currentATokenTotalSupply - r.currentVariableDebtTokenTotalSupply;
+      const availableTokenInPool = availableTokenInPoolRaw < 0 ? 0 : availableTokenInPoolRaw;
+
+      console.log('currentATokenTotalSupply ' + r.symbol, r.currentATokenTotalSupply);
+      console.log(
+        'currentVariableDebtTokenTotalSupply ' + r.symbol,
+        r.currentVariableDebtTokenTotalSupply
+      );
+      console.log('availableTokenInPool ' + r.symbol, availableTokenInPool);
       const totalLiquidityCanBeBorrowedUSD = totalCollateralUSD * (r.ltv / 100) - totalDebtUSD;
       let availableLiquidityToken = 0;
       if (totalLiquidityCanBeBorrowedUSD > 0) {
@@ -200,7 +210,10 @@ export function useCompletedAssets() {
       return {
         assetId: r.assetId,
         symbol: r.symbol,
-        availableLiquidityToken,
+        availableLiquidityToken:
+          availableLiquidityToken > availableTokenInPool
+            ? availableTokenInPool
+            : availableLiquidityToken,
       };
     });
     console.log('totalCollateralUSD', totalCollateralUSD);
