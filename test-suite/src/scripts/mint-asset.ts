@@ -16,34 +16,52 @@ const ASSET_CONFIG = {
   // The amount to mint in whole tokens (will be converted to RAY)
   MINT_AMOUNT: 1000,
   // Target user ID
-  TARGET_USER_ID: ensureBuffer('90737200602B0D981FC35751BAAC4402DBD4E7E1D0934F096553A29D02455FE5'),
+  TARGET_USER_ID: ensureBuffer('5D3D574FA59149FE64E7495907FA047A2AC80EA0524D66373D12770104A0B0FA'),
 };
 
 // Asset configurations
 const TOKENS = [
+  // {
+  //   name: 'Bitcoin USD',
+  //   symbol: 'BTCUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
+  // },
+  // {
+  //   name: 'Ethereum USD',
+  //   symbol: 'ETHUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+  // },
+  // {
+  //   name: 'MyNeighborAlice',
+  //   symbol: 'ALICEUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
+  // },
+  // {
+  //   name: 'DAR Open Network',
+  //   symbol: 'DUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
+  // },
   {
-    name: 'Bitcoin USD',
-    symbol: 'BTCUSD',
+    name: 'Chromia USD',
+    symbol: 'CHRUSD',
     decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
   },
   {
-    name: 'Ethereum USD',
-    symbol: 'ETHUSD',
+    name: 'USDT',
+    symbol: 'USDTUSD',
     decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/825.png',
   },
   {
-    name: 'MyNeighborAlice',
-    symbol: 'ALICEUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
-  },
-  {
-    name: 'DAR Open Network',
-    symbol: 'DUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
+    name: 'USDC',
+    symbol: 'USDCUSD',
+    decimals: 6,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3408.png',
   },
 ];
 

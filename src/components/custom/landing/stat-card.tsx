@@ -21,8 +21,8 @@ export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isLoa
         <div className="w-full text-neutral-800 font-normal">
           {isLoading ? (
             <>
-              <Skeleton className="h-8 w-36 mb-2" />
-              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-8 w-36 mb-2 bg-black/10" />
+              <Skeleton className="h-5 w-24 bg-black/10" />
             </>
           ) : (
             <>
@@ -35,7 +35,7 @@ export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isLoa
         </div>
         <div className="w-[100px] h-[100px] relative">
           {isLoading ? (
-            <Skeleton className="w-full h-full rounded-full" />
+            <Skeleton className="w-[100px] h-[100px] rounded-full bg-black/10" />
           ) : (
             <video
               src={iconUrl}

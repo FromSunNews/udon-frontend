@@ -7,6 +7,7 @@ import { UpcomingFeatures } from '@/components/custom/landing/upcoming-features'
 import { Header } from '@/components/custom/landing/header';
 import { InfrastructureSection } from '@/components/custom/landing/infrastructure';
 import { Footer } from '@/components/layout/footer';
+import { cn } from '@/utils/tailwind';
 
 export const Landing = () => {
   const [visibleSections, setVisibleSections] = useState<{
@@ -88,7 +89,10 @@ export const Landing = () => {
           <BackedBySection />
         </div>
 
-        <div ref={sectionRefs.upcoming} className={getSectionAnimationClass('upcoming')}>
+        <div
+          ref={sectionRefs.upcoming}
+          className={cn(getSectionAnimationClass('upcoming'), 'pb-[20vh]')}
+        >
           <UpcomingFeatures />
         </div>
 

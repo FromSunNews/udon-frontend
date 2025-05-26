@@ -44,7 +44,7 @@ const TabsList = React.forwardRef<
         listRef.current = node;
       }}
       className={cn(
-        'relative inline-flex items-center justify-center rounded-full p-1 text-muted-foreground cursor-pointer',
+        'relative inline-flex items-center justify-center p-1 cursor-pointer',
         className
       )}
       {...props}
@@ -54,19 +54,20 @@ const TabsList = React.forwardRef<
         <motion.div
           style={{
             position: 'absolute',
-            top: '8%',
+            bottom: '0',
             left: '0',
-            bottom: '8%',
-            height: '84%',
-            borderRadius: '9999px',
-            backgroundColor: 'rgba(74,74,80,1)',
-            zIndex: 0,
-            cursor: 'pointer',
+            height: '2px',
+            borderRadius: '1px',
+            backgroundColor: 'currentColor',
+            zIndex: 1,
           }}
           initial={false}
           animate={{
-            width: activeRect.width,
-            x: activeRect.left - (listRef.current?.getBoundingClientRect().left || 0),
+            width: activeRect.width * 0.6,
+            x:
+              activeRect.left -
+              (listRef.current?.getBoundingClientRect().left || 0) +
+              activeRect.width * 0.2,
           }}
           transition={{
             type: 'spring',
@@ -87,7 +88,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      'relative z-20 inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white cursor-pointer',
+      'relative z-10 inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-sm font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground data-[state=inactive]:text-submerged cursor-pointer',
       className
     )}
     {...props}

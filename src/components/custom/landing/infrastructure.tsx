@@ -155,8 +155,14 @@ export const InfrastructureSection: React.FC = () => {
                   className={`p-6 rounded-xl mt-6 transition-all duration-300 cursor-pointer ${
                     cardHover === 'earn' ? 'shadow-2xl bg-white/80' : ''
                   }`}
-                  onMouseEnter={() => setCardHover('earn')}
-                  onMouseLeave={() => setCardHover(null)}
+                  onMouseEnter={() => {
+                    setCardHover('earn');
+                    setHoverState('simple');
+                  }}
+                  onMouseLeave={() => {
+                    setCardHover(null);
+                    setHoverState('none');
+                  }}
                 >
                   <div className="flex justify-between items-center">
                     <div>
@@ -179,8 +185,14 @@ export const InfrastructureSection: React.FC = () => {
                   className={`mt-6 p-6 rounded-xl transition-all duration-300 cursor-pointer ${
                     cardHover === 'borrow' ? 'shadow-2xl bg-white/80' : ''
                   }`}
-                  onMouseEnter={() => setCardHover('borrow')}
-                  onMouseLeave={() => setCardHover(null)}
+                  onMouseEnter={() => {
+                    setCardHover('borrow');
+                    setHoverState('low-cost');
+                  }}
+                  onMouseLeave={() => {
+                    setCardHover(null);
+                    setHoverState('none');
+                  }}
                 >
                   <div className="flex justify-between items-center">
                     <div>
