@@ -1,6 +1,6 @@
 # Udon Finance
 
-<div align="center">
+<div align="center"> 
   <img src="https://via.placeholder.com/1200x400?text=Udon+Frontend+Banner" alt="Udon Finance Banner" width="800"/>
   <p><em>Modern frontend application built with Next.js, React, and TypeScript</em></p> 
 
