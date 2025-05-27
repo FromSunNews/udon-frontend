@@ -19,8 +19,8 @@ export function valueToZDBigNumber(amount: BigNumberValue): BigNumber {
   return new BigNumberZeroDecimal(amount);
 }
 
-export function normalize(n: BigNumberValue, decimals: number): string {
-  return normalizeBN(n, decimals).toString(10);
+export function normalize(n: BigNumberValue, decimals: number): BigNumber {
+  return valueToBigNumber(n).shiftedBy(decimals);
 }
 
 export function normalizeBN(n: BigNumberValue, decimals: number): BigNumber {

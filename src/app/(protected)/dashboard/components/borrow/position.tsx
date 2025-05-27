@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { RepayDialog } from './repay-dialog';
 import { BorrowDialog } from './borrow-dialog';
-import { AvailableLiquidityToken, UserReserveData } from '../../types';
+import { UserReserveData } from '../../types';
 import { useRouter } from 'next/navigation';
 import CountUp from '@/components/common/count-up';
 
@@ -27,7 +27,7 @@ interface BorrowPositionTableProps {
   yourBorrowPowerUsagePosition: number;
   yourBorrowAPYPosition: number;
   enableBorrow: boolean;
-  availableLiquidityTokens: AvailableLiquidityToken[];
+  // availableLiquidityTokens: AvailableLiquidityToken[];
 }
 
 export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
@@ -38,7 +38,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
   yourBorrowPowerUsagePosition,
   yourBorrowAPYPosition,
   enableBorrow,
-  availableLiquidityTokens,
+  // availableLiquidityTokens,
 }) => {
   const router = useRouter();
   // Dialog state management
@@ -282,7 +282,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           reserve={selectedPosition}
           healthFactor={4.91} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}
-          availableLiquidityTokens={availableLiquidityTokens}
+          // availableLiquidityTokens={availableLiquidityTokens}
         />
       )}
     </div>

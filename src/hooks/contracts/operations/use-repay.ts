@@ -3,7 +3,7 @@ import { op } from '@chromia/ft4';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
-import { parseUnits } from 'ethers/lib/utils';
+import { normalize } from '@/utils/bignumber';
 
 interface RepayParams {
   assetId: Buffer<ArrayBufferLike>;
@@ -47,7 +47,6 @@ export function useRepay({
       try {
         console.log('Starting repay operation:', params);
 
-        // Convert amount to BigInt format using parseUnits
         let amountValue;
         // signal for rell recognize we want to withdraw with max amount
         if (params.isRepayMax) {
@@ -55,7 +54,7 @@ export function useRepay({
             throw new Error('Client not available');
           }
           amountValue = await client.query('get_u256_max_query', {});
-        } else amountValue = parseUnits(params.amount.toString(), 27);
+        } else amountValue = normalize(params.amount.toString(), params.decimals);
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
@@ -69,7 +68,8 @@ export function useRepay({
               params.assetId, // asset ID to repay
               BigInt(amountValue.toString()), // amount
               2, // 2 = interest_rate_mode
-              account.id // from account
+              account.id, // from account
+              Date.now()
             )
           )
           .buildAndSend();
@@ -92,7 +92,7 @@ export function useRepay({
         };
       }
     },
-    [session, account, onSuccess, onError]
+    [session, account, onSuccess, onError, client]
   );
 
   return repay;

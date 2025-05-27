@@ -3,13 +3,14 @@ import { op } from '@chromia/ft4';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
-import { parseUnits } from 'ethers/lib/utils';
+import { normalize } from '@/utils/bignumber';
 
 interface BorrowParams {
   assetId: Buffer<ArrayBufferLike>;
   amount: number | string;
   decimals: number;
   interestRateMode?: number; // 1 for stable, 2 for variable
+  isUserBorrowMax?: number;
 }
 
 interface BorrowResult {
@@ -29,7 +30,7 @@ export function useBorrow({
   onSuccess?: (result: BorrowResult, params: BorrowParams) => void;
   onError?: (error: Error, params: BorrowParams) => void;
 } = {}) {
-  const { account } = useChromiaAccount();
+  const { account, client } = useChromiaAccount();
   const { data: session } = useFtSession(
     account ? { clientConfig: publicClientConfig, account } : null
   );
@@ -45,8 +46,14 @@ export function useBorrow({
       try {
         console.log('Starting borrow operation:', params);
 
-        // Convert amount to BigInt format using parseUnits
-        const amountValue = parseUnits(params.amount.toString(), 27);
+        let amountValue;
+        // signal for rell recognize we want to withdraw with max amount
+        if (params.isUserBorrowMax) {
+          if (!client) {
+            throw new Error('Client not available');
+          }
+          amountValue = await client.query('get_u256_max_query', {});
+        } else amountValue = normalize(params.amount, params.decimals);
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
@@ -61,7 +68,8 @@ export function useBorrow({
               BigInt(amountValue.toString()), // amount
               2, // interest rate mode (default: variable)
               0, // referral code,
-              account.id // from on_behalf_of_id
+              account.id, // from on_behalf_of_id
+              Date.now()
             )
           )
           .buildAndSend();

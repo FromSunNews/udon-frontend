@@ -4,10 +4,10 @@ import { op } from '@chromia/ft4';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
-import { parseUnits } from 'ethers/lib/utils';
+import { normalize } from '@/utils/bignumber';
 
 interface UseFaucetReturn {
-  requestTokens: (symbol: string) => Promise<void>;
+  requestTokens: (symbol: string, decimals: number) => Promise<void>;
   isPending: boolean;
   error: Error | null;
 }
@@ -21,7 +21,7 @@ export function useFaucet(): UseFaucetReturn {
   );
 
   const requestTokens = useCallback(
-    async (symbol: string): Promise<void> => {
+    async (symbol: string, decimals: number): Promise<void> => {
       if (!session || !account?.id) {
         toast.error('Wallet not connected');
         throw new Error('Wallet not connected');
@@ -31,9 +31,7 @@ export function useFaucet(): UseFaucetReturn {
         setIsPending(true);
         setError(null);
 
-        // Convert mint amount to RAY (1000 tokens)
-        // Using 10^27 as RAY value from test script
-        const mintAmount = parseUnits('1000', 27);
+        const mintAmount = normalize('1000', decimals);
         const userAccountId = account.id;
 
         // Get asset ID for the requested token symbol

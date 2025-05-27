@@ -3,21 +3,8 @@ import { admin_kp } from '../configs/key-pair';
 import { getClient } from '../clients';
 import chalk from 'chalk';
 import { getSessionOrRegister } from '../helpers';
-import { ensureBuffer } from '../helpers/buffer';
 import { formatUnits, parseUnits } from 'ethers/lib/utils';
-import { TOKENS } from '../configs/tokens';
-
-// hippo: A8A05014A795D77C4FA12FDF08776FD70799549530F27ABB3B3331FB4D0A2AC8
-// nathan: 5D3D574FA59149FE64E7495907FA047A2AC80EA0524D66373D12770104A0B0FA
-
-// Define constants for minting
-// Users can modify these values before running the script
-const ASSET_CONFIG = {
-  // The amount to mint in whole tokens (will be converted to RAY)
-  MINT_AMOUNT: 1000,
-  // Target user ID
-  TARGET_USER_ID: ensureBuffer('FBF14538924A2C0C12BB8852CDEE8AB4F9B149310C75E160BE3C9C2D9DB09B59'),
-};
+import { ASSET_CONFIG, TOKENS } from '../configs/tokens';
 
 async function mintAsset() {
   try {
@@ -27,7 +14,8 @@ async function mintAsset() {
 
     // Loop through all tokens and perform mint operations
     for (const token of TOKENS) {
-      const mintAmount = parseUnits(ASSET_CONFIG.MINT_AMOUNT.toString(), token.decimals);
+      // Convert mint amount to RAY
+      const mintAmount = parseUnits(ASSET_CONFIG.MINT_AMOUNT, token.decimals);
       console.log(chalk.bold.yellow(`\nProcessing ${token.symbol}...`));
 
       // Get asset ID
@@ -44,15 +32,13 @@ async function mintAsset() {
 
       // Mint tokens
       console.log(
-        chalk.blue(
-          `🔄 Minting ${ASSET_CONFIG.MINT_AMOUNT} ${token.symbol} to ${ASSET_CONFIG.TARGET_USER_ID.toString('hex')}...`
-        )
+        chalk.blue(`🔄 Minting ${ASSET_CONFIG.MINT_AMOUNT} ${token.symbol} to admin ...`)
       );
 
       await adminSession.call(
         op(
           'mint_underlying_asset',
-          ASSET_CONFIG.TARGET_USER_ID,
+          adminSession.account.id,
           BigInt(mintAmount.toString()),
           underlyingAssetId
         )
@@ -60,7 +46,7 @@ async function mintAsset() {
 
       console.log(
         chalk.green(
-          `✅ Minted ${chalk.yellow(formatUnits(mintAmount.toString(), token.decimals))} ${token.symbol} tokens to ${ASSET_CONFIG.TARGET_USER_ID.toString('hex')}`
+          `✅ Minted ${chalk.yellow(formatUnits(mintAmount, token.decimals))} ${token.symbol} tokens to admin...`
         )
       );
 
@@ -70,13 +56,35 @@ async function mintAsset() {
       await adminSession.call(
         op(
           'set_using_as_collateral_op',
-          ASSET_CONFIG.TARGET_USER_ID,
+          adminSession.account.id,
           underlyingAssetId,
           true // enable collateral
         )
       );
 
       console.log(chalk.green(`✅ Collateral enabled for ${token.symbol}`));
+
+      // admin supply each asset amount tokens in to pool
+      console.log(chalk.blue('🔄 Performing supply operation for TUT...'));
+      const supplyAmount = parseUnits('1000', token.decimals); // 30 RAY
+      const result = await adminSession.call(
+        op(
+          'supply',
+          adminSession.account.id,
+          underlyingAssetId,
+          BigInt(supplyAmount.toString()),
+          adminSession.account.id,
+          BigInt(0) // referral code
+        )
+      );
+      const isSuccess = result.receipt.statusCode === 200;
+      console.log(
+        isSuccess
+          ? chalk.green(
+              `✅ Supply ${formatUnits(supplyAmount.toString(), token.decimals)} ${token.symbol} operation completed successfully`
+            )
+          : chalk.red('❌ Supply operation failed')
+      );
     }
 
     console.log(

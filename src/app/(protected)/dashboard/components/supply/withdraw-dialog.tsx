@@ -24,6 +24,7 @@ import {
 } from '@/components/common/tooltip';
 import { UserReserveData } from '../../types';
 import CountUp from '@/components/common/count-up';
+import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
 
 const withdrawFormSchema = z.object({
   amount: z
@@ -79,6 +80,12 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
     refetch: fetchPrice,
   } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
+  const { data: maxWithdrawAmount, isLoading: isMaxWithdrawFetching } = useMaxAmount(
+    reserve.assetId,
+    reserve.decimals,
+    'get_max_borrow_amount'
+  );
+
   // Use the withdraw hook
   const withdraw = useWithdraw({
     onSuccess: (result, params) => {
@@ -95,8 +102,8 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
     debouncedFn(() => {
       // Don't allow value > supply balance
       const valueWithBalance =
-        Number(form.watch('amount')) > Number(reserve.currentATokenBalance)
-          ? reserve.currentATokenBalance
+        Number(form.watch('amount')) > Number(maxWithdrawAmount)
+          ? maxWithdrawAmount
           : form.watch('amount');
       const needToChangeValue = valueWithBalance !== form.watch('amount');
       if (needToChangeValue) {
@@ -105,7 +112,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
       setIsRefetchEnabled(true);
       fetchPrice();
     });
-  }, [fetchPrice, form, reserve.currentATokenBalance]);
+  }, [fetchPrice, form, maxWithdrawAmount]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -142,7 +149,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
 
   const handleMaxAmount = () => {
     // Use supply balance as the max amount
-    form.setValue('amount', reserve.currentATokenBalance.toString());
+    form.setValue('amount', maxWithdrawAmount.toString());
     handleFetchPrice();
   };
 
@@ -156,11 +163,9 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
         return;
       }
 
-      const balance = Number(reserve.currentATokenBalance);
+      const balance = Number(maxWithdrawAmount);
       if (amount > balance) {
-        toast.error(
-          `Amount exceeds your supply balance of ${reserve.currentATokenBalance} ${reserve.symbol}`
-        );
+        toast.error(`Amount exceeds your supply balance of ${maxWithdrawAmount} ${reserve.symbol}`);
         return;
       }
 
@@ -171,7 +176,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
         assetId: reserve.assetId,
         amount: data.amount,
         decimals: reserve.decimals,
-        isUserWithdrawMax: Number(form.watch('amount')) === Number(reserve.currentATokenBalance),
+        isUserWithdrawMax: Number(form.watch('amount')) === Number(maxWithdrawAmount),
       });
 
       console.log('Withdraw submitted:', {
@@ -223,7 +228,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                       inputMode="decimal"
                       pattern="[0-9]*[.]?[0-9]*"
                       min={0.0}
-                      max={reserve.currentATokenBalance}
+                      max={maxWithdrawAmount}
                       step="any"
                       onChange={handleAmountChange}
                     />
@@ -265,13 +270,18 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                       className="flex flex-row items-center gap-1 text-primary cursor-pointer"
                       onClick={handleMaxAmount}
                     >
-                      <Typography>Supply balance</Typography>
-                      <CountUp
-                        value={reserve.currentATokenBalance}
-                        className="font-bold"
-                        decimals={6}
-                      />
-                      <Typography className="font-bold text-primary">MAX</Typography>
+                      <div
+                        className="flex flex-row items-center gap-1 cursor-pointer"
+                        onClick={handleMaxAmount}
+                      >
+                        <Typography>Available: </Typography>
+                        {isMaxWithdrawFetching ? (
+                          <Skeleton className="h-5 w-20" />
+                        ) : (
+                          <Typography className="font-bold">{maxWithdrawAmount}</Typography>
+                        )}
+                        <Typography className="font-bold text-primary">MAX</Typography>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -292,7 +302,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                   <Typography className="flex items-center gap-1">Remaining supply</Typography>
                   <Typography weight="medium">
                     <CountUp
-                      value={reserve.currentATokenBalance - Number(form.watch('amount'))}
+                      value={maxWithdrawAmount - Number(form.watch('amount'))}
                       suffix={` ${reserve.symbol}`}
                       decimals={6}
                     />

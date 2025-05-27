@@ -22,9 +22,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { AvailableLiquidityToken, UserReserveData } from '../../types';
+import { UserReserveData } from '../../types';
 import { cn } from '@/utils/tailwind';
 import CountUp from '@/components/common/count-up';
+import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
 
 const borrowFormSchema = z.object({
   amount: z
@@ -49,7 +50,7 @@ export interface BorrowDialogProps {
   reserve: UserReserveData;
   healthFactor?: number;
   mutateAssets: () => void;
-  availableLiquidityTokens: AvailableLiquidityToken[];
+  // availableLiquidityTokens: AvailableLiquidityToken[];
 }
 
 // Create a debounced fetch function with lodash
@@ -62,7 +63,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   onOpenChange,
   reserve,
   mutateAssets,
-  availableLiquidityTokens,
+  // availableLiquidityTokens,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
@@ -84,10 +85,11 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     refetch: fetchPrice,
   } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
-  const availableLiquidityToken =
-    availableLiquidityTokens.find(
-      t => t.assetId.toString('hex') === reserve.assetId.toString('hex')
-    )?.availableLiquidityToken || 0;
+  const { data: maxBorrowAmount, isLoading: isMaxBorrowFetching } = useMaxAmount(
+    reserve.assetId,
+    reserve.decimals,
+    'get_max_borrow_amount'
+  );
 
   // Use the borrow hook
   const borrow = useBorrow({
@@ -105,7 +107,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     debouncedFn(() => {
       // Don't allow value > available borrow
       const availableLiquidityActual =
-        Number(availableLiquidityToken) === 0 ? Number.MAX_VALUE : Number(availableLiquidityToken);
+        Number(maxBorrowAmount) === 0 ? Number.MAX_VALUE : Number(maxBorrowAmount);
       const valueWithBalance =
         Number(form.watch('amount')) > availableLiquidityActual
           ? availableLiquidityActual
@@ -118,7 +120,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
       setIsRefetchEnabled(true);
       fetchPrice();
     });
-  }, [fetchPrice, form, availableLiquidityToken]);
+  }, [fetchPrice, form, maxBorrowAmount]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -156,8 +158,8 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   };
 
   const handleMaxAmount = () => {
-    form.setValue('amount', availableLiquidityToken.toString());
-    setInputAmount(availableLiquidityToken.toString());
+    form.setValue('amount', maxBorrowAmount.toString());
+    setInputAmount(maxBorrowAmount.toString());
     handleFetchPrice();
   };
 
@@ -171,12 +173,8 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
         return;
       }
 
-      const availableLiquidity =
-        Number(availableLiquidityToken) === 0 ? Number.MAX_VALUE : Number(availableLiquidityToken);
-      if (amount > availableLiquidity) {
-        toast.error(
-          `Amount exceeds your available borrow of ${availableLiquidityToken} ${reserve.symbol}`
-        );
+      if (amount > maxBorrowAmount) {
+        toast.error(`Amount exceeds your available borrow of ${maxBorrowAmount} ${reserve.symbol}`);
         return;
       }
 
@@ -240,10 +238,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                       inputMode="decimal"
                       pattern="[0-9]*[.]?[0-9]*"
                       min={0.0}
-                      max={
-                        availableLiquidityTokens.find(t => t.assetId === reserve.assetId)
-                          ?.availableLiquidityToken || 0
-                      }
+                      max={reserve.availableLiquidity}
                       step="any"
                       onChange={handleAmountChange}
                     />
@@ -286,16 +281,21 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                     <div
                       className={cn(
                         'flex flex-row items-center gap-1 text-primary cursor-pointer',
-                        !availableLiquidityToken && 'opacity-50 cursor-not-allowed'
+                        !maxBorrowAmount && 'opacity-50 cursor-not-allowed'
                       )}
                       onClick={handleMaxAmount}
                     >
                       <Typography>Available:</Typography>
-                      <CountUp
-                        value={availableLiquidityToken}
-                        className="font-bold"
-                        animateOnlyOnce={true}
-                      />
+                      {isMaxBorrowFetching ? (
+                        <Skeleton className="h-full w-4" />
+                      ) : (
+                        <CountUp
+                          value={maxBorrowAmount}
+                          className="font-bold"
+                          animateOnlyOnce={true}
+                        />
+                      )}
+
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>

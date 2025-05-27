@@ -3,7 +3,7 @@ import { op } from '@chromia/ft4';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
-import { parseUnits } from 'ethers/lib/utils';
+import { normalize } from '@/utils/bignumber';
 
 interface WithdrawParams {
   assetId: Buffer<ArrayBufferLike>;
@@ -45,7 +45,6 @@ export function useWithdraw({
       try {
         console.log('Starting withdraw operation:', params);
 
-        // Convert amount to BigInt format using parseUnits
         let amountValue;
         // signal for rell recognize we want to withdraw with max amount
         if (params.isUserWithdrawMax) {
@@ -53,7 +52,7 @@ export function useWithdraw({
             throw new Error('Client not available');
           }
           amountValue = await client.query('get_u256_max_query', {});
-        } else amountValue = parseUnits(params.amount.toString(), 27);
+        } else amountValue = normalize(params.amount.toString(), params.decimals);
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
@@ -67,7 +66,8 @@ export function useWithdraw({
               account.id, // from account (asset owner)
               params.assetId, // asset ID to withdraw
               BigInt(amountValue.toString()), // amount
-              account.id // to_id
+              account.id, // to_id,
+              Date.now()
             )
           )
           .buildAndSend();

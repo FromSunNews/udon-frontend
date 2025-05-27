@@ -6,8 +6,8 @@ import { useTokenPrices } from '@/hooks/contracts/queries/use-token-prices';
 import Image from 'next/image';
 import React from 'react';
 import { cn } from '@/utils/tailwind';
-import { formatRay } from '@/utils/wadraymath';
 import CountUp from '@/components/common/count-up';
+import { normalizeBN } from '@/utils/bignumber';
 
 // Extend the Balance type with additional properties
 
@@ -34,7 +34,9 @@ export function TokenList({
 
   // Helper function to calculate USD value
   const calculateUsdValue = (balance: Balance) => {
-    const tokenBalance = Number(formatRay(balance.amount.value));
+    const tokenBalance = Number(
+      normalizeBN(balance.amount.value.toString(), balance.asset.decimals)
+    );
     const price = prices[balance.asset.symbol] || 0;
     return tokenBalance * price;
   };
@@ -76,7 +78,15 @@ export function TokenList({
               {displayBalances.map((balance, index) => {
                 const tokenBalance = balance as unknown as Balance;
                 const usdValue = calculateUsdValue(tokenBalance);
-                const formattedBalance = Number(formatRay(tokenBalance.amount.value));
+                const formattedBalance = Number(
+                  normalizeBN(tokenBalance.amount.value.toString(), tokenBalance.asset.decimals)
+                );
+
+                console.log(
+                  'tokenBalance.amount.value.toString() ' + tokenBalance.amount.value.toString()
+                );
+                console.log('tokenBalance.asset.decimals ' + tokenBalance.asset.decimals);
+                console.log('formattedBalance ' + tokenBalance.asset.name, formattedBalance);
 
                 return (
                   <>
@@ -105,7 +115,7 @@ export function TokenList({
                             <CountUp value={formattedBalance} decimals={6} />
                           </span>
                           <span className="text-sm text-embossed font-medium">
-                            {tokenBalance.asset.symbol}
+                            {tokenBalance.asset.symbol.replace(/USD$/, '')}
                           </span>
                         </div>
                       </div>

@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/common/tooltip';
 import { BorrowDialog } from './borrow-dialog';
-import { AvailableLiquidityToken, UserReserveData } from '../../types';
+import { UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
 import CountUp from '@/components/common/count-up';
 
@@ -25,7 +25,7 @@ interface BorrowTableProps {
   isLoading: boolean;
   mutateAssets: () => void;
   enableBorrow: boolean;
-  availableLiquidityTokens: AvailableLiquidityToken[];
+  // availableLiquidityTokens: AvailableLiquidityToken[];
 }
 
 export const BorrowTable: React.FC<BorrowTableProps> = ({
@@ -34,7 +34,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   isLoading,
   mutateAssets,
   enableBorrow,
-  availableLiquidityTokens,
+  // availableLiquidityTokens,
 }) => {
   const [selectedAsset, setSelectedAsset] = useState<UserReserveData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -93,17 +93,17 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
     },
     {
       header: 'Available',
-      accessorKey: 'symbol',
+      accessorKey: 'availableLiquidity',
       enableSorting: true,
       cell: ({ row }) => {
-        const availableLiquidityToken =
-          availableLiquidityTokens.find(
-            t => t.assetId.toString('hex') === row.assetId.toString('hex')
-          )?.availableLiquidityToken || 0;
-        if (availableLiquidityToken === 0) {
+        // const availableLiquidityToken =
+        //   availableLiquidityTokens.find(
+        //     t => t.assetId.toString('hex') === row.assetId.toString('hex')
+        //   )?.availableLiquidityToken || 0;
+        if (row.availableLiquidity === 0) {
           return <Typography>_</Typography>;
         } else {
-          return <CountUp value={availableLiquidityToken} className="text-base" />;
+          return <CountUp value={row.availableLiquidity} className="text-base" />;
         }
       },
       meta: {
@@ -149,7 +149,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
               }}
               aria-label={`Borrow ${row.symbol}`}
               className="w-[100px]"
-              disabled={!enableBorrow}
+              disabled={!enableBorrow || row.availableLiquidity == 0}
             >
               Borrow
             </Button>
@@ -215,7 +215,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
           onOpenChange={setDialogOpen}
           reserve={selectedAsset}
           mutateAssets={mutateAssets}
-          availableLiquidityTokens={availableLiquidityTokens}
+          // availableLiquidityTokens={availableLiquidityTokens}
         />
       )}
     </>

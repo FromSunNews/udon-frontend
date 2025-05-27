@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useChromiaAccount } from '../../configs/chromia-hooks';
 import { useMemo } from 'react';
-import { formatRay } from '@/utils/wadraymath';
 import { keysToCamelCase } from '@/utils/object';
+import { normalizeBN } from '@/utils/bignumber';
 
 // Define asset price interface
 export interface StatsSupplyDeposit {
   assetId: Buffer<ArrayBufferLike>;
   symbol: string;
+  decimals: number;
   totalDeposit: number;
   totalBorrow: number;
   price: number;
@@ -38,22 +39,30 @@ export function useStatsSupplyDeposit() {
       const stats = (Array.isArray(statsRaw) ? statsRaw : []).map(r => keysToCamelCase(r));
 
       console.log('Received stats supply deposit:', stats);
-      return stats;
+      return stats as StatsSupplyDeposit[];
     },
     enabled: !!client,
     staleTime: 30000, // Consider data fresh for 30 seconds
     retry: 2, // Retry failed requests twice
-    networkMode: 'offlineFirst', // priority cache first
+    // networkMode: 'offlineFirst', // priority cache first
   });
 
   const totalValueDeposited = useMemo(() => {
     return (
-      query.data?.reduce((sum, r) => sum + Number(formatRay(r.totalDeposit)) * r.price, 0) || 0
+      query.data?.reduce(
+        (sum, r) => sum + Number(normalizeBN(r.totalDeposit.toString() || 0, r.decimals)) * r.price,
+        0
+      ) || 0
     );
   }, [query.data]);
 
   const totalValueBorrowed = useMemo(() => {
-    return query.data?.reduce((sum, r) => sum + Number(formatRay(r.totalBorrow)) * r.price, 0) || 0;
+    return (
+      query.data?.reduce(
+        (sum, r) => sum + Number(normalizeBN(r.totalBorrow.toString() || 0, r.decimals)) * r.price,
+        0
+      ) || 0
+    );
   }, [query.data]);
 
   return {

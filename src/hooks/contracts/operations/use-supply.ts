@@ -3,7 +3,7 @@ import { op } from '@chromia/ft4';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
-import { parseUnits } from 'ethers/lib/utils';
+import { normalize } from '@/utils/bignumber';
 // import { RAY } from '@/utils/wadraymath';
 // import { BigNumber } from 'ethers';
 
@@ -46,9 +46,8 @@ export function useSupply({
       try {
         console.log('Starting supply operation:', params);
 
-        // Convert amount to BigInt format using toRay utility
-        const amountValue = parseUnits(params.amount.toString(), 27);
-        // const amountValue = BigNumber.from(RAY).mul(params.amount); //convert to RAY
+        // Convert amount to normalize
+        const amountValue = normalize(params.amount.toString(), params.decimals);
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
@@ -62,7 +61,8 @@ export function useSupply({
               params.assetId, // underlying asset ID
               BigInt(amountValue.toString()), // amount
               account.id, // on behalf of account
-              BigInt(0) // referral code
+              BigInt(0), // referral code
+              Date.now()
             )
           )
           .buildAndSend();

@@ -48,6 +48,8 @@ export interface UserReserveDataResponse {
   supplyCap: bigint;
   borrowCap: bigint;
   ltv: bigint;
+
+  availableLiquidity: bigint;
 }
 
 export interface UserReserveData {
@@ -81,6 +83,8 @@ export interface UserReserveData {
   supplyCap: number;
   borrowCap: number;
   ltv: number;
+
+  availableLiquidity: number;
 }
 
 export interface AvailableLiquidityToken {

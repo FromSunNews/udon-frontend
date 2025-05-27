@@ -7,6 +7,7 @@ import { BorrowTable } from './components/borrow';
 import { SupplyPositionTable } from './components/supply/position';
 import { BorrowPositionTable } from './components/borrow/position';
 import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
+import { useStatsSupplyDeposit } from '@/hooks/contracts/queries/use-stats-supply-deposit';
 // import { useMediaQuery } from '@/hooks/use-media-query';
 // import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
 // import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
@@ -17,8 +18,6 @@ export default function DashboardPage() {
     assets: processedAssets,
     supplyPositions,
     borrowPositions,
-    totalDeposit,
-    totalBorrow,
     isLoading,
     refresh: refetchAssets,
     yourSupplyBalancePosition,
@@ -28,8 +27,14 @@ export default function DashboardPage() {
     yourBorrowPowerUsagePosition,
     yourBorrowAPYPosition,
     enableBorrow,
-    availableLiquidityTokens,
+    // availableLiquidityTokens,
   } = useCompletedAssets();
+
+  const {
+    totalValueDeposited,
+    totalValueBorrowed,
+    isLoading: isStatSupplyDepositFetching,
+  } = useStatsSupplyDeposit();
 
   // Check if the current device is mobile
   // const isMobile = useMediaQuery('(max-width: 768px)');
@@ -63,17 +68,17 @@ export default function DashboardPage() {
 
       <section className="flex flex-col sm:flex-row gap-4 sm:gap-5 mt-6 sm:mt-10">
         <StatCard
-          value={totalDeposit}
+          value={totalValueDeposited}
           label="Total Deposit"
           iconUrl="/images/supply/coin-stack.svg"
-          isLoading={isLoading}
+          isLoading={isStatSupplyDepositFetching}
           videoUrl="/images/supply/coin-stack.gif"
         />
         <StatCard
-          value={totalBorrow}
+          value={totalValueBorrowed}
           label="Total Borrows"
           iconUrl="/images/supply/saving-piggy.svg"
-          isLoading={isLoading}
+          isLoading={isStatSupplyDepositFetching}
           videoUrl="/images/supply/saving-piggy.gif"
         />
       </section>
@@ -121,7 +126,7 @@ export default function DashboardPage() {
           isLoading={isLoading}
           mutateAssets={refetchAssets}
           enableBorrow={enableBorrow}
-          availableLiquidityTokens={availableLiquidityTokens}
+          // availableLiquidityTokens={availableLiquidityTokens}
         />
         <SupplyTable
           title="Assets to supply"
@@ -135,7 +140,7 @@ export default function DashboardPage() {
           isLoading={isLoading}
           mutateAssets={refetchAssets}
           enableBorrow={enableBorrow}
-          availableLiquidityTokens={availableLiquidityTokens}
+          // availableLiquidityTokens={availableLiquidityTokens}
         />
       </section>
       {/* )} */}

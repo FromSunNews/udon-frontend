@@ -3,62 +3,10 @@ import { admin_kp, user_a_kp } from '../configs/key-pair';
 import { registerAccountOpen } from '../common/operations/accounts';
 import { getClient } from '../clients';
 import chalk from 'chalk';
-import { formatRay, RAY } from '../helpers/wadraymath';
+import { RAY } from '../helpers/wadraymath';
 import { BigNumber } from 'ethers';
-import { parseUnits } from 'ethers/lib/utils';
-
-// Token definitions
-const TOKENS = [
-  {
-    name: 'Bitcoin USD',
-    symbol: 'BTCUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
-    price: parseUnits('60000', 18).toString(),
-  },
-  {
-    name: 'Ethereum USD',
-    symbol: 'ETHUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
-    price: parseUnits('2500', 18).toString(),
-  },
-  {
-    name: 'MyNeighborAlice',
-    symbol: 'ALICEUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
-    price: parseUnits('0.49', 18).toString(),
-  },
-  {
-    name: 'DAR Open Network',
-    symbol: 'DUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
-    price: parseUnits('0.45', 18).toString(),
-  },
-  {
-    name: 'Chromia USD',
-    symbol: 'CHRUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
-    price: parseUnits('0.22', 18).toString(),
-  },
-  {
-    name: 'USDT',
-    symbol: 'USDTUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/825.png',
-    price: parseUnits('1', 18).toString(),
-  },
-  {
-    name: 'USDC',
-    symbol: 'USDCUSD',
-    decimals: 6,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3408.png',
-    price: parseUnits('1', 6).toString(),
-  },
-];
+import { formatUnits, parseUnits } from 'ethers/lib/utils';
+import { TOKENS } from '../configs/tokens';
 
 async function initSupply() {
   try {
@@ -127,8 +75,8 @@ async function initSupply() {
 
       // TODO: Uncomment this when we have a price asset oracle
       // update price asset
-      // await adminSession.call(op('update_price_update_op', token.symbol, BigInt(token.price)));
-      // console.log(chalk.green('✅ Price asset updated:'));
+      await adminSession.call(op('update_price_update_op', token.symbol, BigInt(token.price)));
+      console.log(chalk.green('✅ Price asset updated:'));
 
       // Set interest rate strategy
       await adminSession.call(
@@ -183,7 +131,7 @@ async function initSupply() {
           'configure_reserve_as_collateral',
           underlyingAssetId,
           7000, // ltv = 70%
-          8000, // liquidation threshold = 75%
+          8000, // liquidation threshold = 80%
           10500 // liquidation bonus = 5%
         )
       );
@@ -211,13 +159,13 @@ async function initSupply() {
       console.log(chalk.green(`✅ Set field for set_reserve_borrowing`));
 
       // Mint underlying tokens to user
-      const mintAmount = BigNumber.from(RAY).mul(1000); // 1000 RAY
+      const mintAmount = parseUnits('1000', token.decimals); // 1000 * 10ˆdecimal
       await adminSession.call(
         op('mint_underlying_asset', userAccountId, BigInt(mintAmount.toString()), underlyingAssetId)
       );
       console.log(
         chalk.green(
-          `✅ Minted ${chalk.yellow(formatRay(mintAmount))} ${token.symbol} tokens to user`
+          `✅ Minted ${chalk.yellow(formatUnits(mintAmount, token.decimals))} ${token.symbol} tokens to user`
         )
       );
 
@@ -276,22 +224,6 @@ async function initSupply() {
     // }
 
     // console.log(chalk.bold.green('✅✅✅ Supply initialization completed successfully ✅✅✅'));
-
-    // // Borrow operation
-    // const borrowAmount = BigNumber.from(RAY).mul(10);
-    // console.log(chalk.blue('🔄 Initializing borrow mode...'));
-    // await userSession.call(
-    //   op(
-    //     'borrow',
-    //     supplyToken.underlying.id,
-    //     BigInt(borrowAmount.toString()),
-    //     2,
-    //     0,
-    //     userAccountId,
-    //     Date.now()
-    //   )
-    // );
-    // console.log(chalk.green('✅ Borrow mode initialized'));
   } catch (error) {
     console.error(chalk.bold.red('❌❌❌ ERROR IN INIT SUPPLY ❌❌❌'));
     console.error(chalk.red(error));

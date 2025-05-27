@@ -6,7 +6,7 @@ import { keysToCamelCase } from '@/utils/object';
 import { AssetPrice, UserReserveData } from '@/app/(protected)/dashboard/types';
 import { calculateCompoundedRate } from '@/utils/math/compounded-interest';
 import { SECONDS_PER_YEAR } from '@/utils/constants';
-import { normalize } from '@/utils/bignumber';
+import { normalizeBN } from '@/utils/bignumber';
 
 /**
  * Custom hook to fetch complete asset data for a user using get_all_fields_user_reserve_data
@@ -61,15 +61,19 @@ export function useCompletedAssets() {
           symbol: r.symbol.replace(/USD$/, ''),
           assetId: Buffer.from(r.assetId, 'hex'),
           // reserve
-          totalSupply: Number(formatRay(r.totalSupply)),
-          balance: Number(formatRay(r.balance)),
-          reserveUnbacked: Number(formatRay(r.reserveUnbacked)),
-          reserveAccruedToTreasury: Number(formatRay(r.reserveAccruedToTreasury)),
-          currentATokenBalance: Number(formatRay(r.currentATokenBalance)),
-          currentATokenTotalSupply: Number(formatRay(r.currentATokenTotalSupply)),
-          currentVariableDebt: Number(formatRay(r.currentVariableDebt)),
+          totalSupply: Number(normalizeBN(r.totalSupply.toString(), r.decimals)),
+          balance: Number(normalizeBN(r.balance.toString(), r.decimals)),
+          reserveUnbacked: Number(normalizeBN(r.reserveUnbacked.toString(), r.decimals)),
+          reserveAccruedToTreasury: Number(
+            normalizeBN(r.reserveAccruedToTreasury.toString(), r.decimals)
+          ),
+          currentATokenBalance: Number(normalizeBN(r.currentATokenBalance.toString(), r.decimals)),
+          currentATokenTotalSupply: Number(
+            normalizeBN(r.currentATokenTotalSupply.toString(), r.decimals)
+          ),
+          currentVariableDebt: Number(normalizeBN(r.currentVariableDebt.toString(), r.decimals)),
           currentVariableDebtTokenTotalSupply: Number(
-            formatRay(r.currentVariableDebtTokenTotalSupply)
+            normalizeBN(r.currentVariableDebtTokenTotalSupply.toString(), r.decimals)
           ),
           reserveCurrentLiquidityRate: Number(formatRay(r.reserveCurrentLiquidityRate)),
           reserveCurrentVariableBorrowRate: Number(formatRay(r.reserveCurrentVariableBorrowRate)),
@@ -78,11 +82,13 @@ export function useCompletedAssets() {
           reserveLastUpdateTimestamp: Number(r.reserveLastUpdateTimestamp),
           usageAsCollateralEnabled: !!r.usageAsCollateralEnabled,
           price: Number(priceObj?.price),
-          supplyCap: Number(formatRay(r.supplyCap)),
-          borrowCap: Number(formatRay(r.borrowCap)),
+          supplyCap: Number(normalizeBN(r.supplyCap.toString(), r.decimals)),
+          borrowCap: Number(normalizeBN(r.borrowCap.toString(), r.decimals)),
           ltv: Number(r.ltv) / 100,
+          availableLiquidity: Number(normalizeBN(r.availableLiquidity.toString(), r.decimals)),
+
           supplyAPY: Number(
-            normalize(
+            normalizeBN(
               calculateCompoundedRate({
                 rate: r.reserveCurrentLiquidityRate,
                 duration: SECONDS_PER_YEAR,
@@ -91,7 +97,7 @@ export function useCompletedAssets() {
             )
           ),
           borrowAPY: Number(
-            normalize(
+            normalizeBN(
               calculateCompoundedRate({
                 rate: r.reserveCurrentVariableBorrowRate,
                 duration: SECONDS_PER_YEAR,
@@ -123,21 +129,11 @@ export function useCompletedAssets() {
     () => userReserves.filter(r => r.currentATokenBalance > 0n),
     [userReserves]
   );
+
   const borrowPositions = useMemo(
     () => userReserves.filter(r => r.currentVariableDebt > 0n),
     [userReserves]
   );
-
-  const totalDeposit = useMemo(() => {
-    return userReserves.reduce((sum, r) => sum + Number(r.currentATokenTotalSupply) * r.price, 0);
-  }, [userReserves]);
-
-  const totalBorrow = useMemo(() => {
-    return userReserves.reduce(
-      (sum, r) => sum + Number(r.currentVariableDebtTokenTotalSupply) * r.price,
-      0
-    );
-  }, [userReserves]);
 
   const yourSupplyBalancePosition = useMemo(() => {
     return userReserves.reduce((sum, r) => sum + Number(r.currentATokenBalance) * r.price, 0);
@@ -181,53 +177,51 @@ export function useCompletedAssets() {
     return enable;
   }, [userReserves]);
 
-  const availableLiquidityTokens = useMemo(() => {
-    // caculate available liquidity of user
-    const totalCollateralUSD = userReserves.reduce(
-      (sum, r) => sum + (r.usageAsCollateralEnabled ? Number(r.currentATokenBalance) * r.price : 0),
-      0
-    );
-    const totalDebtUSD = userReserves.reduce(
-      (sum, r) => sum + Number(r.currentVariableDebt) * r.price,
-      0
-    );
-    const availableLiquidityTokens = userReserves.map(r => {
-      const availableTokenInPoolRaw =
-        r.currentATokenTotalSupply - r.currentVariableDebtTokenTotalSupply;
-      const availableTokenInPool = availableTokenInPoolRaw < 0 ? 0 : availableTokenInPoolRaw;
+  // const availableLiquidityTokens = useMemo(() => {
+  //   // caculate available liquidity of user
+  //   const totalCollateralUSD = userReserves.reduce(
+  //     (sum, r) => sum + (r.usageAsCollateralEnabled ? Number(r.currentATokenBalance) * r.price : 0),
+  //     0
+  //   );
+  //   const totalDebtUSD = userReserves.reduce(
+  //     (sum, r) => sum + Number(r.currentVariableDebt) * r.price,
+  //     0
+  //   );
+  //   const availableLiquidityTokens = userReserves.map(r => {
+  //     const availableTokenInPoolRaw =
+  //       r.currentATokenTotalSupply - r.currentVariableDebtTokenTotalSupply;
+  //     const availableTokenInPool = availableTokenInPoolRaw < 0 ? 0 : availableTokenInPoolRaw;
 
-      console.log('currentATokenTotalSupply ' + r.symbol, r.currentATokenTotalSupply);
-      console.log(
-        'currentVariableDebtTokenTotalSupply ' + r.symbol,
-        r.currentVariableDebtTokenTotalSupply
-      );
-      console.log('availableTokenInPool ' + r.symbol, availableTokenInPool);
-      const totalLiquidityCanBeBorrowedUSD = totalCollateralUSD * (r.ltv / 100) - totalDebtUSD;
-      let availableLiquidityToken = 0;
-      if (totalLiquidityCanBeBorrowedUSD > 0) {
-        availableLiquidityToken = totalLiquidityCanBeBorrowedUSD / r.price;
-      }
-      return {
-        assetId: r.assetId,
-        symbol: r.symbol,
-        availableLiquidityToken:
-          availableLiquidityToken > availableTokenInPool
-            ? availableTokenInPool
-            : availableLiquidityToken,
-      };
-    });
-    console.log('totalCollateralUSD', totalCollateralUSD);
-    console.log('totalDebtUSD', totalDebtUSD);
-    console.log('availableLiquidityTokens', availableLiquidityTokens);
-    return availableLiquidityTokens;
-  }, [userReserves]);
+  //     console.log('currentATokenTotalSupply ' + r.symbol, r.currentATokenTotalSupply);
+  //     console.log(
+  //       'currentVariableDebtTokenTotalSupply ' + r.symbol,
+  //       r.currentVariableDebtTokenTotalSupply
+  //     );
+  //     console.log('availableTokenInPool ' + r.symbol, availableTokenInPool);
+  //     const totalLiquidityCanBeBorrowedUSD = totalCollateralUSD * (r.ltv / 100) - totalDebtUSD;
+  //     let availableLiquidityToken = 0;
+  //     if (totalLiquidityCanBeBorrowedUSD > 0) {
+  //       availableLiquidityToken = totalLiquidityCanBeBorrowedUSD / r.price;
+  //     }
+  //     return {
+  //       assetId: r.assetId,
+  //       symbol: r.symbol,
+  //       availableLiquidityToken:
+  //         availableLiquidityToken > availableTokenInPool
+  //           ? availableTokenInPool
+  //           : availableLiquidityToken,
+  //     };
+  //   });
+  //   console.log('totalCollateralUSD', totalCollateralUSD);
+  //   console.log('totalDebtUSD', totalDebtUSD);
+  //   console.log('availableLiquidityTokens', availableLiquidityTokens);
+  //   return availableLiquidityTokens;
+  // }, [userReserves]);
 
   return {
     assets: userReserves, // all user reserves (with asset info)
     supplyPositions,
     borrowPositions,
-    totalDeposit,
-    totalBorrow,
     yourSupplyBalancePosition,
     yourSupplyCollateralPosition,
     yourSupplyAPYPosition,
@@ -235,7 +229,7 @@ export function useCompletedAssets() {
     yourBorrowAPYPosition,
     yourBorrowPowerUsagePosition,
     enableBorrow,
-    availableLiquidityTokens,
+    // availableLiquidityTokens,
     isLoading,
     error,
     refresh: fetchUserReserves,

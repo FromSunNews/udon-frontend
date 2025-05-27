@@ -16,10 +16,10 @@ import { useFaucet } from '@/hooks/contracts/operations/use-faucet';
 import { ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTokenBalance } from '@/hooks/contracts/queries/use-token-balance';
-import { formatRay } from '@/utils/wadraymath';
+import { normalizeBN } from '@/utils/bignumber';
 
 // Token definitions
-const TOKENS = [
+export const TOKENS = [
   {
     name: 'Bitcoin USD',
     symbol: 'BTCUSD',
@@ -29,31 +29,31 @@ const TOKENS = [
   {
     name: 'Ethereum USD',
     symbol: 'ETHUSD',
-    decimals: 8,
+    decimals: 18,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
   },
   {
     name: 'MyNeighborAlice',
     symbol: 'ALICEUSD',
-    decimals: 8,
+    decimals: 6,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
   },
   {
     name: 'DAR Open Network',
     symbol: 'DUSD',
-    decimals: 8,
+    decimals: 18,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
   },
   {
     name: 'Chromia USD',
     symbol: 'CHRUSD',
-    decimals: 8,
+    decimals: 6,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
   },
   {
     name: 'USDT',
     symbol: 'USDTUSD',
-    decimals: 8,
+    decimals: 6,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/825.png',
   },
   {
@@ -86,7 +86,12 @@ export default function FaucetPage() {
       );
 
       // Format the balance if found, otherwise use "0"
-      const balance = matchingBalance ? formatRay(matchingBalance.amount.value) : '0';
+      const balance = matchingBalance
+        ? normalizeBN(
+            matchingBalance.amount.value.toString(),
+            matchingBalance.asset.decimals
+          ).toString()
+        : '0';
 
       return {
         ...token,
@@ -97,7 +102,7 @@ export default function FaucetPage() {
 
   const handleFaucetClick = async (asset: FaucetAsset) => {
     try {
-      await requestTokens(asset.symbol);
+      await requestTokens(asset.symbol, asset.decimals);
       // Refresh balances after successful request
       await refreshBalance();
     } catch (error) {
