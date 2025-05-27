@@ -65,14 +65,16 @@ export default function DashboardPage() {
         <StatCard
           value={totalDeposit}
           label="Total Deposit"
-          iconUrl="/images/supply/coin-stack.gif"
+          iconUrl="/images/supply/coin-stack.svg"
           isLoading={isLoading}
+          videoUrl="/images/supply/coin-stack.gif"
         />
         <StatCard
           value={totalBorrow}
           label="Total Borrows"
-          iconUrl="/images/supply/saving-piggy.gif"
+          iconUrl="/images/supply/saving-piggy.svg"
           isLoading={isLoading}
+          videoUrl="/images/supply/saving-piggy.gif"
         />
       </section>
 

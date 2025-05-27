@@ -103,13 +103,15 @@ export default function Hero() {
             <StatCard
               value={totalValueDeposited}
               label="Total Deposits"
-              iconUrl="/images/landing/hero/coin-stack.webm"
+              iconUrl={'/images/landing/hero/coin-stack.svg'}
+              videoUrl={'/images/landing/hero/coin-stack.webm'}
               isLoading={isLoading}
             />
             <StatCard
               value={totalValueBorrowed}
               label="Total Borrows"
-              iconUrl="/images/landing/hero/saving-piggy.webm"
+              iconUrl={'/images/landing/hero/saving-piggy.svg'}
+              videoUrl={'/images/landing/hero/saving-piggy.webm'}
               isLoading={isLoading}
             />
           </div>

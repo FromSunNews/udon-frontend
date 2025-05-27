@@ -1,6 +1,8 @@
 import CountUp from '@/components/common/count-up';
 import { Skeleton } from '@/components/common/skeleton';
 import { Typography } from '@/components/common/typography';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import Image from 'next/image';
 import React from 'react';
 
 interface StatCardProps {
@@ -8,9 +10,17 @@ interface StatCardProps {
   label: string;
   iconUrl: string;
   isLoading?: boolean;
+  videoUrl?: string;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isLoading }) => {
+export const StatCard: React.FC<StatCardProps> = ({
+  value,
+  label,
+  iconUrl,
+  isLoading,
+  videoUrl,
+}) => {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   return (
     <div className="bg-[rgba(255,255,255,0.71)] border self-stretch flex min-w-60 overflow-hidden flex-col items-stretch flex- spac[-8px]-y-6 shrink basis-[0%] p-6 rounded-3xl border-[rgba(138,183,246,1)] border-solid backdrop-blur-md">
       {/* Top Glow Effect */}
@@ -37,14 +47,20 @@ export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isLoa
           {isLoading ? (
             <Skeleton className="w-[100px] h-[100px] rounded-full bg-black/10" />
           ) : (
-            <video
-              src={iconUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-contain"
-            />
+            <div className="w-[100px] h-[100px] flex items-center justify-center">
+              {isMobile ? (
+                <Image src={iconUrl} alt={label} fill className="object-contain" />
+              ) : (
+                <video
+                  src={videoUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-contain"
+                />
+              )}
+            </div>
           )}
         </div>
       </div>

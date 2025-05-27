@@ -5,15 +5,24 @@ import React from 'react';
 import { Typography } from '@/components/common/typography';
 import CountUp from '@/components/common/count-up';
 import { Skeleton } from '@/components/common/skeleton';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 interface StatCardProps {
   value: number;
   label: string;
-  iconUrl: string;
+  iconUrl?: string;
   isLoading?: boolean;
+  videoUrl?: string;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isLoading = false }) => {
+export const StatCard: React.FC<StatCardProps> = ({
+  value,
+  label,
+  iconUrl = '',
+  isLoading = false,
+  videoUrl = '',
+}) => {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   return (
     <div className="rounded-[18px] p-[1px] bg-gradient-to-b from-[#197A94] from-74% to-[#293564] to-0% overflow-hidden flex-1">
       <div className="rounded-[calc(18px-1px)] bg-[#181E26] h-full mt-[1px]">
@@ -37,7 +46,12 @@ export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isLoa
             {isLoading ? (
               <Skeleton className="w-full h-full rounded-full" />
             ) : (
-              <Image src={iconUrl} fill alt={`${label} icon`} />
+              <Image
+                src={isMobile ? iconUrl : videoUrl}
+                fill
+                alt={`${label} icon`}
+                className="object-contain"
+              />
             )}
           </div>
         </div>

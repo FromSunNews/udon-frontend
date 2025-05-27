@@ -38,8 +38,8 @@ export const metadata: Metadata = {
   },
   description: 'Unlocking Liquidity Money Markets and Leverage on Chromia',
   keywords: ['next.js', 'react', 'typescript', 'web development'],
-  authors: [{ name: 'Udon Team' }],
-  creator: 'Udon Team',
+  // authors: [{ name: 'Udon Team' }],
+  // creator: 'Udon Team',
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: '/',
@@ -76,7 +76,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Udon Finance',
     description: 'Unlocking Liquidity Money Markets and Leverage on Chromia',
-    images: ['/seo/twitter-image.png'],
+    images: [SITE_URL + '/seo/twitter-image.png'],
   },
   robots: {
     index: true,
