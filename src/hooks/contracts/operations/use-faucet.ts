@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { op } from '@chromia/ft4';
+import { createAmount, op } from '@chromia/ft4';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
-import { normalize } from '@/utils/bignumber';
+// import { normalize } from '@/utils/bignumber';
 
 interface UseFaucetReturn {
   requestTokens: (symbol: string, decimals: number) => Promise<void>;
@@ -31,7 +31,7 @@ export function useFaucet(): UseFaucetReturn {
         setIsPending(true);
         setError(null);
 
-        const mintAmount = normalize('1000', decimals);
+        // const mintAmount = normalize('1000', decimals);
         const userAccountId = account.id;
 
         // Get asset ID for the requested token symbol
@@ -49,7 +49,7 @@ export function useFaucet(): UseFaucetReturn {
             op(
               'mint_underlying_asset',
               userAccountId,
-              BigInt(mintAmount.toString()),
+              createAmount(1000, decimals).value,
               underlyingAssetId
             )
           )
