@@ -19,7 +19,7 @@ import { useTokenBalance } from '@/hooks/contracts/queries/use-token-balance';
 import { normalizeBN } from '@/utils/bignumber';
 
 // Token definitions
-export const TOKENS = [
+const TOKENS = [
   {
     name: 'Bitcoin USD',
     symbol: 'BTCUSD',
