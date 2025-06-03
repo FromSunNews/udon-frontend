@@ -3,7 +3,7 @@
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab';
 import { Typography } from '@/components/common/typography';
-import { UserReserveData, AvailableLiquidityToken } from '../../types';
+import { UserAccountData, UserReserveData } from '../../types';
 import { Badge } from '@/components/common/badge';
 import { Skeleton } from '@/components/common/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
@@ -36,7 +36,7 @@ interface MobilePositionTabsProps {
   yourBorrowPowerUsagePosition: number;
   yourBorrowAPYPosition: number;
   enableBorrow: boolean;
-  availableLiquidityTokens: AvailableLiquidityToken[];
+  accountData: UserAccountData;
 }
 
 export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
@@ -51,7 +51,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
   yourBorrowPowerUsagePosition,
   yourBorrowAPYPosition,
   enableBorrow,
-  availableLiquidityTokens,
+  accountData,
 }) => {
   const router = useRouter();
 
@@ -108,14 +108,16 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <div
-              className="flex items-center gap-3 cursor-pointer"
+              className="flex items-center gap-2 cursor-pointer"
               onClick={() => handleAssetClick(asset.symbol)}
             >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
                 <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
-              <Typography weight="medium">{asset.symbol}</Typography>
+              <Typography weight="medium" className="text-2xl">
+                {asset.symbol}
+              </Typography>
             </div>
           </TooltipTrigger>
           <TooltipContent>
@@ -126,10 +128,129 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
     );
   };
 
+  // Supply position skeleton
+  const SupplyPositionSkeleton = () => (
+    <div className="border border-border rounded-lg py-3 px-4 bg-black/20">
+      <div className="flex justify-between mb-1">
+        {/* Top row: Asset name and Collateral switch */}
+        <div className="flex items-center gap-2">
+          <Skeleton className="w-8 h-8 rounded-full" />
+          <Skeleton className="w-16 h-8" />
+        </div>
+        <Skeleton className="w-10 h-5 rounded-full" />
+      </div>
+
+      <div className="flex">
+        {/* Left section */}
+        <div className="flex flex-1 flex-col">
+          {/* Col layout for Price/APY and Supplied/Balance */}
+          <div className="flex mt-2">
+            {/* Col 1: Price and APY */}
+            <div className="w-[40%]">
+              <div className="mb-2">
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  Price
+                </Typography>
+                <Skeleton className="w-16 h-5" />
+              </div>
+              <div>
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  APY
+                </Typography>
+                <Skeleton className="w-16 h-5" />
+              </div>
+            </div>
+
+            {/* Col 2: Supplied and Balance */}
+            <div className="flex-1">
+              <div className="mb-2">
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  Supplied
+                </Typography>
+                <Skeleton className="w-24 h-5" />
+              </div>
+              <div>
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  Balance
+                </Typography>
+                <Skeleton className="w-24 h-5" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right section */}
+        <div className="flex flex-col gap-2 justify-center">
+          <Skeleton className="w-[80px] h-6 rounded-md" />
+          <Skeleton className="w-[80px] h-6 rounded-md" />
+        </div>
+      </div>
+    </div>
+  );
+
+  // Borrow position skeleton
+  const BorrowPositionSkeleton = () => (
+    <div className="border border-border rounded-lg py-3 px-4 bg-black/20">
+      <div className="flex">
+        {/* Left section */}
+        <div className="flex flex-1 flex-col">
+          {/* Row 1: Asset */}
+          <div className="">
+            <div className="flex items-center gap-2">
+              <Skeleton className="w-8 h-8 rounded-full" />
+              <Skeleton className="w-16 h-8" />
+            </div>
+          </div>
+
+          {/* Col layout for Price/APY and Debt/Balance */}
+          <div className="flex mt-2">
+            {/* Col 1: Price and APY */}
+            <div className="w-[40%]">
+              <div className="mb-2">
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  Price
+                </Typography>
+                <Skeleton className="w-16 h-5" />
+              </div>
+              <div>
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  APY
+                </Typography>
+                <Skeleton className="w-16 h-5" />
+              </div>
+            </div>
+
+            {/* Col 2: Debt and Balance */}
+            <div className="flex-1">
+              <div className="mb-2">
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  Debt
+                </Typography>
+                <Skeleton className="w-24 h-5" />
+              </div>
+              <div>
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  Balance
+                </Typography>
+                <Skeleton className="w-24 h-5" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right section */}
+        <div className="flex flex-col gap-2 justify-center">
+          <Skeleton className="w-[80px] h-6 rounded-md" />
+          <Skeleton className="w-[80px] h-6 rounded-md" />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
       <Tabs defaultValue="supply" className="w-full">
-        <TabsList className="w-full h-14 rounded-t-2xl rounded-b-none bg-card p-0 border-b border-border">
+        <TabsList className="w-full h-14 rounded-t-2xl rounded-b-none bg-card p-0 border border-b border-border">
           <TabsTrigger value="supply" className="flex-1 h-full py-4 text-base">
             Your Supply
           </TabsTrigger>
@@ -149,26 +270,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
               </div>
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="border border-border rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="w-8 h-8 rounded-full" />
-                        <Skeleton className="w-24 h-5" />
-                      </div>
-                      <Skeleton className="w-10 h-5 rounded-full" />
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <Skeleton className="w-24 h-5 mb-1" />
-                        <Skeleton className="w-16 h-4" />
-                      </div>
-                      <Skeleton className="w-16 h-5" />
-                    </div>
-                    <div className="flex gap-2">
-                      <Skeleton className="w-full h-9" />
-                      <Skeleton className="w-full h-9" />
-                    </div>
-                  </div>
+                  <SupplyPositionSkeleton key={i} />
                 ))}
               </div>
             </div>
@@ -216,60 +318,113 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
                     </Badge>
                   </div>
                   <div className="space-y-4">
-                    {supplyPositions.map(position => (
+                    {supplyPositions.map((position, index) => (
                       <div
                         key={position.symbol}
-                        className="border border-border rounded-lg p-4 space-y-3"
+                        className={`border border-border rounded-lg py-3 px-4 ${
+                          index % 2 === 0 ? 'bg-black/20' : 'bg-card'
+                        }`}
                       >
-                        <div className="flex justify-between items-center">
-                          {renderAssetCell(position)}
-                          <Switch
-                            checked={position.usageAsCollateralEnabled}
-                            onCheckedChange={() => handleCollateralSwitch(position)}
-                          />
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <div className="flex flex-col gap-1">
-                            <CountUp
-                              value={Number(position.currentATokenBalance)}
-                              className="text-base"
-                            />
-                            <Typography variant="small" color="submerged">
-                              <CountUp
-                                value={Number(position.currentATokenBalance) * position.price}
-                                prefix="$"
-                                className="text-sm text-submerged"
-                              />
+                        {/* Top row: Asset name and Collateral switch */}
+                        <div className="flex justify-between mb-1">
+                          <div>{renderAssetCell(position)}</div>
+                          <div className="flex items-center">
+                            <Typography color="submerged" className="mr-2 text-[12px]">
+                              Collateral
                             </Typography>
-                          </div>
-                          <div>
-                            {position.supplyAPY === 0 ? (
-                              <Typography>_</Typography>
-                            ) : (
-                              <CountUp
-                                value={position.supplyAPY}
-                                suffix="%"
-                                className="text-base"
-                                decimals={4}
-                              />
-                            )}
+                            <Switch
+                              checked={position.usageAsCollateralEnabled}
+                              onCheckedChange={() => handleCollateralSwitch(position)}
+                              className="scale-75 origin-left"
+                            />
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="gradient"
-                            className="flex-1"
-                            onClick={() => handleSupplyClick(position)}
-                          >
-                            Supply
-                          </Button>
-                          <Button
-                            variant="outlineGradient"
-                            className="flex-1"
-                            onClick={() => handleWithdrawClick(position)}
-                          >
-                            Withdraw
-                          </Button>
+
+                        <div className="flex">
+                          {/* Left section */}
+                          <div className="flex flex-1 flex-col">
+                            {/* Col layout for Price/APY and Supplied/Balance */}
+                            <div className="flex mt-2">
+                              {/* Col 1: Price and APY */}
+                              <div className="w-[40%]">
+                                <div className="mb-2">
+                                  <Typography color="submerged" className="mb-[2px] text-[12px]">
+                                    Price
+                                  </Typography>
+                                  <CountUp value={position.price} prefix="$" />
+                                </div>
+                                <div>
+                                  <Typography color="submerged" className="mb-[2px] text-[12px]">
+                                    APY
+                                  </Typography>
+                                  {position.supplyAPY === 0 ? (
+                                    <Typography>-</Typography>
+                                  ) : (
+                                    <CountUp value={position.supplyAPY} suffix="%" decimals={2} />
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Col 2: Supplied and Balance */}
+                              <div className="flex-1">
+                                <div className="mb-2">
+                                  <Typography color="submerged" className="mb-[2px] text-[12px]">
+                                    Supplied
+                                  </Typography>
+                                  <div className="flex flex-row items-center gap-1">
+                                    <CountUp
+                                      value={Number(position.currentATokenBalance)}
+                                      className="text-base"
+                                    />
+                                    <Typography color="submerged">~</Typography>
+                                    <CountUp
+                                      value={Number(position.currentATokenBalance) * position.price}
+                                      className="text-base text-submerged"
+                                      prefix="$"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <Typography color="submerged" className="mb-[2px] text-[12px]">
+                                    Balance
+                                  </Typography>
+                                  {position.balance === 0 ? (
+                                    <Typography>-</Typography>
+                                  ) : (
+                                    <div className="flex flex-row items-center gap-1">
+                                      <CountUp value={position.balance} className="text-base" />
+                                      <Typography color="submerged">~</Typography>
+                                      <CountUp
+                                        value={position.price * position.balance}
+                                        className="text-base text-submerged"
+                                        prefix="$"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right section */}
+                          <div className="flex flex-col gap-2 justify-center">
+                            <Button
+                              variant="gradient"
+                              size="sm"
+                              onClick={() => handleSupplyClick(position)}
+                              className="w-[80px] !py-0 !px-2 text-base"
+                            >
+                              Supply
+                            </Button>
+                            <Button
+                              variant="outlineGradient"
+                              size="sm"
+                              onClick={() => handleWithdrawClick(position)}
+                              className="w-[80px] !py-0 !px-2 text-base"
+                            >
+                              Withdraw
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -298,25 +453,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
               </div>
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="border border-border rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="w-8 h-8 rounded-full" />
-                        <Skeleton className="w-24 h-5" />
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <Skeleton className="w-24 h-5 mb-1" />
-                        <Skeleton className="w-16 h-4" />
-                      </div>
-                      <Skeleton className="w-16 h-5" />
-                    </div>
-                    <div className="flex gap-2">
-                      <Skeleton className="w-full h-9" />
-                      <Skeleton className="w-full h-9" />
-                    </div>
-                  </div>
+                  <BorrowPositionSkeleton key={i} />
                 ))}
               </div>
             </div>
@@ -360,62 +497,106 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
                     </Badge>
                   </div>
                   <div className="space-y-4">
-                    {borrowPositions.map(position => (
+                    {borrowPositions.map((position, index) => (
                       <div
                         key={position.symbol}
-                        className="border border-border rounded-lg p-4 space-y-3"
+                        className={`border border-border rounded-lg py-3 px-4 ${
+                          index % 2 === 0 ? 'bg-black/20' : 'bg-card'
+                        }`}
                       >
-                        <div className="flex justify-between items-center">
-                          {renderAssetCell(position)}
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <div className="flex flex-col gap-1">
-                            {position.currentVariableDebt === 0 ? (
-                              <Typography>_</Typography>
-                            ) : (
-                              <>
-                                <CountUp
-                                  value={position.currentVariableDebt}
-                                  className="text-base"
-                                />
-                                <CountUp
-                                  value={position.price * position.currentVariableDebt}
-                                  prefix="$"
-                                  decimals={2}
-                                  className="text-sm text-submerged"
-                                />
-                              </>
-                            )}
+                        <div className="flex">
+                          {/* Left section */}
+                          <div className="flex flex-1 flex-col">
+                            {/* Row 1: Asset */}
+                            <div className="">{renderAssetCell(position)}</div>
+
+                            {/* Col layout for Price/APY and Debt/Balance */}
+                            <div className="flex mt-2">
+                              {/* Col 1: Price and APY */}
+                              <div className="w-[40%]">
+                                <div className="mb-2">
+                                  <Typography color="submerged" className="mb-[2px] text-[12px]">
+                                    Price
+                                  </Typography>
+                                  <CountUp value={position.price} prefix="$" />
+                                </div>
+                                <div>
+                                  <Typography color="submerged" className="mb-[2px] text-[12px]">
+                                    APY
+                                  </Typography>
+                                  {position.borrowAPY === 0 ? (
+                                    <Typography>-</Typography>
+                                  ) : (
+                                    <CountUp value={position.borrowAPY} suffix="%" decimals={2} />
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Col 2: Debt and Balance */}
+                              <div className="flex-1">
+                                <div className="mb-2">
+                                  <Typography color="submerged" className="mb-[2px] text-[12px]">
+                                    Debt
+                                  </Typography>
+                                  {position.currentVariableDebt === 0 ? (
+                                    <Typography>-</Typography>
+                                  ) : (
+                                    <div className="flex flex-row items-center gap-1">
+                                      <CountUp
+                                        value={position.currentVariableDebt}
+                                        className="text-base"
+                                      />
+                                      <Typography color="submerged">~</Typography>
+                                      <CountUp
+                                        value={position.price * position.currentVariableDebt}
+                                        className="text-base text-submerged"
+                                        prefix="$"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <Typography color="submerged" className="mb-[2px] text-[12px]">
+                                    Balance
+                                  </Typography>
+                                  {position.balance === 0 ? (
+                                    <Typography>-</Typography>
+                                  ) : (
+                                    <div className="flex flex-row items-center gap-1">
+                                      <CountUp value={position.balance} className="text-base" />
+                                      <Typography color="submerged">~</Typography>
+                                      <CountUp
+                                        value={position.price * position.balance}
+                                        className="text-base text-submerged"
+                                        prefix="$"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            {position.borrowAPY === 0 ? (
-                              <Typography>_</Typography>
-                            ) : (
-                              <CountUp
-                                value={position.borrowAPY}
-                                suffix="%"
-                                className="text-base"
-                                decimals={4}
-                              />
-                            )}
+
+                          {/* Right section */}
+                          <div className="flex flex-col gap-2 justify-center">
+                            <Button
+                              variant="gradient"
+                              size="sm"
+                              onClick={() => handleBorrowClick(position)}
+                              disabled={!enableBorrow}
+                              className="w-[80px] !py-0 !px-2 text-base"
+                            >
+                              Borrow
+                            </Button>
+                            <Button
+                              variant="outlineGradient"
+                              size="sm"
+                              onClick={() => handleRepayClick(position)}
+                              className="w-[80px] !py-0 !px-2 text-base"
+                            >
+                              Repay
+                            </Button>
                           </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="gradient"
-                            className="flex-1"
-                            onClick={() => handleBorrowClick(position)}
-                            disabled={!enableBorrow}
-                          >
-                            Borrow
-                          </Button>
-                          <Button
-                            variant="outlineGradient"
-                            className="flex-1"
-                            onClick={() => handleRepayClick(position)}
-                          >
-                            Repay
-                          </Button>
                         </div>
                       </div>
                     ))}
@@ -441,6 +622,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           onOpenChange={setSupplyDialogOpen}
           reserve={selectedSupplyPosition}
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
 
@@ -449,7 +631,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           open={withdrawDialogOpen}
           onOpenChange={setWithdrawDialogOpen}
           reserve={selectedSupplyPosition}
-          healthFactor={1.23} // Placeholder value
+          accountData={accountData}
           mutateAssets={mutateAssets}
         />
       )}
@@ -459,8 +641,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           open={collateralDialogOpen}
           onOpenChange={setCollateralDialogOpen}
           reserve={selectedSupplyPosition}
-          healthFactor={1.26} // Placeholder value
-          newHealthFactor={selectedSupplyPosition.usageAsCollateralEnabled ? 1.1 : 2.4} // Placeholder value
+          accountData={accountData}
           mutateAssets={mutateAssets}
         />
       )}
@@ -471,7 +652,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           open={repayDialogOpen}
           onOpenChange={setRepayDialogOpen}
           reserve={selectedBorrowPosition}
-          healthFactor={4.91} // Placeholder value
+          accountData={accountData}
           mutateAssets={mutateAssets}
         />
       )}
@@ -481,9 +662,8 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           open={borrowDialogOpen}
           onOpenChange={setBorrowDialogOpen}
           reserve={selectedBorrowPosition}
-          healthFactor={4.91} // Placeholder value
+          accountData={accountData}
           mutateAssets={mutateAssets}
-          availableLiquidityTokens={availableLiquidityTokens}
         />
       )}
     </div>

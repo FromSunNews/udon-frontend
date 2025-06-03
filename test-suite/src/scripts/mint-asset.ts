@@ -16,7 +16,7 @@ const ASSET_CONFIG = {
   // The amount to mint in whole tokens (will be converted to RAY)
   MINT_AMOUNT: 1000,
   // Target user ID
-  TARGET_USER_ID: ensureBuffer('FBF14538924A2C0C12BB8852CDEE8AB4F9B149310C75E160BE3C9C2D9DB09B59'),
+  TARGET_USER_ID: ensureBuffer('A09E03F051D3ED624CC94DCD3E1CE735915DEB2F0D60D10677AD701D938DA026'),
 };
 
 async function mintAsset() {

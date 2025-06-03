@@ -45,7 +45,7 @@ export function useCollateral({
           .transactionBuilder()
           .add(
             op(
-              'set_using_as_collateral_op',
+              'set_user_use_reserve_as_collateral_op',
               account.id, // from account (asset owner)
               params.assetId, // asset ID to collateral
               params.useAsCollateral // useAsCollateral

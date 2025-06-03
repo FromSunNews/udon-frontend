@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/common/tooltip';
 import { BorrowDialog } from './borrow-dialog';
-import { UserReserveData } from '../../types';
+import { UserAccountData, UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
 import CountUp from '@/components/common/count-up';
 
@@ -25,7 +25,7 @@ interface BorrowTableProps {
   isLoading: boolean;
   mutateAssets: () => void;
   enableBorrow: boolean;
-  // availableLiquidityTokens: AvailableLiquidityToken[];
+  accountData: UserAccountData;
 }
 
 export const BorrowTable: React.FC<BorrowTableProps> = ({
@@ -34,7 +34,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   isLoading,
   mutateAssets,
   enableBorrow,
-  // availableLiquidityTokens,
+  accountData,
 }) => {
   const [selectedAsset, setSelectedAsset] = useState<UserReserveData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -103,7 +103,17 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
         if (row.availableLiquidity === 0) {
           return <Typography>_</Typography>;
         } else {
-          return <CountUp value={row.availableLiquidity} className="text-base" />;
+          return (
+            <div className="flex flex-col gap-2">
+              <CountUp value={row.availableLiquidity} className="text-base" />
+              <CountUp
+                value={row.price * row.availableLiquidity}
+                prefix="$"
+                decimals={2}
+                className="text-sm text-submerged"
+              />
+            </div>
+          );
         }
       },
       meta: {
@@ -215,7 +225,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
           onOpenChange={setDialogOpen}
           reserve={selectedAsset}
           mutateAssets={mutateAssets}
-          // availableLiquidityTokens={availableLiquidityTokens}
+          accountData={accountData}
         />
       )}
     </>

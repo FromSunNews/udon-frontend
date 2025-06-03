@@ -1,13 +1,14 @@
 'use client';
 
 import { ConnectKitButton, Avatar } from 'connectkit';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, UserIcon } from 'lucide-react';
 
 import { Button } from '@/components/common/button';
 import { WalletActions } from './components/wallet-actions';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/common/dialog';
 import { useRef } from 'react';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 interface ConnectedButtonProps {
   className?: string;
@@ -44,6 +45,7 @@ function ConnectedButton({ className, ensName }: ConnectedButtonProps) {
 export function ConnectWallet() {
   const { account } = useChromiaAccount();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleClose = () => {
     if (closeButtonRef.current) {
@@ -62,9 +64,19 @@ export function ConnectWallet() {
           return (
             <Dialog>
               <DialogTrigger asChild>
-                <div>
-                  <ConnectedButton className="w-full" address={address} ensName={ensName} />
-                </div>
+                {!isMobile ? (
+                  <div>
+                    <ConnectedButton className="w-full" address={address} ensName={ensName} />
+                  </div>
+                ) : (
+                  <Button
+                    variant="outlineGradient"
+                    className={`!h-9 !w-9 border p-0 m-0 rounded-md bg-white/20 hover:shadow-md`}
+                  >
+                    {/* User icon */}
+                    <UserIcon className="h-6 w-6 text-submerged" />
+                  </Button>
+                )}
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px] p-0" showCloseButton={false}>
                 {/* <DialogClose ref={closeButtonRef} className="hidden" /> */}

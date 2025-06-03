@@ -133,7 +133,7 @@ export function TransactionHistory({
                     )}
                     <div
                       key={index}
-                      className="relative py-1 flex items-center justify-between shadow-md "
+                      className="relative py-1 flex flex-row items-center justify-between shadow-md "
                     >
                       {/* Icon */}
                       <div
@@ -177,7 +177,9 @@ export function TransactionHistory({
                         </div>
                       </div>
                       {/* Amount */}
-                      <span className={`text-base font-bold ml-2 ${txType.amountColor}`}>
+                      <span
+                        className={`flex flex-row items-center text-base font-bold ml-2 ${txType.amountColor}`}
+                      >
                         {isPositive ? '+' : '- '}
                         <CountUp
                           value={Math.abs(numericValue)}

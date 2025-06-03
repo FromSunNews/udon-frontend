@@ -68,8 +68,8 @@ export function useRepay({
               params.assetId, // asset ID to repay
               BigInt(amountValue.toString()), // amount
               2, // 2 = interest_rate_mode
-              account.id, // from account
-              Date.now()
+              account.id // from account
+              // Date.now()
             )
           )
           .buildAndSend();

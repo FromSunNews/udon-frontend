@@ -24,9 +24,9 @@ export const StatCard: React.FC<StatCardProps> = ({
 }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   return (
-    <div className="rounded-[18px] p-[1px] bg-gradient-to-b from-[#197A94] from-74% to-[#293564] to-0% overflow-hidden flex-1">
-      <div className="rounded-[calc(18px-1px)] bg-[#181E26] h-full mt-[1px]">
-        <div className="p-[18px] flex items-center gap-5 [background:radial-gradient(80%_80%_at_50%_100%,rgba(82,179,239,0.4)_0%,rgba(74,163,201,0)_85%)]">
+    <div className="rounded-2xl p-[1px] bg-gradient-to-b from-[#3E73C4] from-74% to-[#293564] to-0% overflow-hidden flex-1">
+      <div className="rounded-2xl bg-[#181E26] h-full mt-[1px]">
+        <div className="sm:px-4 px-4 sm:py-4 py-2 flex items-center gap-5 [background:radial-gradient(80%_80%_at_50%_100%,rgba(82,179,239,0.4)_0%,rgba(74,163,201,0)_85%)]">
           <div className="flex-1">
             {isLoading ? (
               <>
@@ -36,13 +36,17 @@ export const StatCard: React.FC<StatCardProps> = ({
             ) : (
               <>
                 <CountUp value={value} prefix="$" className="text-[32px]" />
-                <Typography variant="h5" color="submerged">
+                <Typography
+                  variant="h5"
+                  color="submerged"
+                  className="sm:text-lg text-2xl font-medium"
+                >
                   {label}
                 </Typography>
               </>
             )}
           </div>
-          <div className="w-[99px] h-[99px] relative">
+          <div className="w-[80px] sm:w-[100px] h-[80px] sm:h-[100px] relative">
             {isLoading ? (
               <Skeleton className="w-full h-full rounded-full" />
             ) : (

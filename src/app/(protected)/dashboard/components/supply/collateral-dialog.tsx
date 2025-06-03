@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useCollateral } from '@/hooks/contracts/operations/use-collateral';
 
@@ -10,14 +10,15 @@ import { Typography } from '@/components/common/typography';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 import { toast } from 'sonner';
-import { UserReserveData } from '../../types';
+import { UserReserveData, UserAccountData } from '../../types';
+import { calculateHFAfterCallUsageAsCollateral } from '@/utils/hf';
+import { normalize, normalizeBN, valueToBigNumber } from '@/utils/bignumber';
 
 interface CollateralDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   reserve: UserReserveData;
-  healthFactor: number;
-  newHealthFactor: number;
+  accountData: UserAccountData;
   mutateAssets: () => void;
 }
 
@@ -25,15 +26,11 @@ export const CollateralDialog: React.FC<CollateralDialogProps> = ({
   open,
   onOpenChange,
   reserve,
-  healthFactor,
-  newHealthFactor,
+  accountData,
   mutateAssets,
 }) => {
-  console.log('reserve', reserve);
-  console.log('healthFactor', healthFactor);
-  console.log('newHealthFactor', newHealthFactor);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [calculatedHealthFactor, setCalculatedHealthFactor] = useState<number>(-1);
 
   const collateral = useCollateral({
     onSuccess: () => {
@@ -42,8 +39,46 @@ export const CollateralDialog: React.FC<CollateralDialogProps> = ({
     },
   });
 
+  // Calculate health factor after changing collateral status
+  const calculateHealthFactor = useCallback(() => {
+    if (accountData.healthFactor === -1) {
+      setCalculatedHealthFactor(-1);
+      return;
+    }
+
+    // Get the asset value in base currency
+    const assetCollateralValue = valueToBigNumber(
+      normalize(reserve.price.toString(), 18)
+    ).multipliedBy(valueToBigNumber(reserve.currentATokenBalance));
+
+    const hf = calculateHFAfterCallUsageAsCollateral(
+      valueToBigNumber(accountData.totalCollateralBase.toString()),
+      assetCollateralValue,
+      valueToBigNumber((Number(accountData.currentLiquidationThreshold) / 100).toString()),
+      valueToBigNumber(reserve.liquidationThreshold.toString()),
+      valueToBigNumber(accountData.totalDebtBase.toString()),
+      valueToBigNumber(accountData.healthFactor.toString()),
+      reserve.usageAsCollateralEnabled
+    );
+
+    console.log('hf after collateral change', hf.toString());
+    setCalculatedHealthFactor(Number(hf));
+  }, [accountData, reserve]);
+
+  // Calculate health factor when dialog opens
+  useEffect(() => {
+    if (open) {
+      calculateHealthFactor();
+    }
+  }, [open, calculateHealthFactor]);
+
   // Logic: If disabling and newHealthFactor < 1, block action
-  const willCauseLiquidation = newHealthFactor < 1;
+  const willCauseLiquidation = calculatedHealthFactor < 1;
+
+  const currentHealthFactor =
+    accountData.healthFactor === -1
+      ? -1
+      : normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18);
 
   const handleAction = async () => {
     setIsSubmitting(true);
@@ -79,7 +114,7 @@ export const CollateralDialog: React.FC<CollateralDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">Review tx {reserve.symbol}</DialogTitle>
         </DialogHeader>
@@ -102,7 +137,7 @@ export const CollateralDialog: React.FC<CollateralDialogProps> = ({
                   <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <Typography weight="medium">
-                  {reserve.balance} {reserve.symbol}
+                  {reserve.currentATokenBalance} {reserve.symbol}
                 </Typography>
               </div>
             </div>
@@ -111,14 +146,15 @@ export const CollateralDialog: React.FC<CollateralDialogProps> = ({
               <Typography weight="medium">
                 <span
                   className={
-                    newHealthFactor < healthFactor
-                      ? newHealthFactor < 1
+                    calculatedHealthFactor < Number(currentHealthFactor)
+                      ? calculatedHealthFactor < 1
                         ? 'text-red-500'
                         : 'text-amber-500'
                       : 'text-green-500'
                   }
                 >
-                  {healthFactor.toFixed(2)} → {newHealthFactor.toFixed(2)}
+                  {currentHealthFactor === -1 ? '∞' : Number(currentHealthFactor).toFixed(2)} →{' '}
+                  {calculatedHealthFactor === -1 ? '∞' : calculatedHealthFactor.toFixed(2)}
                 </span>
               </Typography>
             </div>

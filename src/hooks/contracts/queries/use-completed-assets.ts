@@ -53,6 +53,7 @@ export function useCompletedAssets() {
       /* eslint-disable @typescript-eslint/no-explicit-any */
       reserves = reserves.map((r: any) => {
         const priceObj = prices.find(p => p.stork_asset_id === r.symbol);
+
         return {
           // asset
 
@@ -96,6 +97,7 @@ export function useCompletedAssets() {
               27
             )
           ),
+          liquidationThreshold: Number(r.liquidationThreshold) / 100,
           borrowAPY: Number(
             normalizeBN(
               calculateCompoundedRate({
@@ -105,7 +107,7 @@ export function useCompletedAssets() {
               27
             )
           ),
-        } as UserReserveData;
+        };
       });
 
       console.log('process fields:', reserves);
@@ -126,22 +128,22 @@ export function useCompletedAssets() {
 
   // For compatibility with old API, split supply/borrow positions
   const supplyPositions = useMemo(
-    () => userReserves.filter(r => r.currentATokenBalance > 0n),
+    () => userReserves.filter(r => r.currentATokenBalance > 0),
     [userReserves]
   );
 
   const borrowPositions = useMemo(
-    () => userReserves.filter(r => r.currentVariableDebt > 0n),
+    () => userReserves.filter(r => r.currentVariableDebt > 0),
     [userReserves]
   );
 
   const yourSupplyBalancePosition = useMemo(() => {
-    return userReserves.reduce((sum, r) => sum + Number(r.currentATokenBalance) * r.price, 0);
+    return userReserves.reduce((sum, r) => sum + r.currentATokenBalance * r.price, 0);
   }, [userReserves]);
 
   const yourSupplyCollateralPosition = useMemo(() => {
     return userReserves.reduce(
-      (sum, r) => sum + (r.usageAsCollateralEnabled ? Number(r.currentATokenBalance) * r.price : 0),
+      (sum, r) => sum + (r.usageAsCollateralEnabled ? r.currentATokenBalance * r.price : 0),
       0
     );
   }, [userReserves]);
@@ -153,7 +155,7 @@ export function useCompletedAssets() {
   }, [userReserves]);
 
   const yourBorrowBalancePosition = useMemo(() => {
-    return userReserves.reduce((sum, r) => sum + Number(r.currentVariableDebt) * r.price, 0);
+    return userReserves.reduce((sum, r) => sum + r.currentVariableDebt * r.price, 0);
   }, [userReserves]);
 
   const yourBorrowAPYPosition = useMemo(() => {
@@ -163,10 +165,11 @@ export function useCompletedAssets() {
   }, [userReserves]);
 
   const yourBorrowPowerUsagePosition = useMemo(() => {
-    return userReserves.reduce(
-      (sum, r) => sum + r.currentVariableDebtTokenTotalSupply / r.currentVariableDebt,
-      0
-    );
+    return userReserves.reduce((sum, r) => {
+      // Prevent division by zero
+      if (r.currentVariableDebt === 0) return sum;
+      return sum + r.currentVariableDebtTokenTotalSupply / r.currentVariableDebt;
+    }, 0);
   }, [userReserves]);
 
   const enableBorrow = useMemo(() => {
@@ -177,49 +180,8 @@ export function useCompletedAssets() {
     return enable;
   }, [userReserves]);
 
-  // const availableLiquidityTokens = useMemo(() => {
-  //   // caculate available liquidity of user
-  //   const totalCollateralUSD = userReserves.reduce(
-  //     (sum, r) => sum + (r.usageAsCollateralEnabled ? Number(r.currentATokenBalance) * r.price : 0),
-  //     0
-  //   );
-  //   const totalDebtUSD = userReserves.reduce(
-  //     (sum, r) => sum + Number(r.currentVariableDebt) * r.price,
-  //     0
-  //   );
-  //   const availableLiquidityTokens = userReserves.map(r => {
-  //     const availableTokenInPoolRaw =
-  //       r.currentATokenTotalSupply - r.currentVariableDebtTokenTotalSupply;
-  //     const availableTokenInPool = availableTokenInPoolRaw < 0 ? 0 : availableTokenInPoolRaw;
-
-  //     console.log('currentATokenTotalSupply ' + r.symbol, r.currentATokenTotalSupply);
-  //     console.log(
-  //       'currentVariableDebtTokenTotalSupply ' + r.symbol,
-  //       r.currentVariableDebtTokenTotalSupply
-  //     );
-  //     console.log('availableTokenInPool ' + r.symbol, availableTokenInPool);
-  //     const totalLiquidityCanBeBorrowedUSD = totalCollateralUSD * (r.ltv / 100) - totalDebtUSD;
-  //     let availableLiquidityToken = 0;
-  //     if (totalLiquidityCanBeBorrowedUSD > 0) {
-  //       availableLiquidityToken = totalLiquidityCanBeBorrowedUSD / r.price;
-  //     }
-  //     return {
-  //       assetId: r.assetId,
-  //       symbol: r.symbol,
-  //       availableLiquidityToken:
-  //         availableLiquidityToken > availableTokenInPool
-  //           ? availableTokenInPool
-  //           : availableLiquidityToken,
-  //     };
-  //   });
-  //   console.log('totalCollateralUSD', totalCollateralUSD);
-  //   console.log('totalDebtUSD', totalDebtUSD);
-  //   console.log('availableLiquidityTokens', availableLiquidityTokens);
-  //   return availableLiquidityTokens;
-  // }, [userReserves]);
-
   return {
-    assets: userReserves, // all user reserves (with asset info)
+    assets: userReserves,
     supplyPositions,
     borrowPositions,
     yourSupplyBalancePosition,
@@ -229,7 +191,6 @@ export function useCompletedAssets() {
     yourBorrowAPYPosition,
     yourBorrowPowerUsagePosition,
     enableBorrow,
-    // availableLiquidityTokens,
     isLoading,
     error,
     refresh: fetchUserReserves,

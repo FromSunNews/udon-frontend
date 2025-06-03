@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { CircleX, Info } from 'lucide-react';
+import { CircleX, Info, ArrowRight } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,9 +22,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { UserReserveData } from '../../types';
+import { UserAccountData, UserReserveData } from '../../types';
 import CountUp from '@/components/common/count-up';
 import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
+import { normalize, normalizeBN, valueToBigNumber } from '@/utils/bignumber';
+import { calculateHFAfterWithdraw } from '@/utils/hf';
 
 const withdrawFormSchema = z.object({
   amount: z
@@ -47,7 +49,7 @@ export interface WithdrawDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   reserve: UserReserveData;
-  healthFactor?: number;
+  accountData: UserAccountData;
   mutateAssets: () => void;
 }
 
@@ -60,12 +62,14 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   open,
   onOpenChange,
   reserve,
-  // healthFactor = 1.0,
+  accountData,
   mutateAssets,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
+  const [calculatedHealthFactor, setCalculatedHealthFactor] = useState<number>(-1);
+
   const form = useForm<WithdrawFormValues>({
     resolver: zodResolver(withdrawFormSchema),
     defaultValues: {
@@ -83,7 +87,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   const { data: maxWithdrawAmount, isLoading: isMaxWithdrawFetching } = useMaxAmount(
     reserve.assetId,
     reserve.decimals,
-    'get_max_borrow_amount'
+    'get_max_withdraw_amount'
   );
 
   // Use the withdraw hook
@@ -96,6 +100,43 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
       console.error('Withdraw error:', { error, params });
     },
   });
+
+  // Calculate health factor based on current input
+  const calculateHealthFactor = useCallback(() => {
+    if (accountData.healthFactor === -1) {
+      setCalculatedHealthFactor(-1);
+      return;
+    }
+
+    const amount = form.watch('amount');
+    if (!amount || Number(amount) <= 0) {
+      setCalculatedHealthFactor(
+        Number(normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18))
+      );
+      return;
+    }
+
+    const hf = calculateHFAfterWithdraw(
+      valueToBigNumber(accountData.totalCollateralBase.toString()),
+      valueToBigNumber(normalize(reserve.price.toString(), 18)).multipliedBy(
+        valueToBigNumber(amount)
+      ),
+      (Number(accountData.currentLiquidationThreshold) / 100).toString(),
+      reserve.liquidationThreshold.toString(),
+      valueToBigNumber(accountData.totalDebtBase.toString()),
+      valueToBigNumber(accountData.healthFactor.toString()),
+      reserve.usageAsCollateralEnabled
+    );
+
+    console.log('hf after withdraw', hf.toString());
+    setCalculatedHealthFactor(Number(hf));
+  }, [
+    accountData,
+    form,
+    reserve.liquidationThreshold,
+    reserve.price,
+    reserve.usageAsCollateralEnabled,
+  ]);
 
   // Handle price fetch with lodash debounce
   const handleFetchPrice = useCallback(() => {
@@ -111,8 +152,10 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
       }
       setIsRefetchEnabled(true);
       fetchPrice();
+      // Calculate health factor after debounce
+      calculateHealthFactor();
     });
-  }, [fetchPrice, form, maxWithdrawAmount]);
+  }, [fetchPrice, form, maxWithdrawAmount, calculateHealthFactor]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -123,10 +166,11 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
     }
   }, [priceData]);
 
-  // Initialize with asset price
+  // Initialize with asset price and calculate initial health factor
   useEffect(() => {
     setCurrentPrice(reserve.price);
-  }, [reserve.price]);
+    calculateHealthFactor();
+  }, [reserve.price, calculateHealthFactor]);
 
   // Watch for input changes and fetch price
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,6 +188,13 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
 
     if (value && parseFloat(value) > 0) {
       handleFetchPrice();
+    } else {
+      // If amount is empty or 0, reset health factor to current
+      setCalculatedHealthFactor(
+        accountData.healthFactor === -1
+          ? -1
+          : Number(normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18))
+      );
     }
   };
 
@@ -199,9 +250,14 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
     }
   };
 
+  const currentHealthFactor =
+    accountData.healthFactor === -1
+      ? -1
+      : normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-xl">
         <TooltipProvider delayDuration={300}>
           <DialogHeader>
             <div className="flex justify-between items-center">
@@ -240,6 +296,17 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                           size="icon"
                           onClick={() => {
                             form.setValue('amount', '');
+                            // Reset health factor when clearing input
+                            setCalculatedHealthFactor(
+                              accountData.healthFactor === -1
+                                ? -1
+                                : Number(
+                                    normalizeBN(
+                                      valueToBigNumber(accountData.healthFactor.toString()),
+                                      18
+                                    )
+                                  )
+                            );
                           }}
                           className="hover:opacity-70"
                         >
@@ -270,10 +337,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                       className="flex flex-row items-center gap-1 text-primary cursor-pointer"
                       onClick={handleMaxAmount}
                     >
-                      <div
-                        className="flex flex-row items-center gap-1 cursor-pointer"
-                        onClick={handleMaxAmount}
-                      >
+                      <div className="flex flex-row items-center gap-1 cursor-pointer">
                         <Typography>Available: </Typography>
                         {isMaxWithdrawFetching ? (
                           <Skeleton className="h-5 w-20" />
@@ -321,22 +385,52 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   </Typography>
-                  {/* <Typography
-                    weight="medium"
-                    className={healthFactor >= 1.0 ? 'text-amber-500' : 'text-red-500'}
-                  >
-                    <CountUp value={healthFactor} decimals={2} />
-                  </Typography> */}
-                  <Typography weight="medium">_ </Typography>
-                </div>
 
-                {/* <div className="text-sm text-muted-foreground">
-                  <Typography>Liquidation at &lt;1.0</Typography>
-                </div> */}
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    {Number(currentHealthFactor) === -1 ? (
+                      <Typography className="text-green-500 text-3xl text-bold">∞</Typography>
+                    ) : (
+                      <CountUp
+                        value={Number(currentHealthFactor)}
+                        decimals={2}
+                        className={
+                          Number(currentHealthFactor) === -1
+                            ? 'text-green-500'
+                            : Number(currentHealthFactor) <= 1.25
+                              ? 'text-red-500'
+                              : Number(currentHealthFactor) <= 1.5
+                                ? 'text-amber-500'
+                                : 'text-green-500'
+                        }
+                      />
+                    )}
+
+                    {/* icon arrow left to right */}
+                    <ArrowRight className="h-4 w-4 mb-1 text-muted-foreground" />
+
+                    {calculatedHealthFactor === -1 ? (
+                      <Typography className="!text-green-500 text-3xl text-bold">∞</Typography>
+                    ) : (
+                      <CountUp
+                        value={calculatedHealthFactor}
+                        decimals={2}
+                        className={
+                          calculatedHealthFactor === -1
+                            ? 'text-green-500'
+                            : calculatedHealthFactor <= 1.25
+                              ? 'text-red-500'
+                              : calculatedHealthFactor <= 1.5
+                                ? 'text-amber-500'
+                                : 'text-green-500'
+                        }
+                      />
+                    )}
+                  </div>
+                </div>
 
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">Withdraw amount</Typography>
-                  <div className="font-medium text-base">
+                  <div className="font-medium text-base flex flex-row items-center gap-1">
                     <CountUp
                       value={Number(form.watch('amount'))}
                       suffix={` ${reserve.symbol}`}

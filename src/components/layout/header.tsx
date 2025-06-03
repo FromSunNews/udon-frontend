@@ -51,7 +51,7 @@ export const Header: React.FC = () => {
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-[20] flex flex-row px-16 justify-between items-center py-4 transition-all duration-300',
+        'fixed top-0 left-0 right-0 z-[20] flex flex-row sm:px-16 px-4 justify-between items-center py-4 transition-all duration-300',
         scrolled && 'bg-background/10 backdrop-blur-md shadow-sm'
       )}
     >

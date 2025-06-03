@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar'
 import { SupplyDialog } from './supply-dialog';
 import { WithdrawDialog } from './withdraw-dialog';
 import { CollateralDialog } from './collateral-dialog';
-import { UserReserveData } from '../../types';
+import { UserAccountData, UserReserveData } from '../../types';
 import { useRouter } from 'next/navigation';
 import CountUp from '@/components/common/count-up';
 
@@ -28,6 +28,7 @@ interface SupplyPositionTableProps {
   yourSupplyBalancePosition: number;
   yourSupplyCollateralPosition: number;
   yourSupplyAPYPosition: number;
+  accountData: UserAccountData;
 }
 
 export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
@@ -37,6 +38,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   yourSupplyBalancePosition,
   yourSupplyCollateralPosition,
   yourSupplyAPYPosition,
+  accountData,
 }) => {
   const router = useRouter();
 
@@ -296,6 +298,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           onOpenChange={setSupplyDialogOpen}
           reserve={selectedPosition}
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
 
@@ -305,8 +308,8 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           open={withdrawDialogOpen}
           onOpenChange={setWithdrawDialogOpen}
           reserve={selectedPosition}
-          healthFactor={1.23} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
 
@@ -316,8 +319,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           open={collateralDialogOpen}
           onOpenChange={setCollateralDialogOpen}
           reserve={selectedCollateral}
-          healthFactor={1.26} // Using a placeholder value, would be calculated based on actual data
-          newHealthFactor={selectedCollateral.usageAsCollateralEnabled ? 1.1 : 2.4} // Would be dynamically calculated
+          accountData={accountData}
           mutateAssets={mutateAssets}
         />
       )}

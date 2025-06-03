@@ -38,8 +38,8 @@ export const metadata: Metadata = {
   },
   description: 'Unlocking Liquidity Money Markets and Leverage on Chromia',
   keywords: ['next.js', 'react', 'typescript', 'web development'],
-  // authors: [{ name: 'Udon Team' }],
-  // creator: 'Udon Team',
+  authors: [{ name: 'Udon Team' }],
+  creator: 'Udon Team',
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: '/',
@@ -99,7 +99,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className={fontClasses} suppressHydrationWarning>
-      <body className="antialiased bg-background text-foreground">
+      <body className="antialiased bg-background text-foreground" suppressHydrationWarning>
         <Providers>{children}</Providers>
         {/* TODO: remove this when we have a production environment */}
         {/* <EnvironmentBadge /> */}

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-
+import { useEffect, useState } from 'react';
 import { cn } from '@/utils/tailwind';
 
 interface ShineBorderProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -35,6 +35,17 @@ export function ShineBorder({
   style,
   ...props
 }: ShineBorderProps) {
+  // Use state to ensure client-side only rendering
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Only render on client side
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Return null during SSR and first render on client
+  if (!isMounted) return null;
+
   return (
     <div
       style={
@@ -57,6 +68,7 @@ export function ShineBorder({
         'pointer-events-none absolute inset-0 size-full rounded-[inherit] will-change-[background-position] motion-safe:animate-shine',
         className
       )}
+      suppressHydrationWarning
       {...props}
     />
   );

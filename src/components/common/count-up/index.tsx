@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Typography } from '../typography';
 
+// Import the CountUp library as a client-side only component
 const CountUpLib = dynamic(() => import('react-countup'), {
   ssr: false,
 });
@@ -50,7 +51,8 @@ const formatWithAbbreviation = (num: number, decimals: number = 2): string => {
   return formatted.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '') + suffix;
 };
 
-export default function CountUp({
+// Export CountUp as a client-side only component to avoid hydration issues
+const CountUp = ({
   value,
   suffix = '',
   prefix = '',
@@ -58,10 +60,10 @@ export default function CountUp({
   decimals = 2,
   color,
   className = '',
-  variant = 'default',
+  variant = 'p',
   abbreviate = true,
   animateOnlyOnce = true,
-}: CountUpProps) {
+}: CountUpProps) => {
   const [isClient, setIsClient] = useState(false);
   const hasAnimatedRef = useRef(false);
   const previousValueRef = useRef<number | null>(null);
@@ -111,12 +113,11 @@ export default function CountUp({
     }
   };
 
+  // Don't render anything on server
   if (!isClient) {
     return (
       <Typography variant={variant} color={color} className={className}>
-        {prefix}
-        {formatNumber(value)}
-        {suffix}
+        {prefix}0{suffix}
       </Typography>
     );
   }
@@ -172,4 +173,7 @@ export default function CountUp({
       />
     </Typography>
   );
-}
+};
+
+// Export the component wrapped in dynamic to ensure client-side only rendering
+export default dynamic(() => Promise.resolve(CountUp), { ssr: false });

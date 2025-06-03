@@ -50,6 +50,8 @@ export interface UserReserveDataResponse {
   ltv: bigint;
 
   availableLiquidity: bigint;
+
+  // userDataAccount: UserAccountDataResponse;
 }
 
 export interface UserReserveData {
@@ -85,6 +87,26 @@ export interface UserReserveData {
   ltv: number;
 
   availableLiquidity: number;
+
+  // userDataAccount: UserAccountData;
+}
+
+export interface UserAccountDataResponse {
+  totalCollateralBase: bigint;
+  totalDebtBase: bigint;
+  availableBorrowsBase: bigint;
+  currentLiquidationThreshold: bigint;
+  ltv: bigint;
+  healthFactor: bigint;
+}
+
+export interface UserAccountData {
+  totalCollateralBase: number;
+  totalDebtBase: number;
+  availableBorrowsBase: number;
+  currentLiquidationThreshold: number;
+  ltv: number;
+  healthFactor: number;
 }
 
 export interface AvailableLiquidityToken {

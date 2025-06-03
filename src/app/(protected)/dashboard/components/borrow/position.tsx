@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { RepayDialog } from './repay-dialog';
 import { BorrowDialog } from './borrow-dialog';
-import { UserReserveData } from '../../types';
+import { UserAccountData, UserReserveData } from '../../types';
 import { useRouter } from 'next/navigation';
 import CountUp from '@/components/common/count-up';
 
@@ -27,7 +27,7 @@ interface BorrowPositionTableProps {
   yourBorrowPowerUsagePosition: number;
   yourBorrowAPYPosition: number;
   enableBorrow: boolean;
-  // availableLiquidityTokens: AvailableLiquidityToken[];
+  accountData: UserAccountData;
 }
 
 export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
@@ -38,7 +38,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
   yourBorrowPowerUsagePosition,
   yourBorrowAPYPosition,
   enableBorrow,
-  // availableLiquidityTokens,
+  accountData,
 }) => {
   const router = useRouter();
   // Dialog state management
@@ -158,7 +158,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
               variant="gradient"
               className="w-[100px]"
               onClick={() => handleBorrowClick(row)}
-              disabled={!enableBorrow}
+              disabled={!enableBorrow || row.availableLiquidity == 0}
             >
               Borrow
             </Button>
@@ -269,8 +269,8 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           open={repayDialogOpen}
           onOpenChange={setRepayDialogOpen}
           reserve={selectedPosition}
-          healthFactor={4.91} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
 
@@ -280,9 +280,8 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           open={borrowDialogOpen}
           onOpenChange={setBorrowDialogOpen}
           reserve={selectedPosition}
-          healthFactor={4.91} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}
-          // availableLiquidityTokens={availableLiquidityTokens}
+          accountData={accountData}
         />
       )}
     </div>

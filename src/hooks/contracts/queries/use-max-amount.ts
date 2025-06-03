@@ -31,6 +31,12 @@ export function useMaxAmount(
       if (!client || !account?.id || !assetId) {
         throw new Error('Missing client or user/asset ID');
       }
+
+      console.log('account', account?.id.toString('hex'));
+      console.log('assetId', assetId.toString('hex'));
+      console.log('decimals', decimals);
+      console.log('queryKey', queryKey);
+
       // Call Chromia contract for max borrow amount (returns big integer string)
       const maxBorrowRaw = (await client.query(queryKey, {
         user_id: account?.id,

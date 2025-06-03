@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { CircleX, Info } from 'lucide-react';
+import { CircleX, Info, ArrowRight } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,10 +22,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { UserReserveData } from '../../types';
+import { UserReserveData, UserAccountData } from '../../types';
 import { cn } from '@/utils/tailwind';
 import CountUp from '@/components/common/count-up';
 import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
+import { calculateHFAfterBorrow } from '@/utils/hf';
+import { normalize, normalizeBN, valueToBigNumber } from '@/utils/bignumber';
 
 const borrowFormSchema = z.object({
   amount: z
@@ -48,9 +50,8 @@ export interface BorrowDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   reserve: UserReserveData;
-  healthFactor?: number;
+  accountData: UserAccountData;
   mutateAssets: () => void;
-  // availableLiquidityTokens: AvailableLiquidityToken[];
 }
 
 // Create a debounced fetch function with lodash
@@ -62,14 +63,14 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
   open,
   onOpenChange,
   reserve,
+  accountData,
   mutateAssets,
-  // availableLiquidityTokens,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
-  // const hf = 0;
+  const [calculatedHealthFactor, setCalculatedHealthFactor] = useState<number>(-1);
 
   const form = useForm<BorrowFormValues>({
     resolver: zodResolver(borrowFormSchema),
@@ -102,6 +103,35 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     },
   });
 
+  // Calculate health factor based on current input
+  const calculateHealthFactor = useCallback(() => {
+    if (accountData.healthFactor === -1) {
+      setCalculatedHealthFactor(-1);
+      return;
+    }
+
+    const amount = form.watch('amount');
+    if (!amount || Number(amount) <= 0) {
+      setCalculatedHealthFactor(
+        Number(normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18))
+      );
+      return;
+    }
+
+    const hf = calculateHFAfterBorrow(
+      valueToBigNumber(accountData.totalCollateralBase.toString()),
+      valueToBigNumber(normalize(reserve.price.toString(), 18)).multipliedBy(
+        valueToBigNumber(amount)
+      ),
+      valueToBigNumber(accountData.totalDebtBase.toString()),
+      valueToBigNumber((Number(accountData.currentLiquidationThreshold) / 100).toString()),
+      valueToBigNumber(accountData.healthFactor.toString())
+    );
+
+    console.log('hf after borrow', hf.toString());
+    setCalculatedHealthFactor(Number(hf));
+  }, [accountData, form, reserve.price]);
+
   // Handle price fetch with lodash debounce
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
@@ -119,8 +149,10 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
       }
       setIsRefetchEnabled(true);
       fetchPrice();
+      // Calculate health factor after debounce
+      calculateHealthFactor();
     });
-  }, [fetchPrice, form, maxBorrowAmount]);
+  }, [fetchPrice, form, maxBorrowAmount, calculateHealthFactor]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -131,10 +163,11 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     }
   }, [priceData]);
 
-  // Initialize with asset price
+  // Initialize with asset price and calculate initial health factor
   useEffect(() => {
     setCurrentPrice(reserve.price);
-  }, [reserve.price]);
+    calculateHealthFactor();
+  }, [reserve.price, calculateHealthFactor]);
 
   // Watch for input changes and fetch price
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,6 +187,13 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
 
     if (value && parseFloat(value) > 0) {
       handleFetchPrice();
+    } else {
+      // If amount is empty or 0, reset health factor to current
+      setCalculatedHealthFactor(
+        accountData.healthFactor === -1
+          ? -1
+          : Number(normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18))
+      );
     }
   };
 
@@ -208,12 +248,14 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
     }
   };
 
-  // Calculate new health factor after borrowing (simplified estimation)
-  // const newHealthFactor = Math.max(0, hf - parseFloat(inputAmount || '0') * 0.2).toFixed(2);
+  const currentHealthFactor =
+    accountData.healthFactor === -1
+      ? -1
+      : normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-xl">
         <TooltipProvider delayDuration={300}>
           <DialogHeader>
             <div className="flex justify-between items-center">
@@ -251,6 +293,17 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                           onClick={() => {
                             form.setValue('amount', '');
                             setInputAmount('');
+                            // Reset health factor when clearing input
+                            setCalculatedHealthFactor(
+                              accountData.healthFactor === -1
+                                ? -1
+                                : Number(
+                                    normalizeBN(
+                                      valueToBigNumber(accountData.healthFactor.toString()),
+                                      18
+                                    )
+                                  )
+                            );
                           }}
                           className="hover:opacity-70"
                         >
@@ -337,28 +390,54 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   </Typography>
-                  {/* <Typography
-                    weight="medium"
-                    className={
-                      parseFloat(newHealthFactor) >= 1.5
-                        ? 'text-green-500'
-                        : parseFloat(newHealthFactor) >= 1.0
-                          ? 'text-amber-500'
-                          : 'text-red-500'
-                    }
-                  >
-                    <CountUp value={hf} decimals={2} animateOnlyOnce={true} /> → {newHealthFactor}
-                  </Typography> */}
-                  <Typography weight="medium">_ </Typography>
-                </div>
 
-                {/* <div className="text-sm text-muted-foreground">
-                  <Typography>Liquidation at &lt;1.0</Typography>
-                </div> */}
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    {Number(currentHealthFactor) === -1 ? (
+                      <Typography className="text-green-500 text-3xl text-bold">∞</Typography>
+                    ) : (
+                      <CountUp
+                        value={Number(currentHealthFactor)}
+                        decimals={2}
+                        className={
+                          Number(currentHealthFactor) === -1
+                            ? 'text-green-500'
+                            : Number(currentHealthFactor) <= 1.25
+                              ? 'text-red-500'
+                              : Number(currentHealthFactor) <= 1.5
+                                ? 'text-amber-500'
+                                : 'text-green-500'
+                        }
+                        animateOnlyOnce={true}
+                      />
+                    )}
+
+                    {/* icon arrow left to right */}
+                    <ArrowRight className="h-4 w-4 mb-1 text-muted-foreground" />
+
+                    {calculatedHealthFactor === -1 ? (
+                      <Typography className="!text-green-500 text-3xl text-bold">∞</Typography>
+                    ) : (
+                      <CountUp
+                        value={calculatedHealthFactor}
+                        decimals={2}
+                        className={
+                          calculatedHealthFactor === -1
+                            ? 'text-green-500'
+                            : calculatedHealthFactor <= 1.25
+                              ? 'text-red-500'
+                              : calculatedHealthFactor <= 1.5
+                                ? 'text-amber-500'
+                                : 'text-green-500'
+                        }
+                        animateOnlyOnce={true}
+                      />
+                    )}
+                  </div>
+                </div>
 
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">Borrow amount</Typography>
-                  <div className="font-medium text-base">
+                  <div className="font-medium text-base flex flex-row items-center gap-1">
                     <CountUp
                       value={Number(form.watch('amount'))}
                       suffix={` ${reserve.symbol}`}

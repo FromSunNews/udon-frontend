@@ -1,12 +1,13 @@
 import { op } from '@chromia/ft4';
 import { admin_kp, user_a_kp } from '../configs/key-pair';
-import { registerAccountOpen } from '../common/operations/accounts';
+// import { registerAccountOpen } from '../common/operations/accounts';
 import { getClient } from '../clients';
 import chalk from 'chalk';
 import { RAY } from '../helpers/wadraymath';
 import { BigNumber } from 'ethers';
 import { formatUnits, parseUnits } from 'ethers/lib/utils';
 import { TOKENS } from '../configs/tokens';
+import { getSessionOrRegister } from '../helpers';
 
 async function initSupply() {
   try {
@@ -15,10 +16,10 @@ async function initSupply() {
     // Get client and setup sessions
     console.log(chalk.blue('🔄 Setting up client and sessions...'));
     const client = await getClient();
-    const adminSession = await registerAccountOpen(client, admin_kp);
+    const adminSession = await getSessionOrRegister(client, admin_kp);
     const adminAccountId = adminSession.account.id;
 
-    const userSession = await registerAccountOpen(client, user_a_kp);
+    const userSession = await getSessionOrRegister(client, user_a_kp);
     const userAccountId = userSession.account.id;
 
     console.log(chalk.green('✅ Sessions created successfully'));
@@ -180,50 +181,6 @@ async function initSupply() {
         },
       });
     }
-
-    // console.log(chalk.green('✅ All tokens created successfully'));
-
-    // // Supply operation for the first token (TUT)
-    // console.log(chalk.blue('🔄 Performing supply operation for TUT...'));
-    // const supplyToken = createdTokens[0];
-    // const supplyAmount = BigNumber.from(RAY).mul(100); // 30 RAY
-    // const result = await userSession.call(
-    //   op(
-    //     'supply',
-    //     userAccountId,
-    //     supplyToken.underlying.id,
-    //     BigInt(supplyAmount.toString()),
-    //     userAccountId,
-    //     BigInt(0), // referral code
-    //     Date.now() // referral code timestamp
-    //   )
-    // );
-    // const isSuccess = result.receipt.statusCode === 200;
-    // console.log(
-    //   isSuccess
-    //     ? chalk.green('✅ Supply operation completed successfully')
-    //     : chalk.red('❌ Supply operation failed')
-    // );
-
-    // // Check final balances using getBalanceByAssetId
-    // console.log(chalk.blue('🔄 Checking final balances...'));
-
-    // // Display balances for all tokens
-    // for (const token of createdTokens) {
-    //   console.log(chalk.yellow(`\n--- ${token.underlying.symbol} Balances ---`));
-
-    //   // Get user's underlying balance
-    //   const underlyingBalance = await userSession.account.getBalanceByAssetId(token.underlying.id);
-    //   console.log(
-    //     chalk.yellow(`   Underlying balance: ${formatRay(underlyingBalance.amount.value)}`)
-    //   );
-
-    //   // Get user's a-asset balance
-    //   const aTokenBalance = await userSession.account.getBalanceByAssetId(token.aToken.id);
-    //   console.log(chalk.yellow(`   A-token balance: ${formatRay(aTokenBalance.amount.value)}`));
-    // }
-
-    // console.log(chalk.bold.green('✅✅✅ Supply initialization completed successfully ✅✅✅'));
   } catch (error) {
     console.error(chalk.bold.red('❌❌❌ ERROR IN INIT SUPPLY ❌❌❌'));
     console.error(chalk.red(error));

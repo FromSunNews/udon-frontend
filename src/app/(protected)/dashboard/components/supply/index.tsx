@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from '@/components/common/tooltip';
 import { SupplyDialog } from './supply-dialog';
-import { UserReserveData } from '../../types';
+import { UserAccountData, UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
 import { FaucetTestBadge } from '../faucet-badge';
 import CountUp from '@/components/common/count-up';
@@ -24,6 +24,7 @@ interface SupplyTableProps {
   reserves: UserReserveData[];
   isLoading: boolean;
   mutateAssets: () => void;
+  accountData: UserAccountData;
 }
 
 export const SupplyTable: React.FC<SupplyTableProps> = ({
@@ -31,6 +32,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
   reserves,
   isLoading,
   mutateAssets,
+  accountData,
 }) => {
   const [selectedAsset, setSelectedAsset] = useState<UserReserveData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -245,6 +247,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
           onOpenChange={setDialogOpen}
           reserve={selectedAsset}
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
     </>

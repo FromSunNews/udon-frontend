@@ -120,39 +120,39 @@ export function getLinearBalance({
 }
 
 interface HealthFactorFromBalanceRequest {
-  collateralBalanceMarketReferenceCurrency: BigNumberValue;
-  borrowBalanceMarketReferenceCurrency: BigNumberValue;
+  totalCollateral: BigNumberValue;
+  totalDebt: BigNumberValue;
   currentLiquidationThreshold: BigNumberValue;
 }
 
 export function calculateHealthFactorFromBalances({
-  borrowBalanceMarketReferenceCurrency,
-  collateralBalanceMarketReferenceCurrency,
+  totalDebt,
+  totalCollateral,
   currentLiquidationThreshold,
 }: HealthFactorFromBalanceRequest): BigNumber {
-  if (valueToBigNumber(borrowBalanceMarketReferenceCurrency).eq(0)) {
+  if (valueToBigNumber(totalDebt).eq(0)) {
     return valueToBigNumber('-1'); // Invalid number
   }
 
-  return valueToBigNumber(collateralBalanceMarketReferenceCurrency)
+  return valueToBigNumber(totalCollateral)
     .multipliedBy(currentLiquidationThreshold)
     .shiftedBy(LTV_PRECISION * -1)
-    .div(borrowBalanceMarketReferenceCurrency);
+    .div(totalDebt);
 }
 
 interface HealthFactorFromBalanceBigUnitsRequest {
-  collateralBalanceMarketReferenceCurrency: BigNumberValue;
-  borrowBalanceMarketReferenceCurrency: BigNumberValue;
+  totalCollateral: BigNumberValue;
+  totalDebt: BigNumberValue;
   currentLiquidationThreshold: BigNumberValue;
 }
 export function calculateHealthFactorFromBalancesBigUnits({
-  collateralBalanceMarketReferenceCurrency,
-  borrowBalanceMarketReferenceCurrency,
+  totalCollateral,
+  totalDebt,
   currentLiquidationThreshold,
 }: HealthFactorFromBalanceBigUnitsRequest): BigNumber {
   return calculateHealthFactorFromBalances({
-    collateralBalanceMarketReferenceCurrency,
-    borrowBalanceMarketReferenceCurrency,
+    totalCollateral,
+    totalDebt,
     currentLiquidationThreshold: valueToBigNumber(currentLiquidationThreshold)
       .shiftedBy(LTV_PRECISION)
       .decimalPlaces(0, BigNumber.ROUND_DOWN),
