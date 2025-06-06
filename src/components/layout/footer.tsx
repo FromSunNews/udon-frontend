@@ -4,6 +4,7 @@ import { Typography } from '../common/typography';
 import { GridPattern } from '../common/grid-pattern';
 import { cn } from '@/utils/tailwind';
 import Link from 'next/link';
+import { env } from '@/utils/env';
 
 const SocialIcon = ({ children, className }: { children: React.ReactNode; className?: string }) => (
   <svg
@@ -17,13 +18,13 @@ const SocialIcon = ({ children, className }: { children: React.ReactNode; classN
 
 const linkFooter = [
   {
-    title: 'Documentation',
-    url: '/documentation',
+    title: 'Dashboard',
+    url: '/dashboard',
   },
-  // {
-  //   title: 'Supply',
-  //   url: '/supply',
-  // },
+  {
+    title: 'Report Bug',
+    url: env.reportBugFormUrl,
+  },
 ];
 
 const linkSocial = [

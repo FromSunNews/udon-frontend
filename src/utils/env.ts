@@ -27,6 +27,8 @@ export const getEnv = (key: string, defaultValue: string = ''): string => {
       return process.env.NEXT_PUBLIC_SITE_URL || defaultValue;
     case 'NEXT_PUBLIC_GA_TRACKING_ID':
       return process.env.NEXT_PUBLIC_GA_TRACKING_ID || defaultValue;
+    case 'NEXT_PUBLIC_REPORT_BUG_FORM_URL':
+      return process.env.NEXT_PUBLIC_REPORT_BUG_FORM_URL || defaultValue;
     default:
       return defaultValue;
   }
@@ -81,6 +83,7 @@ export const APP_NAME = getEnv('NEXT_PUBLIC_APP_NAME', 'Udon Finance');
 export const SITE_URL = getEnv('NEXT_PUBLIC_SITE_URL', 'http://localhost:3000');
 export const GA_TRACKING_ID = getEnv('NEXT_PUBLIC_GA_TRACKING_ID', '');
 export const BRID = getEnv('NEXT_PUBLIC_BRID', '');
+export const REPORT_BUG_FORM_URL = getEnv('NEXT_PUBLIC_REPORT_BUG_FORM_URL', '');
 
 // Export all environment variables in a single object
 export const env = {
@@ -93,4 +96,5 @@ export const env = {
   siteUrl: SITE_URL,
   gaTrackingId: GA_TRACKING_ID,
   brid: BRID,
+  reportBugFormUrl: REPORT_BUG_FORM_URL,
 } as const;
