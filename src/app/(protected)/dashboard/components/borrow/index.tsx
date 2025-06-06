@@ -58,7 +58,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-3 cursor-pointer"
-              onClick={() => handleAssetClick(asset.symbol)}
+              onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
             >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
@@ -96,10 +96,6 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
       accessorKey: 'availableLiquidity',
       enableSorting: true,
       cell: ({ row }) => {
-        // const availableLiquidityToken =
-        //   availableLiquidityTokens.find(
-        //     t => t.assetId.toString('hex') === row.assetId.toString('hex')
-        //   )?.availableLiquidityToken || 0;
         if (row.availableLiquidity === 0) {
           return <Typography>_</Typography>;
         } else {
@@ -166,7 +162,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
 
             <Button
               variant="outlineGradient"
-              onClick={() => handleAssetClick(row.symbol)}
+              onClick={() => handleAssetClick(row.assetId.toString('hex'))}
               aria-label={`Borrow ${row.symbol}`}
               className="w-[100px]"
             >

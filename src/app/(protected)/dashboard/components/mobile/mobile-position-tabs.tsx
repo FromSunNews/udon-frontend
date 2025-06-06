@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab/anim-underline';
 import { Typography } from '@/components/common/typography';
 import { UserAccountData, UserReserveData } from '../../types';
 import { Badge } from '@/components/common/badge';
@@ -98,8 +98,8 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
   };
 
   // Handle asset click (navigation)
-  const handleAssetClick = (asset: string) => {
-    router.push(`/reserve/${asset}`);
+  const handleAssetClick = (assetId: string) => {
+    router.push(`/reserve/${assetId}`);
   };
 
   const renderAssetCell = (asset: UserReserveData) => {
@@ -109,7 +109,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-2 cursor-pointer"
-              onClick={() => handleAssetClick(asset.symbol)}
+              onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
             >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={asset.iconUrl} alt={asset.symbol} />

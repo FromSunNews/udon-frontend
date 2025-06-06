@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/utils/tailwind';
 import { ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/popover';
-import { Tabs, TabsList, TabsTrigger } from '@/components/common/tab';
+import { Tabs, TabsList, TabsTrigger } from '@/components/common/tab/anim-slider';
 import { Typography } from '@/components/common/typography';
+import { capitalizeFirstLetter } from '@/utils/string';
+import { ChartType, TimePeriod } from '../types';
 
 interface FilterPillProps {
   active?: boolean;
@@ -26,47 +28,40 @@ export const FilterPill: React.FC<FilterPillProps> = ({ active, children, onClic
 );
 
 interface ChartFiltersProps {
-  chartType: 'deposit' | 'liquidity';
-  setChartType: (type: 'deposit' | 'liquidity') => void;
-  currency: 'usdc' | 'usdt';
-  setCurrency: (currency: 'usdc' | 'usdt') => void;
+  chartType: ChartType;
+  setChartType: (type: ChartType) => void;
   timePeriod: string;
-  setTimePeriod: (period: string) => void;
+  setTimePeriod: (period: TimePeriod) => void;
   timeOptions?: string[];
 }
 
 export const ChartFilters: React.FC<ChartFiltersProps> = ({
   chartType,
   setChartType,
-  currency,
-  setCurrency,
   timePeriod,
   setTimePeriod,
-  timeOptions = ['1 week', '1 month', '3 months', '6 months', '1 year', 'All time'],
+  timeOptions = ['hourly', 'daily', 'weekly', 'monthly', 'yearly'],
 }) => {
+  const [open, setOpen] = useState(false);
+
+  const handleSelectTimePeriod = (option: TimePeriod) => {
+    setTimePeriod(option);
+    setOpen(false);
+  };
+
   return (
     <div className="flex flex-wrap gap-3">
-      <Tabs
-        value={chartType}
-        onValueChange={value => setChartType(value as 'deposit' | 'liquidity')}
-      >
+      <Tabs value={chartType} onValueChange={value => setChartType(value as 'deposit' | 'borrow')}>
         <TabsList className="bg-[rgba(51,51,54,1)] p-1 border-0">
           <TabsTrigger value="deposit">Deposit</TabsTrigger>
-          <TabsTrigger value="liquidity">Liquidity</TabsTrigger>
+          <TabsTrigger value="borrow">Borrow</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      <Tabs value={currency} onValueChange={value => setCurrency(value as 'usdc' | 'usdt')}>
-        <TabsList className="bg-[rgba(51,51,54,1)] p-1 border-0">
-          <TabsTrigger value="usdc">USDC</TabsTrigger>
-          <TabsTrigger value="usdt">USDT</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <div className="bg-[rgba(51,51,54,1)] flex items-center gap-1 text-[rgba(206,206,206,1)] px-3 py-1 rounded-3xl cursor-pointer">
-            <Typography variant="small">{timePeriod}</Typography>
+          <div className="bg-[rgba(51,51,54,1)] flex items-center justify-center gap-1 text-[rgba(206,206,206,1)] min-w-[90px] py-1 rounded-3xl cursor-pointer">
+            <Typography variant="small">{capitalizeFirstLetter(timePeriod)}</Typography>
             <ChevronDown className="h-4 w-4" />
           </div>
         </PopoverTrigger>
@@ -79,9 +74,9 @@ export const ChartFilters: React.FC<ChartFiltersProps> = ({
                   'px-3 py-1.5 rounded text-sm cursor-pointer hover:bg-[rgba(51,51,54,1)]',
                   timePeriod === option ? 'text-primary' : 'text-[rgba(206,206,206,1)]'
                 )}
-                onClick={() => setTimePeriod(option)}
+                onClick={() => handleSelectTimePeriod(option as TimePeriod)}
               >
-                <Typography variant="small">{option}</Typography>
+                <Typography variant="small">{capitalizeFirstLetter(option)}</Typography>
               </div>
             ))}
           </div>

@@ -1,6 +1,7 @@
 import { createClient, encryption } from 'postchain-client';
 import {
   Account,
+  createAmount,
   // createAmount,
   createConnection,
   createInMemoryEvmKeyStore,
@@ -62,8 +63,19 @@ async function stakingEc() {
     // console.log('first10Entries', first10Entries[0]);
 
     console.log(chalk.blue('🔄 Staking...'));
-    await session.call(op('staking_deposit_native', 100_000, null));
+    await session.call(op('staking_deposit_native', createAmount(11, 6).value, null));
     console.log(chalk.green('✅ Staked'));
+
+    const balances2 = await myAccount.getBalances();
+
+    for (const balance of balances2.data) {
+      console.log(
+        'balance2',
+        balance.asset.symbol,
+        balance.amount,
+        balance.asset.id.toString('hex')
+      );
+    }
   } catch (error) {
     console.error(chalk.bold.red('❌❌❌ ERROR IN STAKING EC ❌❌❌'));
     console.error(chalk.red(error));

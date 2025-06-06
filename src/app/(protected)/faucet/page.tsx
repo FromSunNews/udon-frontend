@@ -121,11 +121,11 @@ export default function FaucetPage() {
                 <AvatarImage src={asset.icon} alt={asset.symbol} />
                 <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
-              <Typography weight="medium">{asset.symbol}</Typography>
+              <Typography weight="medium">{asset.symbol.replace(/USD$/, '').trim()}</Typography>
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{asset.name}</p>
+            <p>{asset.name.replace(/USD$/, '')}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -185,7 +185,7 @@ export default function FaucetPage() {
   ];
 
   return (
-    <main className="px-32 py-[200px]">
+    <main className="px-4 sm:px-32 py-[100px] sm:py-[200px]">
       <div className="mb-8">
         <Button
           variant="secondary"
@@ -197,12 +197,12 @@ export default function FaucetPage() {
         <Typography variant="h2" weight="semibold">
           Test Assets
         </Typography>
-        <Typography className="text-submerged mt-2">
+        <Typography className="text-base text-submerged mt-2">
           With testnet Faucet you can get free assets to test the Protocol. Make sure your wallet is
           connected, select the desired asset, and click &apos;Faucet&apos; to get tokens
           transferred to your wallet. Each request mints 1000 tokens to your wallet.
         </Typography>
-        <Typography className="text-submerged mt-2 text-sm">
+        <Typography className="text-base text-submerged mt-2">
           The assets on a testnet have no monetary value. They are only for testing purposes.
         </Typography>
       </div>

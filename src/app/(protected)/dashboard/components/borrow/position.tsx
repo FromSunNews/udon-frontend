@@ -71,7 +71,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-3 cursor-pointer"
-              onClick={() => handleAssetClick(reserve.symbol)}
+              onClick={() => handleAssetClick(reserve.assetId.toString('hex'))}
             >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />

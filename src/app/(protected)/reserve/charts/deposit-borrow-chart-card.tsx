@@ -1,0 +1,65 @@
+import React from 'react';
+import { UserReserveData } from '../../dashboard/types';
+import { ChartCard } from './chart-card';
+import { ChartFilters } from './chart-filters';
+import { ChartType, TimePeriod } from '../types';
+import { SimpleAreaChart } from './simple-area';
+import { useTotalDepositBorrowHistory } from '@/hooks/contracts/queries/use-total-deposit-borrow-chart';
+import { Skeleton } from '@/components/common/skeleton';
+
+interface DepositBorrowChartCardProps {
+  reserve: UserReserveData;
+}
+
+export const DepositBorrowChartCard: React.FC<DepositBorrowChartCardProps> = ({ reserve }) => {
+  const [chartType, setChartType] = React.useState<ChartType>('deposit');
+  const [timePeriod, setTimePeriod] = React.useState<TimePeriod>('hourly');
+
+  const { data, isLoading, error } = useTotalDepositBorrowHistory(
+    reserve.assetId,
+    timePeriod,
+    reserve.decimals,
+    chartType
+  );
+
+  return (
+    <ChartCard
+      title={
+        chartType === 'deposit'
+          ? `Total Deposit (${reserve.symbol})`
+          : `Total Borrow (${reserve.symbol})`
+      }
+      value={
+        chartType === 'deposit'
+          ? reserve.currentATokenTotalSupply
+          : reserve.currentVariableDebtTokenTotalSupply
+      }
+      filters={
+        <ChartFilters
+          chartType={chartType}
+          setChartType={setChartType}
+          timePeriod={timePeriod}
+          setTimePeriod={setTimePeriod}
+        />
+      }
+    >
+      {isLoading ? (
+        <div className="w-full h-full flex flex-1 items-center justify-center">
+          <Skeleton className="h-full w-full" />
+        </div>
+      ) : error ? (
+        <div className="w-full h-64 flex items-center justify-center text-red-500">
+          Failed to load chart data
+        </div>
+      ) : (
+        <SimpleAreaChart
+          data={data || []}
+          tooltipFormatter={value => [
+            `${value.toFixed(2)}`,
+            chartType === 'deposit' ? 'Total deposit' : 'Total borrow',
+          ]}
+        />
+      )}
+    </ChartCard>
+  );
+};

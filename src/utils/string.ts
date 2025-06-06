@@ -20,3 +20,7 @@ export const ensureString = (input: Buffer | string | number | Record<string, un
 
   return input;
 };
+
+export const capitalizeFirstLetter = (s: string) => {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};

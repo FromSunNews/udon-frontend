@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab/anim-underline';
 import { Typography } from '@/components/common/typography';
 import { Button } from '@/components/common/button';
 import { CheckIcon } from 'lucide-react';
@@ -55,8 +55,8 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
   };
 
   // Handle asset click (navigation)
-  const handleAssetClick = (asset: string) => {
-    router.push(`/reserve/${asset}`);
+  const handleAssetClick = (assetId: string) => {
+    router.push(`/reserve/${assetId}`);
   };
 
   // Render asset icon and symbol
@@ -67,7 +67,7 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-2 cursor-pointer"
-              onClick={() => handleAssetClick(asset.symbol)}
+              onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
             >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
@@ -320,7 +320,7 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
                           <Button
                             variant="outlineGradient"
                             size="sm"
-                            onClick={() => handleAssetClick(asset.symbol)}
+                            onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
                             className="w-[80px] !py-0 !px-2 text-base"
                           >
                             Details
@@ -455,7 +455,7 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
                           <Button
                             variant="outlineGradient"
                             size="sm"
-                            onClick={() => handleAssetClick(asset.symbol)}
+                            onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
                             className="w-[60px] !py-0 !px-2 text-sm"
                           >
                             Details

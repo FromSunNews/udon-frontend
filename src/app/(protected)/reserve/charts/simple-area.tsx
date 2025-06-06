@@ -26,6 +26,15 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
   showAvg = true,
   avgValue = 4.55,
 }) => {
+  // Handle empty data case
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full w-full text-gray-400">
+        No data available
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height="100%" className={className}>
       <AreaChart data={data} margin={{ left: 0, right: 0, top: 24, bottom: 0 }}>
@@ -62,10 +71,10 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
         />
 
         {/* <CartesianGrid vertical={false} stroke="#ffff" /> */}
-        {showAvg && (
+        {showAvg && data.length >= 3 && (
           <>
             <ReferenceDot
-              x={data[2].date}
+              x={data[Math.min(2, data.length - 1)].date}
               y={avgValue}
               r={20}
               isFront={true}

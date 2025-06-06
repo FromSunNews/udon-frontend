@@ -105,10 +105,10 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
 
   // Calculate health factor based on current input
   const calculateHealthFactor = useCallback(() => {
-    if (accountData.healthFactor === -1) {
-      setCalculatedHealthFactor(-1);
-      return;
-    }
+    // if (accountData.healthFactor === -1) {
+    //   setCalculatedHealthFactor(-1);
+    //   return;
+    // }
 
     const amount = form.watch('amount');
     if (!amount || Number(amount) <= 0) {

@@ -16,34 +16,34 @@ export const ASSET_CONFIG = {
 
 // Token definitions
 export const TOKENS = [
-  {
-    name: 'Bitcoin USD',
-    symbol: 'BTCUSD',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
-    price: parseUnits('60000', 18).toString(),
-  },
-  {
-    name: 'Ethereum USD',
-    symbol: 'ETHUSD',
-    decimals: 18,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
-    price: parseUnits('2500', 18).toString(),
-  },
-  {
-    name: 'MyNeighborAlice',
-    symbol: 'ALICEUSD',
-    decimals: 6,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
-    price: parseUnits('0.49', 18).toString(),
-  },
-  {
-    name: 'DAR Open Network',
-    symbol: 'DUSD',
-    decimals: 18,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
-    price: parseUnits('0.45', 18).toString(),
-  },
+  // {
+  //   name: 'Bitcoin USD',
+  //   symbol: 'BTCUSD',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
+  //   price: parseUnits('60000', 18).toString(),
+  // },
+  // {
+  //   name: 'Ethereum USD',
+  //   symbol: 'ETHUSD',
+  //   decimals: 18,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+  //   price: parseUnits('2500', 18).toString(),
+  // },
+  // {
+  //   name: 'MyNeighborAlice',
+  //   symbol: 'ALICEUSD',
+  //   decimals: 6,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
+  //   price: parseUnits('0.49', 18).toString(),
+  // },
+  // {
+  //   name: 'DAR Open Network',
+  //   symbol: 'DUSD',
+  //   decimals: 18,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
+  //   price: parseUnits('0.45', 18).toString(),
+  // },
   {
     name: 'Chromia USD',
     symbol: 'CHRUSD',

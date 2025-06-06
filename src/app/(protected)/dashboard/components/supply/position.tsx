@@ -82,7 +82,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-3 cursor-pointer"
-              onClick={() => handleAssetClick(row.symbol)}
+              onClick={() => handleAssetClick(row.assetId.toString('hex'))}
             >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={row.iconUrl} alt={row.symbol} />

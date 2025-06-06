@@ -6,36 +6,9 @@ export const VaultPerformance: React.FC = () => {
   return (
     <div className="w-full mt-6 max-md:max-w-full">
       <div className="grid grid-cols-3 gap-4">
-        <StatCard
-          title="7D APY"
-          value={
-            <>
-              <span className="font-medium">6,88</span>
-              <span className="text-submerged"> %</span>
-            </>
-          }
-          className="h-full"
-        />
-        <StatCard
-          title="30D APY"
-          value={
-            <>
-              <span className="font-medium">6,88</span>
-              <span className="text-submerged"> %</span>
-            </>
-          }
-          className="h-full"
-        />
-        <StatCard
-          title="90D APY"
-          value={
-            <>
-              <span className="font-medium">6,88</span>
-              <span className="text-submerged"> %</span>
-            </>
-          }
-          className="h-full"
-        />
+        <StatCard title="7D APY" value={6.88} className="h-full" />
+        <StatCard title="30D APY" value={6.88} className="h-full" />
+        <StatCard title="90D APY" value={6.88} className="h-full" />
       </div>
       <StatCardGrid
         columns={2}
@@ -43,24 +16,10 @@ export const VaultPerformance: React.FC = () => {
         className="mt-[18px]"
         responsiveCols="max-md:grid-cols-1"
       >
-        <StatCard
-          title="Performance Fee"
-          value={
-            <>
-              <span className="font-medium">10,00</span>
-              <span className="text-submerged"> %</span>
-            </>
-          }
-          className="h-full"
-        />
+        <StatCard title="Performance Fee" value={10} className="h-full" />
         <StatCard
           title="Management Fee"
-          value={
-            <>
-              <span className="font-medium">10,00</span>
-              <span className="text-submerged"> %</span>
-            </>
-          }
+          value={10}
           icon="/images/tokens/usdt.png"
           className="h-full"
         />
