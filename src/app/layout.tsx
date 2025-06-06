@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-// import EnvironmentBadge from '@/components/environment-badge';
-import { Analytics } from '@/analytics';
+import { GoogleAnalytics } from '@/analytics/google';
 import { SITE_URL } from '@/utils/env';
 import { Providers } from '@/providers';
 import './globals.css';
 import localFont from 'next/font/local';
 import { Toaster } from '@/components/common/sonner';
+import { VercelAnalytics } from '@/analytics/vercel';
 
 const BattlefinFont = localFont({
   src: '../../public/fonts/Battlefin-Black.woff2',
@@ -99,12 +99,14 @@ export default function RootLayout({
 
   return (
     <html lang="en" className={fontClasses} suppressHydrationWarning>
+      <head>
+        {/* Analytics */}
+        <GoogleAnalytics />
+        <VercelAnalytics />
+      </head>
       <body className="antialiased bg-background text-foreground" suppressHydrationWarning>
+        {/* Providers */}
         <Providers>{children}</Providers>
-        {/* TODO: remove this when we have a production environment */}
-        {/* <EnvironmentBadge /> */}
-        {/* Analytics webpage */}
-        <Analytics />
         {/* Toaster */}
         <Toaster closeButton richColors />
       </body>

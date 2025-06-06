@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
-import { op } from '@chromia/ft4';
+import { createAmount, op } from '@chromia/ft4';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
-import { normalize } from '@/utils/bignumber';
 
 interface BorrowParams {
   assetId: Buffer<ArrayBufferLike>;
@@ -53,7 +52,7 @@ export function useBorrow({
             throw new Error('Client not available');
           }
           amountValue = await client.query('get_u256_max_query', {});
-        } else amountValue = normalize(params.amount, params.decimals);
+        } else amountValue = createAmount(params.amount, params.decimals).value;
 
         console.log('Amount in decimals format:', amountValue);
         console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
@@ -65,7 +64,7 @@ export function useBorrow({
             op(
               'borrow',
               params.assetId, // asset ID to borrow
-              BigInt(amountValue.toString()), // amount
+              amountValue, // amount
               2, // interest rate mode (default: variable)
               0, // referral code,
               account.id, // from on_behalf_of_id

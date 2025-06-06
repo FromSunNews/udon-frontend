@@ -1,17 +1,15 @@
 'use client';
 
 import Script from 'next/script';
+import { env } from '@/utils/env';
 
-export function Analytics() {
-  // Use environment variables to store tracking IDs
-  const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_TRACKING_ID || 'G-XXXXXXXXXX';
-
+export function GoogleAnalytics() {
   return (
     <>
       {/* Google Analytics */}
       <Script
         strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
+        src={`https://www.googletagmanager.com/gtag/js?id=${env.gaTrackingId}`}
       />
       <Script
         id="google-analytics"
@@ -21,7 +19,7 @@ export function Analytics() {
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${GA_TRACKING_ID}', {
+            gtag('config', '${env.gaTrackingId}', {
               page_path: window.location.pathname,
             });
           `,

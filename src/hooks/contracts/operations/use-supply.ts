@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
-import { op } from '@chromia/ft4';
+import { createAmount, op } from '@chromia/ft4';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
-import { normalize } from '@/utils/bignumber';
+// import { normalize } from '@/utils/bignumber';
 // import { RAY } from '@/utils/wadraymath';
 // import { BigNumber } from 'ethers';
 
@@ -45,12 +45,6 @@ export function useSupply({
 
       try {
         console.log('Starting supply operation:', params);
-
-        // Convert amount to normalize
-        const amountValue = normalize(params.amount.toString(), params.decimals);
-
-        console.log('Amount in decimals format:', amountValue);
-        console.log('Actual BigInt(amountValue.toString())', BigInt(amountValue.toString()));
         // Execute supply operation
         const result = await session
           .transactionBuilder()
@@ -59,7 +53,7 @@ export function useSupply({
               'supply',
               account.id, // from account
               params.assetId, // underlying asset ID
-              BigInt(amountValue.toString()), // amount
+              createAmount(params.amount, params.decimals).value, // amount
               account.id, // on behalf of account
               BigInt(0), // referral code
               Date.now()

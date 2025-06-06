@@ -7,7 +7,7 @@ export function generateOrganizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Udon Frontend',
+    name: 'Udon Finance',
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
     sameAs: [
