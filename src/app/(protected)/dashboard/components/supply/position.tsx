@@ -78,7 +78,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   const renderAssetCell = (row: UserReserveData) => {
     return (
       <TooltipProvider>
-        <Tooltip>
+        <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-3 cursor-pointer"
@@ -91,7 +91,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
               <Typography weight="medium">{row.symbol}</Typography>
             </div>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="bottom">
             <p>{row.name}</p>
           </TooltipContent>
         </Tooltip>
@@ -148,7 +148,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
         if (row.supplyAPY === 0) {
           return <Typography>_</Typography>;
         } else {
-          return <CountUp value={row.supplyAPY} suffix="%" className="text-base" decimals={4} />;
+          return <CountUp value={row.supplyAPY} suffix="%" className="text-base" decimals={2} />;
         }
       },
       meta: {
@@ -255,7 +255,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                       value={yourSupplyAPYPosition}
                       suffix="%"
                       className="text-base ml-1"
-                      decimals={4}
+                      decimals={2}
                     />
                   ) : (
                     <Typography>_</Typography>

@@ -376,11 +376,11 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">
                     Health factor
-                    <Tooltip>
+                    <Tooltip delayDuration={100}>
                       <TooltipTrigger type="button">
                         <Info className="h-4 w-4" />
                       </TooltipTrigger>
-                      <TooltipContent>
+                      <TooltipContent side="bottom">
                         <p>Liquidation occurs when health factor is below 1.0</p>
                       </TooltipContent>
                     </Tooltip>
@@ -408,7 +408,9 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                     {/* icon arrow left to right */}
                     <ArrowRight className="h-4 w-4 mb-1 text-muted-foreground" />
 
-                    {calculatedHealthFactor === -1 ? (
+                    {!form.watch('amount') || Number(form.watch('amount')) === 0 ? (
+                      <Typography className="text-muted-foreground font-medium">_</Typography>
+                    ) : calculatedHealthFactor === -1 ? (
                       <Typography className="!text-green-500 text-3xl text-bold">∞</Typography>
                     ) : (
                       <CountUp

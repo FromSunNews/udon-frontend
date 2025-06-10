@@ -53,7 +53,12 @@ export function useCompletedAssets() {
       /* eslint-disable @typescript-eslint/no-explicit-any */
       reserves = reserves.map((r: any) => {
         const priceObj = prices.find(p => p.stork_asset_id === r.symbol);
-
+        console.log(
+          'symbol, reserveCurrentLiquidityRate, reserveCurrentVariableBorrowRate',
+          r.symbol,
+          r.reserveCurrentLiquidityRate,
+          r.reserveCurrentVariableBorrowRate
+        );
         return {
           // asset
 
@@ -95,7 +100,7 @@ export function useCompletedAssets() {
                 duration: SECONDS_PER_YEAR,
               }),
               27
-            )
+            ).multipliedBy(100)
           ),
           liquidationThreshold: Number(r.liquidationThreshold) / 100,
           borrowAPY: Number(
@@ -105,7 +110,7 @@ export function useCompletedAssets() {
                 duration: SECONDS_PER_YEAR,
               }),
               27
-            )
+            ).multipliedBy(100)
           ),
         };
       });
@@ -172,6 +177,58 @@ export function useCompletedAssets() {
     }, 0);
   }, [userReserves]);
 
+  // formula net worth: netWorthUSD = totalLiquidityUSD - totalBorrowsUSD
+  const yourNetWorthPosition = useMemo(() => {
+    return yourSupplyBalancePosition - yourBorrowBalancePosition;
+  }, [yourSupplyBalancePosition, yourBorrowBalancePosition]);
+
+  // formula net apy: netAPY = (earnedAPY * (totalLiquidityUSD / netWorthUSD)) - (debtAPY * (totalBorrowsUSD / netWorthUSD))
+  const yourNetAPYPosition = useMemo(() => {
+    // Handle case with no net worth to avoid division by zero
+    if (yourNetWorthPosition <= 0) return 0;
+
+    const totalLiquidityUSD = yourSupplyBalancePosition;
+    console.log('totalLiquidityUSD', totalLiquidityUSD);
+    const totalBorrowsUSD = yourBorrowBalancePosition;
+    console.log('totalBorrowsUSD', totalBorrowsUSD);
+
+    // Calculate positive proportion (earnings from supply positions and borrow incentives)
+    // For now we only have supplyAPY, but this can be extended to include incentives later
+    const positiveProportion = userReserves.reduce((sum, reserve) => {
+      // Add earnings from supply positions
+      const supplyEarnings =
+        reserve.currentATokenBalance * reserve.price * (reserve.supplyAPY / 100);
+
+      // In the future, add supply incentives and borrow incentives here
+      // const supplyIncentives = reserve.currentATokenBalance * reserve.price * (reserve.supplyIncentivesAPY / 100);
+      // const borrowIncentives = reserve.currentVariableDebt * reserve.price * (reserve.borrowIncentivesAPY / 100);
+
+      return sum + supplyEarnings; // + supplyIncentives + borrowIncentives;
+    }, 0);
+    console.log('positiveProportion', positiveProportion);
+
+    // Calculate negative proportion (costs from borrow positions)
+    const negativeProportion = userReserves.reduce((sum, reserve) => {
+      // Add costs from borrow positions
+      const borrowCosts = reserve.currentVariableDebt * reserve.price * (reserve.borrowAPY / 100);
+
+      return sum + borrowCosts;
+    }, 0);
+    console.log('negativeProportion', negativeProportion);
+    // Calculate earned APY and debt APY
+    const earnedAPY = totalLiquidityUSD > 0 ? (positiveProportion / totalLiquidityUSD) * 100 : 0;
+    console.log('earnedAPY', earnedAPY);
+    const debtAPY = totalBorrowsUSD > 0 ? (negativeProportion / totalBorrowsUSD) * 100 : 0;
+    console.log('debtAPY', debtAPY);
+
+    // Calculate net APY using the formula
+    const netAPY =
+      earnedAPY * (totalLiquidityUSD / yourNetWorthPosition) -
+      debtAPY * (totalBorrowsUSD / yourNetWorthPosition);
+    console.log('netAPY', netAPY);
+    return netAPY;
+  }, [userReserves, yourSupplyBalancePosition, yourBorrowBalancePosition, yourNetWorthPosition]);
+
   const enableBorrow = useMemo(() => {
     const enable = !!userReserves.some(
       r => r.currentATokenBalance > 0 && r.usageAsCollateralEnabled
@@ -190,6 +247,8 @@ export function useCompletedAssets() {
     yourBorrowBalancePosition,
     yourBorrowAPYPosition,
     yourBorrowPowerUsagePosition,
+    yourNetAPYPosition,
+    yourNetWorthPosition,
     enableBorrow,
     isLoading,
     error,

@@ -54,7 +54,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
   const renderAssetCell = (asset: UserReserveData) => {
     return (
       <TooltipProvider>
-        <Tooltip>
+        <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-3 cursor-pointer"
@@ -67,7 +67,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
               <Typography weight="medium">{asset.symbol}</Typography>
             </div>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="bottom">
             <p>{asset.name}</p>
           </TooltipContent>
         </Tooltip>
@@ -134,7 +134,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
         } else {
           return (
             <div className="flex flex-col gap-2">
-              <CountUp value={row.supplyAPY} suffix="%" className="text-base" decimals={4} />
+              <CountUp value={row.supplyAPY} suffix="%" className="text-base" decimals={2} />
             </div>
           );
         }

@@ -105,7 +105,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
   const renderAssetCell = (asset: UserReserveData) => {
     return (
       <TooltipProvider>
-        <Tooltip>
+        <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-2 cursor-pointer"
@@ -120,7 +120,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
               </Typography>
             </div>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="bottom">
             <p>{asset.name}</p>
           </TooltipContent>
         </Tooltip>
@@ -298,7 +298,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
                           value={yourSupplyAPYPosition}
                           suffix="%"
                           className="text-sm ml-1"
-                          decimals={4}
+                          decimals={2}
                         />
                       ) : (
                         <Typography>_</Typography>
@@ -481,7 +481,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
                           value={yourBorrowAPYPosition}
                           suffix="%"
                           className="text-sm ml-1"
-                          decimals={4}
+                          decimals={2}
                         />
                       ) : (
                         <Typography>_</Typography>

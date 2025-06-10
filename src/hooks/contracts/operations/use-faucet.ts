@@ -7,7 +7,7 @@ import { useFtSession } from '@chromia/react';
 // import { normalize } from '@/utils/bignumber';
 
 interface UseFaucetReturn {
-  requestTokens: (symbol: string, decimals: number) => Promise<void>;
+  requestTokens: (symbol: string, decimals: number, mintAmount: number) => Promise<void>;
   isPending: boolean;
   error: Error | null;
 }
@@ -21,7 +21,7 @@ export function useFaucet(): UseFaucetReturn {
   );
 
   const requestTokens = useCallback(
-    async (symbol: string, decimals: number): Promise<void> => {
+    async (symbol: string, decimals: number, mintAmount: number): Promise<void> => {
       if (!session || !account?.id) {
         toast.error('Wallet not connected');
         throw new Error('Wallet not connected');
@@ -31,7 +31,6 @@ export function useFaucet(): UseFaucetReturn {
         setIsPending(true);
         setError(null);
 
-        // const mintAmount = normalize('1000', decimals);
         const userAccountId = account.id;
 
         // Get asset ID for the requested token symbol
@@ -49,7 +48,7 @@ export function useFaucet(): UseFaucetReturn {
             op(
               'mint_underlying_asset',
               userAccountId,
-              createAmount(1000, decimals).value,
+              createAmount(mintAmount, decimals).value,
               underlyingAssetId
             )
           )
@@ -65,11 +64,13 @@ export function useFaucet(): UseFaucetReturn {
 
         console.log('Mint operation result:', result);
 
-        toast.success(`Successfully minted 1000 ${symbol} tokens to your wallet`);
+        toast.success(
+          `Successfully minted ${mintAmount} ${symbol.replace(/USD$/, '')} tokens to your wallet`
+        );
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Failed to request tokens');
         setError(error);
-        toast.error(`Failed to mint ${symbol} tokens: ${error.message}`);
+        toast.error(`Failed to mint ${symbol.replace(/USD$/, '')} tokens: ${error.message}`);
         throw error;
       } finally {
         setIsPending(false);

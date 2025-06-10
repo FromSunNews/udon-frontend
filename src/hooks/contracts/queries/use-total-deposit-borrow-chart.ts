@@ -122,6 +122,13 @@ export function useTotalDepositBorrowHistory(
 
       console.log('chartData', chartData);
 
+      // Calculate average value
+      let avgValue = 0;
+      if (chartData.length > 0) {
+        const sum = chartData.reduce((acc, item) => acc + item.value, 0);
+        avgValue = Number((sum / chartData.length).toFixed(2));
+      }
+
       // For 7_days period, we want to group by date and only show unique dates on x-axis
       if (periodType === '7_days') {
         // Get all unique dates from the data
@@ -148,7 +155,7 @@ export function useTotalDepositBorrowHistory(
           }
         });
 
-        return processedData;
+        return { data: processedData, avgValue };
       } else {
         // For other period types, use the standard deduplication logic
         const usedLabels = new Set<string>();
@@ -165,7 +172,7 @@ export function useTotalDepositBorrowHistory(
           }
         });
 
-        return filteredChartData;
+        return { data: filteredChartData, avgValue };
       }
     },
     enabled: !!client && !!assetId,
@@ -173,7 +180,8 @@ export function useTotalDepositBorrowHistory(
   });
 
   return {
-    data: query.data,
+    data: query.data?.data ?? null,
+    avgValue: query.data?.avgValue ?? 0,
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

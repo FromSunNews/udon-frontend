@@ -77,7 +77,7 @@ export function useReserveData(assetId: string) {
               duration: SECONDS_PER_YEAR,
             }),
             27
-          )
+          ).multipliedBy(100)
         ),
         liquidationThreshold: Number(reserves.liquidationThreshold) / 100,
         borrowAPY: Number(
@@ -87,7 +87,7 @@ export function useReserveData(assetId: string) {
               duration: SECONDS_PER_YEAR,
             }),
             27
-          )
+          ).multipliedBy(100)
         ),
       };
       console.log('reserves', reserves.assetId.toString('hex'));

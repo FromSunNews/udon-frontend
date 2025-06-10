@@ -6,6 +6,14 @@ import { Typography } from '@/components/common/typography';
 import CountUp from '@/components/common/count-up';
 import { Skeleton } from '@/components/common/skeleton';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { cn } from '@/utils/tailwind';
+import { Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/common/tooltip';
 
 interface StatItemProps {
   value: number;
@@ -13,6 +21,9 @@ interface StatItemProps {
   isLoading?: boolean;
   prefix?: string;
   suffix?: string;
+  decimals?: number;
+  className?: string;
+  tooltip?: string;
 }
 
 interface StatCardProps {
@@ -21,6 +32,7 @@ interface StatCardProps {
   iconUrl?: string;
   isLoading?: boolean;
   videoUrl?: string;
+  tooltip?: string;
 }
 
 interface MultiStatCardProps {
@@ -33,6 +45,8 @@ interface CombinedStatsCardProps {
   borrowValue: number;
   isLoading?: boolean;
   className?: string;
+  depositTooltip?: string;
+  borrowTooltip?: string;
 }
 
 // Component for a single stat item (value + label)
@@ -42,8 +56,11 @@ const StatItem: React.FC<StatItemProps> = ({
   isLoading = false,
   prefix = '',
   suffix = '',
+  decimals = 2,
+  className = '',
+  tooltip = '',
 }) => (
-  <div className="flex flex-col items-center justify-center">
+  <div className={`flex flex-col items-center justify-center`}>
     {isLoading ? (
       <>
         <Skeleton className="h-8 w-24 mb-2" />
@@ -51,15 +68,39 @@ const StatItem: React.FC<StatItemProps> = ({
       </>
     ) : (
       <>
-        <CountUp
-          value={value}
-          prefix={prefix}
-          suffix={suffix}
-          className="text-[24px] sm:text-[32px] font-medium"
-        />
-        <Typography color="submerged" className="font-normal text-lg">
-          {label}
-        </Typography>
+        {value === -1 ? (
+          <Typography className="!text-green-500 text-[24px] sm:text-[32px] text-bold">
+            ∞
+          </Typography>
+        ) : value === 0 ? (
+          <Typography className="font-medium text-[24px] sm:text-[32px]">_</Typography>
+        ) : (
+          <CountUp
+            value={value}
+            prefix={prefix}
+            suffix={suffix}
+            className={cn('text-[24px] sm:text-[32px] font-medium', className)}
+            decimals={decimals}
+          />
+        )}
+        <div className="flex items-center gap-1.5">
+          <Typography color="submerged" className="font-normal text-lg">
+            {label}
+          </Typography>
+
+          {tooltip && (
+            <TooltipProvider>
+              <Tooltip delayDuration={100}>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-submerged cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[250px] text-sm">
+                  <p>{tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       </>
     )}
   </div>
@@ -81,6 +122,9 @@ export const MultiStatCard: React.FC<MultiStatCardProps> = ({ items, className =
               isLoading={item.isLoading}
               prefix={item.prefix}
               suffix={item.suffix}
+              decimals={item.decimals}
+              className={item.className}
+              tooltip={item.tooltip}
             />
           ))}
         </div>
@@ -95,6 +139,8 @@ export const CombinedStatsCard: React.FC<CombinedStatsCardProps> = ({
   borrowValue,
   isLoading = false,
   className = '',
+  depositTooltip = '',
+  borrowTooltip = '',
 }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -119,9 +165,24 @@ export const CombinedStatsCard: React.FC<CombinedStatsCardProps> = ({
                     prefix="$"
                     className="text-[24px] sm:text-[32px] font-medium"
                   />
-                  <Typography color="submerged" className="font-normal text-lg">
-                    Total Deposit
-                  </Typography>
+                  <div className="flex items-center gap-1.5">
+                    <Typography color="submerged" className="font-normal text-lg">
+                      Total Deposit
+                    </Typography>
+
+                    {depositTooltip && (
+                      <TooltipProvider>
+                        <Tooltip delayDuration={100}>
+                          <TooltipTrigger asChild>
+                            <Info className="h-4 w-4 text-submerged cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-[250px] text-sm">
+                            <p>{depositTooltip}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -157,9 +218,24 @@ export const CombinedStatsCard: React.FC<CombinedStatsCardProps> = ({
                     prefix="$"
                     className="text-[24px] sm:text-[32px] font-medium"
                   />
-                  <Typography color="submerged" className="font-normal text-lg">
-                    Total Borrows
-                  </Typography>
+                  <div className="flex items-center gap-1.5">
+                    <Typography color="submerged" className="font-normal text-lg">
+                      Total Borrows
+                    </Typography>
+
+                    {borrowTooltip && (
+                      <TooltipProvider>
+                        <Tooltip delayDuration={100}>
+                          <TooltipTrigger asChild>
+                            <Info className="h-4 w-4 text-submerged cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-[250px] text-sm">
+                            <p>{borrowTooltip}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -190,6 +266,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   iconUrl = '',
   isLoading = false,
   videoUrl = '',
+  tooltip = '',
 }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
   return (
@@ -209,9 +286,24 @@ export const StatCard: React.FC<StatCardProps> = ({
                   prefix="$"
                   className="text-[24px] sm:text-[32px] font-medium"
                 />
-                <Typography color="submerged" className="font-normal">
-                  {label}
-                </Typography>
+                <div className="flex items-center gap-1.5">
+                  <Typography color="submerged" className="font-normal">
+                    {label}
+                  </Typography>
+
+                  {tooltip && (
+                    <TooltipProvider>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-submerged cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-[250px] text-sm">
+                          <p>{tooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
               </>
             )}
           </div>

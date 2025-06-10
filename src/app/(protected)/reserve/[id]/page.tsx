@@ -58,10 +58,8 @@ export default function VaultPage() {
             {/* Right column - Side panel */}
             <aside className="col-span-12 md:col-span-4 rounded-3xl">
               <div className="flex flex-col space-y-6">
-                {/* Top box */}
                 <Skeleton className="h-[250px] w-full rounded-2xl bg-primary/10 border border-primary/10" />
-
-                {/* Bottom box */}
+                <Skeleton className="h-[250px] w-full rounded-2xl bg-primary/10 border border-primary/10" />
                 <Skeleton className="h-[250px] w-full rounded-2xl bg-primary/10 border border-primary/10" />
               </div>
             </aside>

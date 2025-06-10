@@ -13,10 +13,6 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
 import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
 
-// Add these variables for the missing values
-const totalNetApy = 4.28; // Mock value for Net APY
-const healthFactor = 4.24; // Mock value for Health factor
-
 export default function DashboardPage() {
   // Use the enhanced custom hook to get all data
   const {
@@ -32,6 +28,8 @@ export default function DashboardPage() {
     yourBorrowPowerUsagePosition,
     yourBorrowAPYPosition,
     enableBorrow,
+    yourNetAPYPosition,
+    yourNetWorthPosition,
   } = useCompletedAssets();
 
   const {
@@ -46,6 +44,10 @@ export default function DashboardPage() {
     isLoading: isAccountDataFetching,
     refetch: refetchAccountData,
   } = useAccountData();
+
+  console.log('accountData', accountData);
+  console.log('yourNetAPYPosition', yourNetAPYPosition);
+  console.log('yourNetWorthPosition', yourNetWorthPosition);
 
   // Check if the current device is mobile
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -89,21 +91,41 @@ export default function DashboardPage() {
         <MultiStatCard
           items={[
             {
-              value: totalValueDeposited - totalValueBorrowed,
+              value: yourNetWorthPosition || 0,
               label: 'Net worth',
-              isLoading: isStatSupplyDepositFetching,
+              isLoading: isLoadingAssets,
               prefix: '$',
+              decimals: 2,
+              tooltip:
+                'The total value of your supplied assets minus your borrowed assets. Formula: Net Worth = Total Supplied - Total Borrowed. This represents your overall position in the protocol.',
             },
             {
-              value: totalNetApy || 0,
+              value: yourNetAPYPosition || 0,
               label: 'Net APY',
-              isLoading: isStatSupplyDepositFetching,
+              isLoading: isLoadingAssets,
               suffix: '%',
+              decimals: 2,
+              tooltip:
+                'Your overall earning rate considering all supplied and borrowed assets. Formula: Net APY = (Earned APY × Supply Balance/Net Worth) - (Debt APY × Borrow Balance/Net Worth). A positive value means your positions are generating net profit.',
             },
             {
-              value: healthFactor || 0,
+              value:
+                accountData?.healthFactorFormatted === -1
+                  ? -1
+                  : accountData?.healthFactorFormatted || 0,
               label: 'Health factor',
-              isLoading: isStatSupplyDepositFetching,
+              isLoading: isAccountDataFetching,
+              decimals: 2,
+              className:
+                accountData?.healthFactorFormatted === -1
+                  ? 'text-green-500'
+                  : accountData?.healthFactorFormatted <= 1.25
+                    ? 'text-red-500'
+                    : accountData?.healthFactorFormatted <= 1.5
+                      ? 'text-amber-500'
+                      : 'text-green-500',
+              tooltip:
+                'Indicates the safety of your borrowed position. Values below 1 may result in liquidation. Higher values indicate a safer position.',
             },
           ]}
         />
@@ -112,6 +134,8 @@ export default function DashboardPage() {
           borrowValue={totalValueBorrowed}
           depositValue={totalValueDeposited}
           isLoading={isStatSupplyDepositFetching}
+          depositTooltip="The total value of all assets deposited into the protocol by all users. Higher deposit values indicate more liquidity available in the market."
+          borrowTooltip="The total value of all assets borrowed from the protocol by all users. This represents the total debt across the protocol."
         />
       </section>
 

@@ -54,7 +54,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   const renderAssetCell = (asset: UserReserveData) => {
     return (
       <TooltipProvider>
-        <Tooltip>
+        <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-3 cursor-pointer"
@@ -67,7 +67,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
               <Typography weight="medium">{asset.symbol}</Typography>
             </div>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="bottom">
             <p>{asset.name}</p>
           </TooltipContent>
         </Tooltip>
@@ -133,7 +133,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
         if (row.borrowAPY === 0) {
           return <Typography>_</Typography>;
         } else {
-          return <CountUp value={row.borrowAPY} suffix="%" className="text-base" decimals={4} />;
+          return <CountUp value={row.borrowAPY} suffix="%" className="text-base" decimals={2} />;
         }
       },
       meta: {

@@ -3,6 +3,7 @@ import { useChromiaAccount } from '../../configs/chromia-hooks';
 import { keysToCamelCase } from '@/utils/object';
 import { UserAccountData } from '@/app/(protected)/dashboard/types';
 import { useGetMaxU256 } from './use-get-max-u256';
+import { normalizeBN } from '@/utils/bignumber';
 // import { normalizeBN } from '@/utils/bignumber';
 
 /**
@@ -66,6 +67,8 @@ export function useAccountData() {
         currentLiquidationThreshold,
         ltv,
         healthFactor: maxU256 === healthFactor ? -1 : healthFactor,
+        healthFactorFormatted:
+          maxU256 === healthFactor ? -1 : Number(normalizeBN(healthFactor.toString(), 18)),
       } as unknown as UserAccountData;
     },
     enabled: !!client && !isMaxU256Loading,

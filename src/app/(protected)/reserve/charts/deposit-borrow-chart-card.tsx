@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UserReserveData } from '../../dashboard/types';
 import { ChartCard } from './chart-card';
 import { ChartFilters } from './chart-filters';
@@ -15,12 +15,22 @@ export const DepositBorrowChartCard: React.FC<DepositBorrowChartCardProps> = ({ 
   const [chartType, setChartType] = React.useState<ChartType>('deposit');
   const [timePeriod, setTimePeriod] = React.useState<TimePeriod>('24_hours');
 
-  const { data, isLoading, error } = useTotalDepositBorrowHistory(
+  const { data, avgValue, isLoading, error } = useTotalDepositBorrowHistory(
     reserve.assetId,
     timePeriod,
     reserve.decimals,
     chartType
   );
+
+  // Log for debugging
+  useEffect(() => {
+    console.log('DepositBorrowChartCard data:', {
+      dataLength: data?.length,
+      avgValue,
+      isLoading,
+      hasError: !!error,
+    });
+  }, [data, avgValue, isLoading, error]);
 
   return (
     <ChartCard
@@ -54,10 +64,14 @@ export const DepositBorrowChartCard: React.FC<DepositBorrowChartCardProps> = ({ 
       ) : (
         <SimpleAreaChart
           data={data || []}
-          tooltipFormatter={value => [
-            `${value.toFixed(2)}`,
-            chartType === 'deposit' ? 'Total deposit' : 'Total borrow',
-          ]}
+          tooltipFormatter={value =>
+            chartType === 'deposit'
+              ? [`Total Deposit: ${value.toFixed(2)}`]
+              : [`Total Borrow: ${value.toFixed(2)}`]
+          }
+          showAvg={true}
+          avgValue={avgValue}
+          period={timePeriod}
         />
       )}
     </ChartCard>

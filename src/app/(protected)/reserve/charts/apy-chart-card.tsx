@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UserReserveData } from '../../dashboard/types';
 import { ChartCard } from './chart-card';
 import { ChartFilters } from './chart-filters';
@@ -15,16 +15,21 @@ export const APYChartCard: React.FC<APYChartCardProps> = ({ reserve }) => {
   const [chartType, setChartType] = React.useState<ChartType>('deposit');
   const [timePeriod, setTimePeriod] = React.useState<TimePeriod>('24_hours');
 
-  const { data, isLoading, error } = useAPYHistory(reserve.assetId, timePeriod, chartType);
+  const { data, avgValue, isLoading, error } = useAPYHistory(
+    reserve.assetId,
+    timePeriod,
+    chartType
+  );
 
-  // Calculate average APY if available
-  const avgValue = React.useMemo(() => {
-    if (!data || data.length === 0)
-      return chartType === 'deposit' ? reserve.supplyAPY : reserve.borrowAPY;
-
-    const sum = data.reduce((acc, item) => acc + item.value, 0);
-    return sum / data.length;
-  }, [data, chartType, reserve.supplyAPY, reserve.borrowAPY]);
+  // Log for debugging
+  useEffect(() => {
+    console.log('APYChartCard data:', {
+      dataLength: data?.length,
+      avgValue,
+      isLoading,
+      hasError: !!error,
+    });
+  }, [data, avgValue, isLoading, error]);
 
   return (
     <div className="fcol md:frow gap-6 w-full">
@@ -53,9 +58,10 @@ export const APYChartCard: React.FC<APYChartCardProps> = ({ reserve }) => {
           ) : (
             <SimpleAreaChart
               data={data || []}
-              tooltipFormatter={value => [`${value.toFixed(2)}%`, 'APY']}
+              tooltipFormatter={value => [`APY: ${value.toFixed(2)}%`]}
               showAvg={true}
               avgValue={avgValue}
+              period={timePeriod}
             />
           )}
         </ChartCard>

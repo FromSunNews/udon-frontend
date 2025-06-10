@@ -111,6 +111,7 @@ export interface UserAccountData {
   currentLiquidationThreshold: number;
   ltv: number;
   healthFactor: number;
+  healthFactorFormatted: number;
 }
 
 export interface AvailableLiquidityToken {

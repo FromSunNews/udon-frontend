@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserReserveData, UserAccountData } from '@/app/(protected)/dashboard/types';
+import { UserReserveData } from '@/app/(protected)/dashboard/types';
 import { Typography } from '@/components/common/typography';
 import { Button } from '@/components/common/button';
 import CountUp from '@/components/common/count-up';
@@ -7,6 +7,7 @@ import { SupplyDialog } from '@/app/(protected)/dashboard/components/supply/supp
 import { BorrowDialog } from '@/app/(protected)/dashboard/components/borrow/borrow-dialog';
 import { CheckIcon, XIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
+import { useAccountData } from '@/hooks/contracts/queries/use-account-data';
 
 interface SidePanelProps {
   reserve: UserReserveData;
@@ -15,16 +16,7 @@ interface SidePanelProps {
 export const SidePanel: React.FC<SidePanelProps> = ({ reserve }) => {
   const [supplyDialogOpen, setSupplyDialogOpen] = useState(false);
   const [borrowDialogOpen, setBorrowDialogOpen] = useState(false);
-
-  // Mock account data for dialogs - in real app you'd get this from a hook
-  const mockAccountData: UserAccountData = {
-    totalCollateralBase: 0,
-    totalDebtBase: 0,
-    availableBorrowsBase: 0,
-    currentLiquidationThreshold: 0,
-    ltv: 0,
-    healthFactor: -1,
-  };
+  const { data: accountData } = useAccountData();
 
   const handleRefresh = () => {
     // This would trigger a data refresh in a real implementation
@@ -92,7 +84,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ reserve }) => {
                 <div className="flex justify-between py-1.5">
                   <Typography className="text-base">Balance</Typography>
                   <div className="flex flex-col items-end">
-                    <CountUp value={reserve.balance} decimals={4} suffix={` ${reserve.symbol}`} />
+                    <CountUp value={reserve.balance} decimals={2} suffix={` ${reserve.symbol}`} />
                     <CountUp
                       value={reserve.price * reserve.balance}
                       decimals={2}
@@ -190,7 +182,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ reserve }) => {
                   <div className="flex flex-col items-end">
                     <CountUp
                       value={reserve.availableLiquidity}
-                      decimals={4}
+                      decimals={2}
                       suffix={` ${reserve.symbol}`}
                     />
                     <CountUp
@@ -235,7 +227,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ reserve }) => {
           onOpenChange={setSupplyDialogOpen}
           reserve={reserve}
           mutateAssets={handleRefresh}
-          accountData={mockAccountData}
+          accountData={accountData}
         />
       )}
 
@@ -245,7 +237,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ reserve }) => {
           onOpenChange={setBorrowDialogOpen}
           reserve={reserve}
           mutateAssets={handleRefresh}
-          accountData={mockAccountData}
+          accountData={accountData}
         />
       )}
     </div>

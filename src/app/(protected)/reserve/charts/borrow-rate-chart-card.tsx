@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UserReserveData } from '../../dashboard/types';
 import { ChartCard } from './chart-card';
 import { ChartFilters } from './chart-filters';
@@ -19,23 +19,23 @@ export const BorrowRateChartCard: React.FC<BorrowRateChartCardProps> = ({ reserv
   const chartType: ChartType = 'borrow';
   const setChartType = () => {}; // No-op function as we don't need to change chart type
 
-  const { data, isLoading, error } = useBorrowRateHistory(reserve.assetId, timePeriod);
-
-  // Calculate average rate if available
-  const avgValue = React.useMemo(() => {
-    if (!data || data.length === 0) {
-      return reserve.reserveCurrentVariableBorrowRate;
-    }
-
-    const sum = data.reduce((acc, item) => acc + item.value, 0);
-    return sum / data.length;
-  }, [data, reserve.reserveCurrentVariableBorrowRate]);
+  const { data, avgValue, isLoading, error } = useBorrowRateHistory(reserve.assetId, timePeriod);
 
   const {
     totalValueDeposited,
     totalValueBorrowed,
     isLoading: isStatSupplyDepositFetching,
   } = useStatsSupplyDeposit();
+
+  // Log for debugging
+  useEffect(() => {
+    console.log('BorrowRateChartCard data:', {
+      dataLength: data?.length,
+      avgValue,
+      isLoading,
+      hasError: !!error,
+    });
+  }, [data, avgValue, isLoading, error]);
 
   return (
     <div className="fcol md:frow gap-6 w-full">
@@ -65,7 +65,7 @@ export const BorrowRateChartCard: React.FC<BorrowRateChartCardProps> = ({ reserv
           ) : (
             <SimpleAreaChart
               data={data || []}
-              tooltipFormatter={value => [`${value.toFixed(2)}%`, 'Borrow Rate']}
+              tooltipFormatter={value => [`Borrow Rate: ${value.toFixed(2)}%`]}
               showAvg={true}
               avgValue={avgValue}
               period={timePeriod}

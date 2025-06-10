@@ -25,42 +25,49 @@ const TOKENS = [
     symbol: 'BTCUSD',
     decimals: 8,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
+    mintAmount: 1,
   },
   {
     name: 'Ethereum USD',
     symbol: 'ETHUSD',
     decimals: 18,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+    mintAmount: 10,
   },
   {
     name: 'MyNeighborAlice',
     symbol: 'ALICEUSD',
     decimals: 6,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
+    mintAmount: 1000,
   },
   {
     name: 'DAR Open Network',
     symbol: 'DUSD',
     decimals: 18,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
+    mintAmount: 1000,
   },
   {
     name: 'Chromia USD',
     symbol: 'CHRUSD',
     decimals: 6,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
+    mintAmount: 1000,
   },
   {
     name: 'USDT',
     symbol: 'USDTUSD',
     decimals: 6,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/825.png',
+    mintAmount: 1000,
   },
   {
     name: 'USDC',
     symbol: 'USDCUSD',
     decimals: 6,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3408.png',
+    mintAmount: 1000,
   },
 ];
 
@@ -70,6 +77,7 @@ interface FaucetAsset {
   decimals: number;
   icon: string;
   balance: string;
+  mintAmount: number;
 }
 
 export default function FaucetPage() {
@@ -96,13 +104,14 @@ export default function FaucetPage() {
       return {
         ...token,
         balance,
+        mintAmount: token.mintAmount,
       };
     });
   }, [balances]);
 
   const handleFaucetClick = async (asset: FaucetAsset) => {
     try {
-      await requestTokens(asset.symbol, asset.decimals);
+      await requestTokens(asset.symbol, asset.decimals, asset.mintAmount);
       // Refresh balances after successful request
       await refreshBalance();
     } catch (error) {
@@ -114,7 +123,7 @@ export default function FaucetPage() {
   const renderAssetCell = (asset: FaucetAsset) => {
     return (
       <TooltipProvider>
-        <Tooltip>
+        <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <div className="flex items-center gap-3">
               <Avatar className="w-8 h-8">
@@ -124,8 +133,10 @@ export default function FaucetPage() {
               <Typography weight="medium">{asset.symbol.replace(/USD$/, '').trim()}</Typography>
             </div>
           </TooltipTrigger>
-          <TooltipContent>
-            <p>{asset.name.replace(/USD$/, '')}</p>
+          <TooltipContent side="bottom">
+            <p>
+              {asset.name.replace(/USD$/, '')} - Mint {asset.mintAmount} tokens
+            </p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -146,6 +157,15 @@ export default function FaucetPage() {
             <Skeleton className="w-24 h-5" />
           </div>
         ),
+      },
+    },
+    {
+      header: 'Mint Amount',
+      accessorKey: 'mintAmount',
+      enableSorting: true,
+      cell: ({ row }) => <Typography>{row.mintAmount}</Typography>,
+      meta: {
+        skeleton: <Skeleton className="w-20 h-5" />,
       },
     },
     {
@@ -200,7 +220,8 @@ export default function FaucetPage() {
         <Typography className="text-base text-submerged mt-2">
           With testnet Faucet you can get free assets to test the Protocol. Make sure your wallet is
           connected, select the desired asset, and click &apos;Faucet&apos; to get tokens
-          transferred to your wallet. Each request mints 1000 tokens to your wallet.
+          transferred to your wallet. Each request mints specific amounts: 1 BTC, 10 ETH, and 1000
+          for other tokens (ALICE, DUSD, CHR, USDT, USDC).
         </Typography>
         <Typography className="text-base text-submerged mt-2">
           The assets on a testnet have no monetary value. They are only for testing purposes.
