@@ -92,11 +92,13 @@ export default function DashboardPage() {
               value: totalValueDeposited - totalValueBorrowed,
               label: 'Net worth',
               isLoading: isStatSupplyDepositFetching,
+              prefix: '$',
             },
             {
               value: totalNetApy || 0,
               label: 'Net APY',
               isLoading: isStatSupplyDepositFetching,
+              suffix: '%',
             },
             {
               value: healthFactor || 0,

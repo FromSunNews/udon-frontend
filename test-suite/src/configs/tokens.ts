@@ -16,20 +16,20 @@ export const ASSET_CONFIG = {
 
 // Token definitions
 export const TOKENS = [
-  // {
-  //   name: 'Bitcoin USD',
-  //   symbol: 'BTCUSD',
-  //   decimals: 8,
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
-  //   price: parseUnits('60000', 18).toString(),
-  // },
-  // {
-  //   name: 'Ethereum USD',
-  //   symbol: 'ETHUSD',
-  //   decimals: 18,
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
-  //   price: parseUnits('2500', 18).toString(),
-  // },
+  {
+    name: 'Bitcoin USD',
+    symbol: 'BTCUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
+    price: parseUnits('60000', 18).toString(),
+  },
+  {
+    name: 'Ethereum USD',
+    symbol: 'ETHUSD',
+    decimals: 18,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+    price: parseUnits('2500', 18).toString(),
+  },
   {
     name: 'MyNeighborAlice',
     symbol: 'ALICEUSD',
@@ -58,11 +58,11 @@ export const TOKENS = [
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/825.png',
     price: parseUnits('1', 18).toString(),
   },
-  // {
-  //   name: 'USDC',
-  //   symbol: 'USDCUSD',
-  //   decimals: 6,
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3408.png',
-  //   price: parseUnits('1', 18).toString(),
-  // },
+  {
+    name: 'USDC',
+    symbol: 'USDCUSD',
+    decimals: 6,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3408.png',
+    price: parseUnits('1', 18).toString(),
+  },
 ];

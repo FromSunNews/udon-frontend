@@ -11,6 +11,8 @@ interface StatItemProps {
   value: number;
   label: string;
   isLoading?: boolean;
+  prefix?: string;
+  suffix?: string;
 }
 
 interface StatCardProps {
@@ -34,7 +36,13 @@ interface CombinedStatsCardProps {
 }
 
 // Component for a single stat item (value + label)
-const StatItem: React.FC<StatItemProps> = ({ value, label, isLoading = false }) => (
+const StatItem: React.FC<StatItemProps> = ({
+  value,
+  label,
+  isLoading = false,
+  prefix = '',
+  suffix = '',
+}) => (
   <div className="flex flex-col items-center justify-center">
     {isLoading ? (
       <>
@@ -43,7 +51,12 @@ const StatItem: React.FC<StatItemProps> = ({ value, label, isLoading = false }) 
       </>
     ) : (
       <>
-        <CountUp value={value} prefix="$" className="text-[24px] sm:text-[32px] font-medium" />
+        <CountUp
+          value={value}
+          prefix={prefix}
+          suffix={suffix}
+          className="text-[24px] sm:text-[32px] font-medium"
+        />
         <Typography color="submerged" className="font-normal text-lg">
           {label}
         </Typography>
@@ -66,6 +79,8 @@ export const MultiStatCard: React.FC<MultiStatCardProps> = ({ items, className =
               value={item.value}
               label={item.label}
               isLoading={item.isLoading}
+              prefix={item.prefix}
+              suffix={item.suffix}
             />
           ))}
         </div>
