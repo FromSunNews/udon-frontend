@@ -1,6 +1,5 @@
 import { TimePeriod } from '@/app/(protected)/reserve/types';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
-import { normalizeBN } from '@/utils/bignumber';
 // import { formatRay } from '@/utils/wadraymath';
 import { useQuery } from '@tanstack/react-query';
 
@@ -40,12 +39,21 @@ export function useBorrowRateHistory(
       if (!result) return null;
 
       // Parse the result - assuming it's an array of [timestamp, rateValue] arrays
-      const dataArray = JSON.parse(result as string) as [number, bigint][];
+      const dataArray = JSON.parse(result as string) as [number, number][];
+      console.log('dataArray borrow rate history', dataArray);
 
       // Convert to chart data format with proper date formatting
       const chartData = dataArray.map(item => {
         const timestamp = item[0]; // First element is timestamp
-        const rateValue = Number(normalizeBN(item[1].toString(), 27)); // Second element is rate value
+        console.log('item[1]', item[1]);
+
+        let rateValue = 0;
+
+        if (item[1] !== 0) {
+          rateValue = item[1] / 100; // Second element is rate value
+        }
+
+        console.log('rateValue borrow rate history', rateValue);
         const date = new Date(timestamp * 1000);
         let formattedDate = '';
         let tooltipDate = '';
@@ -111,7 +119,7 @@ export function useBorrowRateHistory(
 
         return {
           date: formattedDate,
-          value: rateValue * 100, // Convert to percentage
+          value: rateValue, // Convert to percentage
           tooltipDate,
         } as ChartDataPoint;
       });
