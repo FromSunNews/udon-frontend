@@ -242,7 +242,11 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
               style={{ pointerEvents: 'none' }} // This lets the wider invisible line handle the events
             >
               <Label
-                value={`Avg ${avgValue.toFixed(2)}%`}
+                value={
+                  tooltipFormatter
+                    ? `Avg ${tooltipFormatter(avgValue)}`
+                    : `Avg ${avgValue.toFixed(2)}`
+                }
                 position="insideLeft"
                 fill={isAvgLineHovered ? '#FFFFFF' : '#A1A1AA'}
                 fontSize={11}

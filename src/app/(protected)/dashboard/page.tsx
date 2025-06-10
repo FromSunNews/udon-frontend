@@ -45,14 +45,10 @@ export default function DashboardPage() {
     refetch: refetchAccountData,
   } = useAccountData();
 
-  console.log('accountData', accountData);
-  console.log('yourNetAPYPosition', yourNetAPYPosition);
-  console.log('yourNetWorthPosition', yourNetWorthPosition);
-
   // Check if the current device is mobile
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const isLoadingTable = isLoadingAssets || isAccountDataFetching;
+  const isLoadingTable = isLoadingAssets || isAccountDataFetching || isStatSupplyDepositFetching;
 
   const handleFetchData = () => {
     refetchAssets();
@@ -93,7 +89,7 @@ export default function DashboardPage() {
             {
               value: yourNetWorthPosition || 0,
               label: 'Net worth',
-              isLoading: isLoadingAssets,
+              isLoading: isLoadingTable,
               prefix: '$',
               decimals: 2,
               tooltip:
@@ -102,7 +98,7 @@ export default function DashboardPage() {
             {
               value: yourNetAPYPosition || 0,
               label: 'Net APY',
-              isLoading: isLoadingAssets,
+              isLoading: isLoadingTable,
               suffix: '%',
               decimals: 2,
               tooltip:
@@ -114,7 +110,7 @@ export default function DashboardPage() {
                   ? -1
                   : accountData?.healthFactorFormatted || 0,
               label: 'Health factor',
-              isLoading: isAccountDataFetching,
+              isLoading: isLoadingTable,
               decimals: 2,
               className:
                 accountData?.healthFactorFormatted === -1
@@ -133,7 +129,7 @@ export default function DashboardPage() {
         <CombinedStatsCard
           borrowValue={totalValueBorrowed}
           depositValue={totalValueDeposited}
-          isLoading={isStatSupplyDepositFetching}
+          isLoading={isLoadingTable}
           depositTooltip="The total value of all assets deposited into the protocol by all users. Higher deposit values indicate more liquidity available in the market."
           borrowTooltip="The total value of all assets borrowed from the protocol by all users. This represents the total debt across the protocol."
         />
