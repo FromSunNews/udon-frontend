@@ -10,6 +10,7 @@ import { UserReserveData } from '@/app/(protected)/dashboard/types';
 // import { cn } from '@/utils/tailwind';
 import { DepositBorrowChartCard } from '../charts/deposit-borrow-chart-card';
 import { APYChartCard } from '../charts/apy-chart-card';
+import { BorrowRateChartCard } from '../charts/borrow-rate-chart-card';
 
 // Market table indicator component
 // const MarketIndicator = ({ active }: { active?: boolean }) => (
@@ -74,7 +75,7 @@ export const VaultOverview: React.FC<VaultOverviewProps> = ({ reserve }) => {
 
   // // Helper function to render APY cell
   // const renderApyCell = (item: MarketData | undefined) => {
-  //   if (!item) return null;
+  //   if (!item) r eturn null;
   //   return (
   //     <Typography className="frow-icenter font-semibold">
   //       {item.apy.toFixed(2)}%
@@ -124,6 +125,9 @@ export const VaultOverview: React.FC<VaultOverviewProps> = ({ reserve }) => {
 
       {/* APY Card + APY Breakdown */}
       <APYChartCard reserve={reserve} />
+
+      {/* Borrow Rate Card */}
+      <BorrowRateChartCard reserve={reserve} />
 
       {/* Market Allocation Table */}
       {/* <SortableTable data={marketData} columns={columns} pageSize={8} /> */}

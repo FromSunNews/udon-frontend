@@ -44,16 +44,16 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
   //   showAvg = true,
   //   avgValue = 4.55,
 }) => {
-  //   const renderAvgLabel = () => {
-  //     return (
-  //       <g>
-  //         <circle cx={70} cy={70} r={35} fill="#282828" opacity={0.8} />
-  //         <text x={70} y={70} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={12}>
-  //           Avg {avgValue}%
-  //         </text>
-  //       </g>
-  //     );
-  //   };
+  const renderAvgLabel = () => {
+    return (
+      <g>
+        <circle cx={70} cy={70} r={35} fill="#282828" opacity={0.8} />
+        <text x={70} y={70} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={12}>
+          Avg 4.55%
+        </text>
+      </g>
+    );
+  };
 
   // Get all data keys except 'date'
   const keys = Object.keys(data[0] || {}).filter(key => key !== 'date');
@@ -111,7 +111,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
               fillOpacity={1}
             />
           ))}
-          {/* {showAvg && renderAvgLabel()} */}
+          {renderAvgLabel()}
         </AreaChart>
       </ResponsiveContainer>
     </div>

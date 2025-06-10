@@ -1,4 +1,4 @@
-import { ChartType, TimePeriod } from '@/app/(protected)/reserve/types';
+import { TimePeriod } from '@/app/(protected)/reserve/types';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { normalizeBN } from '@/utils/bignumber';
 // import { formatRay } from '@/utils/wadraymath';
@@ -18,44 +18,34 @@ const formatShortDate = (date: Date): string => {
   return `${day}/${month}/${year}`;
 };
 
-export function useAPYHistory(
+export function useBorrowRateHistory(
   assetId: Buffer<ArrayBufferLike>,
-  periodType: TimePeriod = '24_hours',
-  chartType: ChartType
+  periodType: TimePeriod = '24_hours'
 ) {
   const { client } = useChromiaAccount();
 
   const query = useQuery({
-    queryKey: ['apy_history', assetId, periodType, chartType],
+    queryKey: ['borrow_rate_history', assetId, periodType],
     queryFn: async () => {
       if (!client) return null;
 
-      // Select endpoint based on chart type
-      const endpoint =
-        chartType === 'deposit' ? 'get_apy_deposit_history' : 'get_apy_borrow_history';
+      // Always use the borrow rate history endpoint
+      const endpoint = 'get_borrow_rate_history';
 
-      console.log('assetId', assetId);
-      console.log('periodType', periodType);
-      console.log('chartType', chartType);
       const result = await client.query(endpoint, {
         asset_id: assetId,
         period_type: periodType,
       });
 
-      console.log('result', result);
-
       if (!result) return null;
 
-      // Parse the result - assuming it's now an array of [timestamp, apyValue] arrays
+      // Parse the result - assuming it's an array of [timestamp, rateValue] arrays
       const dataArray = JSON.parse(result as string) as [number, bigint][];
-      console.log('dataArray', dataArray);
+
       // Convert to chart data format with proper date formatting
       const chartData = dataArray.map(item => {
         const timestamp = item[0]; // First element is timestamp
-        console.log('item', item);
-        const apyValue = Number(normalizeBN(item[1].toString(), 27)); // Second element is APY value
-
-        console.log('apyValue', apyValue);
+        const rateValue = Number(normalizeBN(item[1].toString(), 27)); // Second element is rate value
         const date = new Date(timestamp * 1000);
         let formattedDate = '';
         let tooltipDate = '';
@@ -121,7 +111,7 @@ export function useAPYHistory(
 
         return {
           date: formattedDate,
-          value: apyValue * 100, // Convert to percentage
+          value: rateValue * 100, // Convert to percentage
           tooltipDate,
         } as ChartDataPoint;
       });

@@ -32,7 +32,7 @@ interface ChartFiltersProps {
   setChartType: (type: ChartType) => void;
   timePeriod: string;
   setTimePeriod: (period: TimePeriod) => void;
-  timeOptions?: string[];
+  isShowChartType?: boolean;
 }
 
 export const ChartFilters: React.FC<ChartFiltersProps> = ({
@@ -40,8 +40,15 @@ export const ChartFilters: React.FC<ChartFiltersProps> = ({
   setChartType,
   timePeriod,
   setTimePeriod,
-  timeOptions = ['hourly', 'daily', 'weekly', 'monthly', 'yearly'],
+  isShowChartType = true,
 }) => {
+  const timeOptions = [
+    { title: '24 Hours', key: '24_hours' },
+    { title: '7 Days', key: '7_days' },
+    { title: '30 Days', key: '30_days' },
+    { title: '90 Days', key: '90_days' },
+    { title: 'All Time', key: 'all_time' },
+  ];
   const [open, setOpen] = useState(false);
 
   const handleSelectTimePeriod = (option: TimePeriod) => {
@@ -51,17 +58,26 @@ export const ChartFilters: React.FC<ChartFiltersProps> = ({
 
   return (
     <div className="flex flex-wrap gap-3">
-      <Tabs value={chartType} onValueChange={value => setChartType(value as 'deposit' | 'borrow')}>
-        <TabsList className="bg-[rgba(51,51,54,1)] p-1 border-0">
-          <TabsTrigger value="deposit">Deposit</TabsTrigger>
-          <TabsTrigger value="borrow">Borrow</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {isShowChartType && (
+        <Tabs
+          value={chartType}
+          onValueChange={value => setChartType(value as 'deposit' | 'borrow')}
+        >
+          <TabsList className="bg-[rgba(51,51,54,1)] p-1 border-0">
+            <TabsTrigger value="deposit">Deposit</TabsTrigger>
+            <TabsTrigger value="borrow">Borrow</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <div className="bg-[rgba(51,51,54,1)] flex items-center justify-center gap-1 text-[rgba(206,206,206,1)] min-w-[90px] py-1 rounded-3xl cursor-pointer">
-            <Typography variant="small">{capitalizeFirstLetter(timePeriod)}</Typography>
+          <div className="bg-[rgba(51,51,54,1)] flex items-center justify-center gap-1 text-[rgba(206,206,206,1)] min-w-[90px] !h-[35px] py-1 rounded-3xl cursor-pointer">
+            <Typography variant="small">
+              {capitalizeFirstLetter(
+                timeOptions.find(option => option.key === timePeriod)?.title || '24 Hours'
+              )}
+            </Typography>
             <ChevronDown className="h-4 w-4" />
           </div>
         </PopoverTrigger>
@@ -69,14 +85,14 @@ export const ChartFilters: React.FC<ChartFiltersProps> = ({
           <div className="flex flex-col space-y-1">
             {timeOptions.map(option => (
               <div
-                key={option}
+                key={option.key}
                 className={cn(
                   'px-3 py-1.5 rounded text-sm cursor-pointer hover:bg-[rgba(51,51,54,1)]',
-                  timePeriod === option ? 'text-primary' : 'text-[rgba(206,206,206,1)]'
+                  timePeriod === option.key ? 'text-primary' : 'text-[rgba(206,206,206,1)]'
                 )}
-                onClick={() => handleSelectTimePeriod(option as TimePeriod)}
+                onClick={() => handleSelectTimePeriod(option.key as TimePeriod)}
               >
-                <Typography variant="small">{capitalizeFirstLetter(option)}</Typography>
+                <Typography variant="small">{capitalizeFirstLetter(option.title)}</Typography>
               </div>
             ))}
           </div>

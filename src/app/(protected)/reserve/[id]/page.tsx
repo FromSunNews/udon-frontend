@@ -22,6 +22,55 @@ export default function VaultPage() {
 
   const { reserve, isLoading, error } = useReserveData(params.id as string);
 
+  if (isLoading) {
+    return (
+      <div className="fcol items-center py-12 px-4 md:px-10 lg:pt-[140px] lg:pb-[100px] lg:px-[40px]">
+        <div className="w-full">
+          <div className="grid grid-cols-12 gap-5">
+            {/* Left column - Main content */}
+            <main className="col-span-12 md:col-span-8 rounded-3xl">
+              <div className="flex flex-col space-y-6">
+                {/* Top long bar */}
+                <div className="w-full">
+                  <Skeleton className="h-20 w-full rounded-2xl bg-primary/10 border border-primary/10" />
+                </div>
+
+                {/* Four boxes in a row */}
+                <div className="grid grid-cols-4 gap-3">
+                  <Skeleton className="h-16 w-full rounded-2xl bg-primary/10 border border-primary/10" />
+                  <Skeleton className="h-16 w-full rounded-2xl bg-primary/10 border border-primary/10" />
+                  <Skeleton className="h-16 w-full rounded-2xl bg-primary/10 border border-primary/10" />
+                  <Skeleton className="h-16 w-full rounded-2xl bg-primary/10 border border-primary/10" />
+                </div>
+
+                {/* Two medium boxes in a row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Skeleton className="h-16 w-full rounded-2xl bg-primary/10 border border-primary/10" />
+                  <Skeleton className="h-16 w-full rounded-2xl bg-primary/10 border border-primary/10" />
+                </div>
+
+                {/* Large box at bottom */}
+                <Skeleton className="h-[300px] w-full rounded-2xl bg-primary/10 border border-primary/10" />
+                <Skeleton className="h-[300px] w-full rounded-2xl bg-primary/10 border border-primary/10" />
+              </div>
+            </main>
+
+            {/* Right column - Side panel */}
+            <aside className="col-span-12 md:col-span-4 rounded-3xl">
+              <div className="flex flex-col space-y-6">
+                {/* Top box */}
+                <Skeleton className="h-[250px] w-full rounded-2xl bg-primary/10 border border-primary/10" />
+
+                {/* Bottom box */}
+                <Skeleton className="h-[250px] w-full rounded-2xl bg-primary/10 border border-primary/10" />
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">

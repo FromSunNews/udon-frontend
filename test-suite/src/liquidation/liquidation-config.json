@@ -1,0 +1,29 @@
+{
+  "nodeUrl": "http://localhost:7740",
+  "chainId": "31415926535897932384626433832",
+  "liquidatorPrivateKey": "YOUR_PRIVATE_KEY_HERE",
+  "liquidatorAccountId": "YOUR_ACCOUNT_ID_HERE",
+  "healthFactorThreshold": 1.0,
+  "minProfitPercentage": 1.0,
+  "gasLimit": 500000,
+  "supportedAssets": [
+    {
+      "name": "Tether",
+      "symbol": "USDT",
+      "assetId": "",
+      "decimals": 6
+    },
+    {
+      "name": "Chromia Coin",
+      "symbol": "CHR",
+      "assetId": "",
+      "decimals": 6
+    },
+    {
+      "name": "Alice Coin",
+      "symbol": "ALICE",
+      "assetId": "",
+      "decimals": 18
+    }
+  ]
+}

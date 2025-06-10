@@ -10,13 +10,15 @@ import {
   ReferenceLine,
   AreaChart,
 } from 'recharts';
+import { AxisInterval } from 'recharts/types/util/types';
 
 interface ChartProps {
-  data: Array<{ date: string; value: number }>;
+  data: Array<{ date: string; value: number; tooltipDate?: string }>;
   tooltipFormatter?: (value: number) => React.ReactNode;
   className?: string;
   showAvg?: boolean;
   avgValue?: number;
+  period?: string;
 }
 
 export const SimpleAreaChart: React.FC<ChartProps> = ({
@@ -25,6 +27,7 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
   className,
   showAvg = true,
   avgValue = 4.55,
+  period = '24_hours',
 }) => {
   // Handle empty data case
   if (!data || data.length === 0) {
@@ -33,6 +36,15 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
         No data available
       </div>
     );
+  }
+
+  // Extract unique date labels for ticks
+  const uniqueDates = Array.from(new Set(data.map(item => item.date).filter(Boolean)));
+
+  // Determine appropriate interval based on period and data length
+  let tickInterval: AxisInterval = 'preserveStart';
+  if (period === '24_hours' && uniqueDates.length > 8) {
+    tickInterval = Math.ceil(uniqueDates.length / 9) as AxisInterval; // Show ~8 ticks for 24 hour view
   }
 
   return (
@@ -49,6 +61,14 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
           tick={{ fill: '#A1A1AA', fontSize: 12 }}
           axisLine={true}
           tickLine={true}
+          interval={tickInterval} // Dynamic interval based on period
+          minTickGap={30} // Increased from 10 to 30 for better spacing
+          height={50}
+          ticks={uniqueDates}
+          // padding={{
+          //   right: 5,
+          // }} // Add margin below ticks
+          angle={-10} // Slight angle for 24-hour labels
         />
         <YAxis
           orientation="left"
@@ -67,10 +87,14 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
             borderRadius: '0.5rem',
           }}
           formatter={tooltipFormatter}
-          labelFormatter={(v: number) => `Date: ${v}`}
+          labelFormatter={(_, data) => {
+            // Get the original data point
+            const dataPoint = data[0]?.payload;
+            // Use tooltipDate if available, otherwise fallback to date
+            return `Date: ${dataPoint?.tooltipDate || dataPoint?.date}`;
+          }}
         />
 
-        {/* <CartesianGrid vertical={false} stroke="#ffff" /> */}
         {showAvg && data.length >= 3 && (
           <>
             <ReferenceDot
@@ -97,9 +121,9 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
           type="monotone"
           dataKey="value"
           stroke="hsl(var(--primary))"
-          strokeWidth={2}
+          strokeWidth={4}
           dot={false}
-          activeDot={{ r: 5, fill: 'hsl(var(--primary))' }}
+          activeDot={{ r: 8, fill: 'hsl(var(--primary))' }}
         />
       </AreaChart>
     </ResponsiveContainer>

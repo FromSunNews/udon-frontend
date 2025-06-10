@@ -13,7 +13,7 @@ interface DepositBorrowChartCardProps {
 
 export const DepositBorrowChartCard: React.FC<DepositBorrowChartCardProps> = ({ reserve }) => {
   const [chartType, setChartType] = React.useState<ChartType>('deposit');
-  const [timePeriod, setTimePeriod] = React.useState<TimePeriod>('hourly');
+  const [timePeriod, setTimePeriod] = React.useState<TimePeriod>('24_hours');
 
   const { data, isLoading, error } = useTotalDepositBorrowHistory(
     reserve.assetId,

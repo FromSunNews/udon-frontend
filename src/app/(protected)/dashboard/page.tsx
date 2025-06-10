@@ -1,7 +1,7 @@
 'use client';
 
 import { Typography } from '@/components/common/typography';
-import { StatCard } from './components/stat-card';
+import { MultiStatCard, CombinedStatsCard } from './components/stat-card';
 import { SupplyTable } from './components/supply';
 import { BorrowTable } from './components/borrow';
 import { SupplyPositionTable } from './components/supply/position';
@@ -12,6 +12,10 @@ import { useAccountData } from '@/hooks/contracts/queries/use-account-data';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
 import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
+
+// Add these variables for the missing values
+const totalNetApy = 4.28; // Mock value for Net APY
+const healthFactor = 4.24; // Mock value for Health factor
 
 export default function DashboardPage() {
   // Use the enhanced custom hook to get all data
@@ -81,20 +85,31 @@ export default function DashboardPage() {
         </Typography>
       </section>
 
-      <section className="flex flex-col sm:flex-row gap-4 sm:gap-5 mt-6 sm:mt-10">
-        <StatCard
-          value={totalValueDeposited}
-          label="Total Deposit"
-          iconUrl="/images/supply/coin-stack.svg"
-          isLoading={isStatSupplyDepositFetching}
-          videoUrl="/images/supply/coin-stack.gif"
+      <section className="flex flex-col md:flex-row justify-between gap-6 mt-8 sm:mt-10">
+        <MultiStatCard
+          items={[
+            {
+              value: totalValueDeposited - totalValueBorrowed,
+              label: 'Net worth',
+              isLoading: isStatSupplyDepositFetching,
+            },
+            {
+              value: totalNetApy || 0,
+              label: 'Net APY',
+              isLoading: isStatSupplyDepositFetching,
+            },
+            {
+              value: healthFactor || 0,
+              label: 'Health factor',
+              isLoading: isStatSupplyDepositFetching,
+            },
+          ]}
         />
-        <StatCard
-          value={totalValueBorrowed}
-          label="Total Borrows"
-          iconUrl="/images/supply/saving-piggy.svg"
+
+        <CombinedStatsCard
+          borrowValue={totalValueBorrowed}
+          depositValue={totalValueDeposited}
           isLoading={isStatSupplyDepositFetching}
-          videoUrl="/images/supply/saving-piggy.gif"
         />
       </section>
 
