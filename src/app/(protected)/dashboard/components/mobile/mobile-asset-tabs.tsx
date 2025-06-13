@@ -114,6 +114,12 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
                 </Typography>
                 <Skeleton className="w-16 h-5" />
               </div>
+              <div>
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  Total Supply
+                </Typography>
+                <Skeleton className="w-16 h-5" />
+              </div>
             </div>
 
             {/* Col 2: Collateral and Balance */}
@@ -169,6 +175,13 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
               <div>
                 <Typography color="submerged" className="mb-[2px] text-[12px]">
                   APY
+                </Typography>
+                <Skeleton className="w-16 h-5" />
+              </div>
+
+              <div>
+                <Typography color="submerged" className="mb-[2px] text-[12px]">
+                  Total Borrow
                 </Typography>
                 <Skeleton className="w-16 h-5" />
               </div>
@@ -265,6 +278,28 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
                                   <Typography>-</Typography>
                                 ) : (
                                   <CountUp value={asset.supplyAPY} suffix="%" decimals={2} />
+                                )}
+                              </div>
+
+                              <div>
+                                <Typography color="submerged" className="mt-2 text-[12px]">
+                                  Total Supply
+                                </Typography>
+                                {asset.currentATokenTotalSupply === 0 ? (
+                                  <Typography>-</Typography>
+                                ) : (
+                                  <div className="flex flex-row items-center gap-1">
+                                    <CountUp
+                                      value={asset.currentATokenTotalSupply}
+                                      className="text-base"
+                                    />
+                                    <Typography color="submerged">~</Typography>
+                                    <CountUp
+                                      value={asset.price * asset.currentATokenTotalSupply}
+                                      className="text-base text-submerged"
+                                      prefix="$"
+                                    />
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -389,6 +424,30 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
                                   <Typography>-</Typography>
                                 ) : (
                                   <CountUp value={asset.borrowAPY} suffix="%" decimals={2} />
+                                )}
+                              </div>
+
+                              <div>
+                                <Typography color="submerged" className="mt-2 text-[12px]">
+                                  Total Borrow
+                                </Typography>
+                                {asset.currentVariableDebtTokenTotalSupply === 0 ? (
+                                  <Typography>-</Typography>
+                                ) : (
+                                  <div className="flex flex-row items-center gap-1">
+                                    <CountUp
+                                      value={asset.currentVariableDebtTokenTotalSupply}
+                                      className="text-base"
+                                    />
+                                    <Typography color="submerged">~</Typography>
+                                    <CountUp
+                                      value={
+                                        asset.price * asset.currentVariableDebtTokenTotalSupply
+                                      }
+                                      className="text-base text-submerged"
+                                      prefix="$"
+                                    />
+                                  </div>
                                 )}
                               </div>
                             </div>

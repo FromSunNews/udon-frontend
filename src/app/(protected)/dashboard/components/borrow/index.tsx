@@ -126,6 +126,30 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
       },
     },
     {
+      header: 'Total Supply',
+      accessorKey: 'currentVariableDebtTokenTotalSupply',
+      enableSorting: true,
+      cell: ({ row }) => {
+        if (row.currentVariableDebtTokenTotalSupply === 0) {
+          return <Typography>_</Typography>;
+        } else {
+          return (
+            <div className="flex flex-col gap-2">
+              <CountUp value={row.currentVariableDebtTokenTotalSupply} className="text-base" />
+              <CountUp
+                value={row.price * row.currentVariableDebtTokenTotalSupply}
+                prefix="$"
+                className="text-sm text-submerged"
+              />
+            </div>
+          );
+        }
+      },
+      meta: {
+        skeleton: <Skeleton className="w-16 h-5" />,
+      },
+    },
+    {
       header: 'APY',
       accessorKey: 'borrowAPY',
       enableSorting: true,

@@ -125,6 +125,30 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
       },
     },
     {
+      header: 'Total Supply',
+      accessorKey: 'currentATokenTotalSupply',
+      enableSorting: true,
+      cell: ({ row }) => {
+        if (row.currentATokenTotalSupply === 0) {
+          return <Typography>_</Typography>;
+        } else {
+          return (
+            <div className="flex flex-col gap-2">
+              <CountUp value={row.currentATokenTotalSupply} className="text-base" />
+              <CountUp
+                value={row.price * row.currentATokenTotalSupply}
+                prefix="$"
+                className="text-sm text-submerged"
+              />
+            </div>
+          );
+        }
+      },
+      meta: {
+        skeleton: <Skeleton className="w-16 h-5" />,
+      },
+    },
+    {
       header: 'APY',
       accessorKey: 'supplyAPY',
       enableSorting: true,
