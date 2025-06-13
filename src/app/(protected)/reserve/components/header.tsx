@@ -59,11 +59,19 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ reserve }) => {
       <div className="flex w-full flex-wrap gap-3 mt-6">
         <StatCard
           title="Total Supply"
-          value={reserve.totalSupply}
+          value={reserve.currentATokenTotalSupply}
           suffix={` ${reserve.symbol}`}
           icon={reserve.iconUrl}
           className="bg-card border-border"
         />
+        <StatCard
+          title="Total Borrow"
+          value={reserve.currentVariableDebtTokenTotalSupply}
+          suffix={` ${reserve.symbol}`}
+          icon={reserve.iconUrl}
+          className="bg-card border-border"
+        />
+
         <StatCard
           title="Available Liquidity"
           value={reserve.availableLiquidity}
@@ -71,6 +79,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ reserve }) => {
           icon={reserve.iconUrl}
           className="bg-card border-border"
         />
+
         <StatCard
           title="Price"
           value={reserve.price}
@@ -82,9 +91,7 @@ export const VaultHeader: React.FC<VaultHeaderProps> = ({ reserve }) => {
         <StatCard
           title="Utilization"
           value={
-            (reserve.currentVariableDebtTokenTotalSupply /
-              (reserve.currentVariableDebtTokenTotalSupply + reserve.currentATokenTotalSupply)) *
-            100
+            (reserve.currentVariableDebtTokenTotalSupply / reserve.currentATokenTotalSupply) * 100
           }
           suffix="%"
           icon={reserve.iconUrl}

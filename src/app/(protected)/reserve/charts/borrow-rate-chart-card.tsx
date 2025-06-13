@@ -6,7 +6,6 @@ import { ChartType, TimePeriod } from '../types';
 import { SimpleAreaChart } from './simple-area';
 import { useBorrowRateHistory } from '@/hooks/contracts/queries/use-borrow-rate-chart';
 import { Skeleton } from '@/components/common/skeleton';
-import { useStatsSupplyDeposit } from '@/hooks/contracts/queries/use-stats-supply-deposit';
 
 interface BorrowRateChartCardProps {
   reserve: UserReserveData;
@@ -20,12 +19,6 @@ export const BorrowRateChartCard: React.FC<BorrowRateChartCardProps> = ({ reserv
   const setChartType = () => {}; // No-op function as we don't need to change chart type
 
   const { data, avgValue, isLoading, error } = useBorrowRateHistory(reserve.assetId, timePeriod);
-
-  const {
-    totalValueDeposited,
-    totalValueBorrowed,
-    isLoading: isStatSupplyDepositFetching,
-  } = useStatsSupplyDeposit();
 
   // Log for debugging
   useEffect(() => {
@@ -41,8 +34,10 @@ export const BorrowRateChartCard: React.FC<BorrowRateChartCardProps> = ({ reserv
     <div className="fcol md:frow gap-6 w-full">
       <div className="w-full">
         <ChartCard
-          title="Borrow Rate"
-          value={(totalValueBorrowed * 100) / totalValueDeposited}
+          title="Utilization"
+          value={
+            (reserve.currentVariableDebtTokenTotalSupply * 100) / reserve.currentATokenTotalSupply
+          }
           suffix="%"
           filters={
             <ChartFilters
@@ -54,7 +49,7 @@ export const BorrowRateChartCard: React.FC<BorrowRateChartCardProps> = ({ reserv
             />
           }
         >
-          {isLoading || isStatSupplyDepositFetching ? (
+          {isLoading ? (
             <div className="w-full h-full flex flex-1 items-center justify-center">
               <Skeleton className="h-full w-full" />
             </div>
