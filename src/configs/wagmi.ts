@@ -1,5 +1,6 @@
 // Import necessary functions and configurations from `connectkit` and `wagmi`
 // `connectkit` is used to manage wallet connection, while `wagmi` handles Ethereum-related operations
+import { env } from '@/utils/env';
 import { getDefaultConfig } from 'connectkit'; // Get the default configuration for WalletConnect
 import { createConfig, http } from 'wagmi'; // `createConfig` for creating wagmi config and `http` for API transport
 import { mainnet, sepolia } from 'wagmi/chains'; // Import network chains: mainnet and sepolia for different environments
@@ -17,10 +18,14 @@ export const wagmiConfig = createConfig(
     },
 
     // Provide required API keys (these are used for WalletConnect service to establish connections)
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!, // WalletConnect project ID from environment variables
+    // register your project id at https://cloud.reown.com/
+    walletConnectProjectId: env.walletconnectProjectId, // WalletConnect project ID from environment variables
 
     // Set the application name for this configuration
-    appName: 'Udon', // The name of the app as it will appear in WalletConnect and related services
+    appName: env.appName, // The name of the app as it will appear in WalletConnect and related services
+    appDescription: 'Udon Finance - Unlocking Liquidity Money Markets and Leverage on Chromia',
+    appUrl: env.siteUrl,
+    appIcon: `${env.siteUrl}/favicon/android-chrome-192x192.png`,
   })
 );
 

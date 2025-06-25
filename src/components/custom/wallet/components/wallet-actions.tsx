@@ -1,15 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRightLeft, Wallet, ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 
-import { Button } from '@/components/common/button';
 import TransferForm from '../form/transfer-form';
 import DepositForm from '../form/deposit-form';
 import { ChromiaAccount } from './chromia-account';
 import { TokenList } from './token-list';
 import { TransactionHistory } from './transaction-history';
-import { DialogClose, DialogFooter } from '@/components/common/dialog';
+import { DialogClose } from '@/components/common/dialog';
 import { Typography } from '@/components/common/typography';
 import { cn } from '@/utils/tailwind';
 import { useTokenBalance } from '@/hooks/contracts/queries/use-token-balance';
@@ -190,7 +189,7 @@ export function WalletActions({ onClose }: WalletActionsProps) {
         <FullActivityView />
       </SlideView>
 
-      {activeView === 'account' && (
+      {/* {activeView === 'account' && (
         <DialogFooter className="absolute bottom-0 left-0 right-0 bg-[#1F1F1F] px-6 border-t border h-[70px]">
           <div className="w-full grid grid-cols-2 gap-3 py-4">
             <Button
@@ -211,7 +210,7 @@ export function WalletActions({ onClose }: WalletActionsProps) {
             </Button>
           </div>
         </DialogFooter>
-      )}
+      )} */}
     </div>
   );
 }
