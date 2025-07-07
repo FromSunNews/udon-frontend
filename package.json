@@ -21,7 +21,7 @@
     "sitemap": "next-sitemap"
   },
   "dependencies": {
-    "@chromia/ft4": "^1.1.0",
+    "@chromia/ft4": "^2.0.1",
     "@chromia/react": "^0.3.0",
     "@chromia/ui-kit": "^0.7.0",
     "@ebay/nice-modal-react": "^1.2.13",

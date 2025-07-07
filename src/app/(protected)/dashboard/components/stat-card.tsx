@@ -113,7 +113,7 @@ export const MultiStatCard: React.FC<MultiStatCardProps> = ({ items, className =
       className={`rounded-2xl p-[1px] bg-gradient-to-b from-[#3E73C4] from-74% to-[#293564] to-0% overflow-hidden w-full ${className}`}
     >
       <div className="rounded-2xl bg-[#181E26] h-full mt-[1px]">
-        <div className="px-4 py-6 grid grid-cols-3 items-center justify-center text-center gap-4 [background:radial-gradient(80%_80%_at_50%_100%,rgba(82,179,239,0.4)_0%,rgba(74,163,201,0)_85%)] h-full">
+        <div className="px-0 sm:px-4 py-6 grid grid-cols-3 items-center justify-center text-center gap-4 [background:radial-gradient(80%_80%_at_50%_100%,rgba(82,179,239,0.4)_0%,rgba(74,163,201,0)_85%)] h-full">
           {items.map((item, index) => (
             <StatItem
               key={index}
@@ -149,9 +149,9 @@ export const CombinedStatsCard: React.FC<CombinedStatsCardProps> = ({
       className={`rounded-2xl p-[1px] bg-gradient-to-b from-[#3E73C4] from-74% to-[#293564] to-0% overflow-hidden w-full ${className}`}
     >
       <div className="rounded-2xl bg-[#181E26] h-full mt-[1px]">
-        <div className="px-6 py-6 grid grid-cols-2 items-center justify-center text-center gap-4 [background:radial-gradient(80%_80%_at_50%_100%,rgba(82,179,239,0.4)_0%,rgba(74,163,201,0)_85%)] h-full">
+        <div className="px-4 sm:px-4 py-6 grid grid-cols-2 items-center justify-center text-center gap-4 [background:radial-gradient(80%_80%_at_50%_100%,rgba(82,179,239,0.4)_0%,rgba(74,163,201,0)_85%)] h-full">
           {/* Borrow section */}
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-2 sm:gap-4">
             <div>
               {isLoading ? (
                 <>
@@ -187,7 +187,7 @@ export const CombinedStatsCard: React.FC<CombinedStatsCardProps> = ({
               )}
             </div>
 
-            <div className="w-[60px] sm:w-[80px] h-[60px] sm:h-[80px] relative">
+            <div className="w-[50px] sm:w-[80px] h-[50px] sm:h-[80px] relative">
               {isLoading ? (
                 <Skeleton className="w-full h-full rounded-full" />
               ) : (
@@ -204,7 +204,7 @@ export const CombinedStatsCard: React.FC<CombinedStatsCardProps> = ({
           </div>
 
           {/* Deposit section */}
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-2 sm:gap-4">
             <div>
               {isLoading ? (
                 <>
@@ -240,7 +240,7 @@ export const CombinedStatsCard: React.FC<CombinedStatsCardProps> = ({
               )}
             </div>
 
-            <div className="w-[60px] sm:w-[80px] h-[60px] sm:h-[80px] relative">
+            <div className="w-[50px] sm:w-[80px] h-[50px] sm:h-[80px] relative">
               {isLoading ? (
                 <Skeleton className="w-full h-full rounded-full" />
               ) : (

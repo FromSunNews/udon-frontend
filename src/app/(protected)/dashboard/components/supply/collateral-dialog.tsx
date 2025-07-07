@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { UserReserveData, UserAccountData } from '../../types';
 import { calculateHFAfterCallUsageAsCollateral } from '@/utils/hf';
 import { normalize, normalizeBN, valueToBigNumber } from '@/utils/bignumber';
+import CountUp from '@/components/common/count-up';
 
 interface CollateralDialogProps {
   open: boolean;
@@ -136,9 +137,12 @@ export const CollateralDialog: React.FC<CollateralDialogProps> = ({
                   <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
                   <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <Typography weight="medium">
-                  {reserve.currentATokenBalance} {reserve.symbol}
-                </Typography>
+                <CountUp
+                  value={reserve.currentATokenBalance}
+                  suffix={` ${reserve.symbol}`}
+                  decimals={6}
+                  className="font-medium"
+                />
               </div>
             </div>
             <div className="flex items-center justify-between">

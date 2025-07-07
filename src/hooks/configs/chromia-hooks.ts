@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 // Import Chromia FT4 functionality for account management and authentication
 import {
@@ -42,7 +42,7 @@ export const useChromiaAccount = ({
   const [isLoading, setIsLoading] = useState(true); // Tracks if account creation is in progress
   const [tried, setTried] = useState(false); // Tracks if account creation has been attempted
 
-  const { address: ethAddress } = useAccount(); // Retrieve the Ethereum address using wagmi hook
+  const { address: ethAddress, isConnected } = useAccount();
   const { data: client, isLoading: isLoadingClient } = usePostchainClient({
     config: publicClientConfig,
   }); // Initialize Postchain client
@@ -62,6 +62,17 @@ export const useChromiaAccount = ({
       setIsLoading(false);
     }
   }, [isLoadingClient, isLoadingFtAccounts]);
+
+  // Reset Chromia account khi disconnect hoặc khi đổi ví (Ethereum address thay đổi)
+  useEffect(() => {
+    console.log('isConnected', isConnected);
+    console.log('ethAddress', ethAddress);
+    console.log('keyStore', keyStore);
+    if (isConnected) {
+      mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected, ethAddress, keyStore]);
 
   /**
    * Creates a new Chromia account with transfer capabilities.

@@ -51,6 +51,7 @@ export default function DashboardPage() {
   const isLoadingTable = isLoadingAssets || isAccountDataFetching || isStatSupplyDepositFetching;
 
   const handleFetchData = () => {
+    console.log('handleFetchData');
     refetchAssets();
     refetchAccountData();
     refetchStatsSupplyDeposit();

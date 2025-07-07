@@ -51,6 +51,7 @@ export interface WithdrawDialogProps {
   reserve: UserReserveData;
   accountData: UserAccountData;
   mutateAssets: () => void;
+  yourSupplyCollateralPosition: number;
 }
 
 // Create a debounced fetch function with lodash
@@ -64,7 +65,9 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   reserve,
   accountData,
   mutateAssets,
+  yourSupplyCollateralPosition,
 }) => {
+  console.log('yourSupplyCollateralPosition', yourSupplyCollateralPosition);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
@@ -84,11 +87,15 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
     refetch: fetchPrice,
   } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
-  const { data: maxWithdrawAmount, isLoading: isMaxWithdrawFetching } = useMaxAmount(
+  const { data: maxAmount, isLoading: isMaxWithdrawFetching } = useMaxAmount(
     reserve.assetId,
     reserve.decimals,
     'get_max_withdraw_amount'
   );
+
+  const maxWithdrawAmount = !yourSupplyCollateralPosition
+    ? maxAmount
+    : reserve.currentATokenBalance;
 
   // Use the withdraw hook
   const withdraw = useWithdraw({
@@ -201,6 +208,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   const handleMaxAmount = () => {
     // Use supply balance as the max amount
     form.setValue('amount', maxWithdrawAmount.toString());
+    console.log('maxWithdrawAmount', maxWithdrawAmount);
     handleFetchPrice();
   };
 
@@ -342,7 +350,11 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                         {isMaxWithdrawFetching ? (
                           <Skeleton className="h-5 w-20" />
                         ) : (
-                          <Typography className="font-bold">{maxWithdrawAmount}</Typography>
+                          <CountUp
+                            value={maxWithdrawAmount}
+                            suffix={` ${reserve.symbol}`}
+                            decimals={6}
+                          />
                         )}
                         <Typography className="font-bold text-primary">MAX</Typography>
                       </div>

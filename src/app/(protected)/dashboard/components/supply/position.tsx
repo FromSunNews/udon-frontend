@@ -310,6 +310,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           reserve={selectedPosition}
           mutateAssets={mutateAssets}
           accountData={accountData}
+          yourSupplyCollateralPosition={yourSupplyCollateralPosition}
         />
       )}
 
